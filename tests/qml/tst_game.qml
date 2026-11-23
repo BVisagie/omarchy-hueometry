@@ -9,8 +9,8 @@ Item {
   width: 1280
   height: 720
 
-  MemoryHost { id: host }
-  Game { id: game; anchors.fill: parent; host: host }
+  MemoryHost { id: memory }
+  Game { id: game; anchors.fill: parent; host: memory }
 
   TestCase {
     name: "Game"
@@ -40,7 +40,7 @@ Item {
       }
       tryVerify(() => !!game.current.result, 3000)
       compare(game.current.view.moves, sol.length)
-      const saved = JSON.parse(host.files["progress.json"])
+      const saved = JSON.parse(memory.files["progress.json"])
       compare(saved.done["tutorial/0"].best, sol.length)
       compare(saved.current, null)
     }
@@ -74,7 +74,7 @@ Item {
       compare(game.screen, "map")
       keyClick(Qt.Key_Escape)
       compare(game.screen, "menu")
-      compare(JSON.parse(host.files["progress.json"]).current.ref.index, 1, "the unfinished puzzle is saved")
+      compare(JSON.parse(memory.files["progress.json"]).current.ref.index, 1, "the unfinished puzzle is saved")
     }
   }
 }

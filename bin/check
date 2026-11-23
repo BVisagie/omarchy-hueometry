@@ -50,7 +50,8 @@ step "standalone app: build, and the C++ host's tests"
 bin/build
 bin/test
 
-step "shell plugin: assemble and validate"
+step "shell plugin: assemble, validate, and run the overlay in Quickshell"
 bin/plugin --check
+tools/check/overlay.sh
 
 printf '\nAll checks passed.\n'

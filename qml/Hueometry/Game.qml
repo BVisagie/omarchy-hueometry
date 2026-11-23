@@ -7,10 +7,12 @@ import "js/store.mjs" as Store
 // quit(), kind ("app" or "plugin"), canFullscreen, toggleFullscreen().
 Item {
   id: root
-  required property var host
+  property var host: null
 
-  property var settings: Store.settings(host.readText("settings.json"))
-  property var progress: Store.progress(host.readText("progress.json"))
+  // defaults until the host is set: a host's binding can arrive after these
+  // properties are first evaluated (it does under the Omarchy shell)
+  property var settings: Store.settings("")
+  property var progress: Store.progress("")
   property string screen: "menu"
   property int lastArea: 1
   property bool helpShown: false
@@ -39,7 +41,16 @@ Item {
   // Saving
   // ------
 
+  function load() {
+    if (!host) return
+    settings = Store.settings(host.readText("settings.json"))
+    progress = Store.progress(host.readText("progress.json"))
+  }
+  onHostChanged: load()
+  Component.onCompleted: load()
+
   function saveProgress() {
+    if (!host) return
     progress = Store.merge(Store.progress(host.readText("progress.json")), progress)
     host.writeText("progress.json", JSON.stringify(progress))
   }
@@ -48,7 +59,7 @@ Item {
     const next = Object.assign({}, settings)
     next[key] = value
     settings = Store.settings(JSON.stringify(next))
-    host.writeText("settings.json", JSON.stringify(settings))
+    if (host) host.writeText("settings.json", JSON.stringify(settings))
   }
 
   function saveCurrent(ref, moves) {
@@ -140,6 +151,7 @@ Item {
   function showHelp() { helpShown = true }
 
   function quit() {
+    if (!host) return
     if (host.kind === "plugin") { host.quit(); return }
     if (confirmQuit) host.quit()
     else { confirmQuit = true; quitTimer.restart() }
@@ -150,7 +162,7 @@ Item {
   Keys.onPressed: function(event) {
     if (helpShown) { helpShown = false; event.accepted = true; return }
     if (event.key === Qt.Key_Question || (event.key === Qt.Key_Slash && (event.modifiers & Qt.ShiftModifier))) { helpShown = true; event.accepted = true; return }
-    if (event.key === Qt.Key_F11 && host.canFullscreen) { host.toggleFullscreen(); event.accepted = true; return }
+    if (event.key === Qt.Key_F11 && host && host.canFullscreen) { host.toggleFullscreen(); event.accepted = true; return }
     if (event.key === Qt.Key_Q && !(event.modifiers & Qt.ControlModifier)) { quit(); event.accepted = true; return }
     if (screens.item && screens.item.handleKey(event)) event.accepted = true
   }

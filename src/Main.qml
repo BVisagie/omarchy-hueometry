@@ -14,7 +14,7 @@ Window {
   color: "#0A1A10"
 
   QtObject {
-    id: host
+    id: gameHost
     readonly property string kind: "app"
     readonly property bool canFullscreen: true
     function readText(name) { return appHost.readText(name) }
@@ -25,7 +25,7 @@ Window {
 
   Game {
     anchors.fill: parent
-    host: host
+    host: gameHost
     focus: true
   }
 }

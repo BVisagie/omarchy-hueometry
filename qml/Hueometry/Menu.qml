@@ -11,7 +11,7 @@ Item {
     { text: qsTr("Free play"), icon: "play", act: function() { game.show("free") } },
     { text: qsTr("Adventure map"), icon: "settings", act: function() { game.show("map") }, hidden: !game.progress.current },
     { text: qsTr("Settings"), icon: "settings", act: function() { game.show("settings") } },
-    { text: game.host.kind === "plugin" ? qsTr("Close") : qsTr("Quit"), icon: "close", act: function() { game.quit() } },
+    { text: game.host && game.host.kind === "plugin" ? qsTr("Close") : qsTr("Quit"), icon: "close", act: function() { game.quit() } },
   ].filter(i => !i.hidden)
 
   function handleKey(event) {

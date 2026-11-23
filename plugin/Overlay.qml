@@ -35,9 +35,10 @@ Item {
   FileView { id: progressFile; path: root.dataDir + "/progress.json"; blockLoading: true; atomicWrites: true; printErrors: false }
   FileView { id: settingsFile; path: root.configDir + "/settings.json"; blockLoading: true; atomicWrites: true; printErrors: false }
 
-  // what Game.qml needs from its host
+  // what Game.qml needs from its host (not named `host`: inside Game that
+  // name is Game's own property)
   QtObject {
-    id: host
+    id: gameHost
     readonly property string kind: "plugin"
     readonly property bool canFullscreen: false
     function file(name) { return name === "progress.json" ? progressFile : name === "settings.json" ? settingsFile : null }
@@ -66,7 +67,7 @@ Item {
       id: game
       anchors.fill: parent
       active: root.opened
-      sourceComponent: Game { host: host }
+      sourceComponent: Game { host: gameHost }
       onLoaded: item.forceActiveFocus()
     }
   }
