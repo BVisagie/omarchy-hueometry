@@ -127,3 +127,12 @@ All defaults in plan.md section 10 were accepted, except:
   own note of a pentatonic scale when placed, a refusal is a soft low tok,
   and the music dips under the win fanfare. Effects follow the sounds
   slider; music and ambience follow the music slider.
+
+## Packaging (checkpoint 5)
+
+- The app installs from a checkout with `bin/install` (makepkg), following
+  Omarchy's own apps; each release also attaches the built package. The
+  package depends on Qt Multimedia, so the app always has sound.
+- The release workflow assembles the plugin and attaches it to the release.
+  Publishing it to `BVisagie/omarchy-hueometry-plugin` stays off until that
+  repository, its deploy key secret and the `PLUGIN_PUBLISH` variable exist.

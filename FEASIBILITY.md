@@ -6,6 +6,11 @@ report.
 
 **Verdict: feasible. Bend 2 is the rules engine.**
 
+Since this report was written, the engine also generates puzzles (with a
+law that every generated puzzle is valid and solvable) and gives hints, and
+LAWS.bend has grown to cover move counting, validity over every reached
+game, legal targets and refusal reasons; see ARCHITECTURE.md.
+
 Measured on 2026-11-23 with Bend 2.0.40, Lean 4.34.0, Qt 6.12, Quickshell 0.3.2
 and Omarchy 4.5.0, on an x86-64 laptop.
 
@@ -77,6 +82,6 @@ A move costs about 17 µs in Qt's engine, far below one frame.
 - Values are affine: anything used twice needs `+`.
 - A function cannot match a computed value, so every proof that splits on a
   computed fact takes it as a parameter (the `.go` and `.fin` helpers).
-- No tactics: PROOF.bend is about 1,000 lines for the laws above.
+- No tactics: PROOF.bend is about 1,500 lines for all the laws in LAWS.bend.
 
 None of these blocked anything.

@@ -75,6 +75,12 @@ A colour-sorting puzzle for Omarchy 4.5+. `docs/plan.md` is the design;
 - `bin/engine` rebuilds `qml/Hueometry/js/engine.mjs` from `engine/api.bend`.
   Commit the result; never edit that file by hand. Only
   `qml/Hueometry/js/rules.mjs` imports it.
-- `tools/audio/synth.py` regenerates `assets/audio/`. Commit the output and
-  update `ASSETS.md`.
+- `bin/levels` rebuilds the level pack (`qml/Hueometry/js/levels.mjs`,
+  `free.mjs`; about half an hour) and `bin/audio` the sounds
+  (`qml/Hueometry/sounds/`). Commit their output; credit new assets in
+  `ASSETS.md`.
+- `bin/build` builds the app, `bin/install` installs it as a package,
+  `bin/plugin` assembles the shell plugin in `dist/plugin`.
+- Qt's JavaScript engine has no object spread; every component of
+  `qml/Hueometry` must be listed in its `qmldir` (Quickshell needs it).
 - `bin/check` runs everything CI runs. Run it before every commit you push.
