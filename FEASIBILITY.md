@@ -16,7 +16,7 @@ and Omarchy 4.5.0, on an x86-64 laptop.
 | 1 | Representation of the standard seven-column puzzle | `engine/core.bend`: a board is a list of columns, top bead first; `Game` adds colours, capacity, the start board and the move history. Any size works; the standard puzzle is 6 colours of 6 in 7 columns. |
 | 2 | A function that applies a move | `Core.apply` and `Core.step`; laws `legal_is_played` (a legal move is exactly `transfer` plus one history entry), `step_accepts_legal` and `step_refuses_illegal` |
 | 3 | Rejection of invalid moves | `Core.step` answers `Rejected{reason}` (law `step_refuses_illegal`); `Core.apply` changes nothing (law `refused_changes_nothing`) |
-| 4 | Victory detection | `Core.is_solved`; law `victory_is_solved` proves it equals the four conditions of section 3.3 on every valid board |
+| 4 | Victory detection | `Core.is_solved`; law `victory_is_solved` proves it equals the four conditions of section 3.3 on every valid board, and `reads_solved` ties the interface's `solved(g)` to it |
 | 5 | Proof of bead conservation | laws `conserves_colours` and `conserves_beads` |
 | 6 | Proof of capacity preservation | law `keeps_capacity` |
 | 7 | Proof that invalid moves change nothing | law `refused_changes_nothing` |
@@ -77,6 +77,6 @@ A move costs about 17 µs in Qt's engine, far below one frame.
 - Values are affine: anything used twice needs `+`.
 - A function cannot match a computed value, so every proof that splits on a
   computed fact takes it as a parameter (the `.go` and `.fin` helpers).
-- No tactics: PROOF.bend is about 850 lines for the laws above.
+- No tactics: PROOF.bend is about 1,000 lines for the laws above.
 
 None of these blocked anything.

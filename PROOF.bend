@@ -954,6 +954,9 @@ def Laws.reads_board(c, k, s, b, h):
 def Laws.reads_history(c, k, s, b, h):
   {==}
 
+def Laws.reads_solved(c, k, s, b, h):
+  {==}
+
 def Laws.reads_move(i, j):
   {==}
 

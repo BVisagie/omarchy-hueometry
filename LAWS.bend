@@ -56,6 +56,14 @@ law reads_history:
   for +h: List<&2, Core.Move>
   {Core.history(Core.Game{c, k, s, b, h}) == h : List<&2, Core.Move>}
 
+law reads_solved:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  {Core.solved(Core.Game{c, k, s, b, h}) == Core.is_solved(k, b) : Bool}
+
 law reads_move:
   for +i: Nat
   for +j: Nat
