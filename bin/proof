@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Checks every law in LAWS.bend twice: with Bend's checker, then with the
+# proven BendTT kernel (--verdict).
+set -euo pipefail
+# shellcheck source=bin/env.sh
+source "$(dirname "$0")/env.sh"
+need_bend
+cd "$ROOT"
+out="$(bend PROOF.bend --verdict 2>&1)" || { echo "$out"; exit 1; }
+echo "$out"
+grep -q "^ALL PROOFS CHECK" <<<"$out"
