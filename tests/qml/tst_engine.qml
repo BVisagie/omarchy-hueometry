@@ -33,12 +33,13 @@ TestCase {
     let g = R.newGame(6, 10, cols)
     let n = 0
     const t0 = Date.now()
-    for (let k = 0; n < 600; k++) {
+    for (let k = 0; n < 600 && k < 5000; k++) {
       const from = (k * 5 + 1) % 7, to = (k * 3 + 2) % 7
       const r = R.play(g, from, to)
       if (r.accepted) n++
       g = r.game
     }
+    compare(n, 600)
     const t1 = Date.now()
     const again = R.replay(R.newGame(6, 10, cols), R.history(g))
     const t2 = Date.now()

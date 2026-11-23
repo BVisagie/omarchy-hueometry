@@ -35,6 +35,12 @@ export function fromBoard(b) {
   return array(b).map(array);
 }
 
+// A column number the engine can take: a whole number from 0 up. Anything
+// else (negative, fractional, huge, not a number) names no column.
+export function isIndex(n) {
+  return Number.isSafeInteger(n) && n >= 0 && n < 2 ** 31;
+}
+
 const REASONS = {
   NoSuchColumn: "no-such-column",
   SameColumn: "same-column",
@@ -50,9 +56,7 @@ export function newGame(colours, cap, columns) {
 // Asks the engine to move the top bead of column `from` onto column `to`.
 // Answers { accepted, game, reason }: the game is unchanged when refused.
 export function play(game, from, to) {
-  if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to < 0) {
-    return { accepted: false, game, reason: "no-such-column" };
-  }
+  if (!isIndex(from) || !isIndex(to)) return { accepted: false, game, reason: "no-such-column" };
   const out = E.play(game, from, to);
   if (out.$ === "Accepted") return { accepted: true, game: out.game, reason: null };
   return { accepted: false, game, reason: REASONS[out.reason.$] };
@@ -75,7 +79,7 @@ export function moves(game) {
 }
 
 export function targets(game, column) {
-  if (!Number.isInteger(column) || column < 0) return [];
+  if (!isIndex(column)) return [];
   return array(E.targets(game, column));
 }
 
@@ -84,9 +88,12 @@ export function history(game) {
   return array(game.history).reverse().map((m) => ({ from: m.from, to: m.to }));
 }
 
-// Replays moves ({ from, to }, oldest first) from the game's current board.
+// Replays moves ({ from, to }, oldest first) from the game's current board,
+// exactly as calling play() for each would: a move naming no column is
+// refused like any other illegal move.
 export function replay(game, moveList) {
-  return E.replay(game, list(moveList.map((m) => ({ $: "Mv", from: m.from, to: m.to }))));
+  const ok = moveList.filter((m) => m && isIndex(m.from) && isIndex(m.to));
+  return E.replay(game, list(ok.map((m) => ({ $: "Mv", from: m.from, to: m.to }))));
 }
 
 // Everything the interface needs to draw a game.

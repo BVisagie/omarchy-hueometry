@@ -80,3 +80,22 @@ test("the engine agrees with the model on every move", () => {
     assert.deepEqual(R.view(again).columns, cols);
   }), { numRuns: 500 });
 });
+
+test("replay agrees with playing each move, malformed moves included", () => {
+  const junk = fc.oneof(fc.integer({ min: -3, max: 9 }), fc.constant(1.5), fc.constant(NaN),
+    fc.constant(2 ** 60), fc.constant("1"), fc.constant(null));
+  fc.assert(fc.property(fc.array(fc.record({ from: junk, to: junk }), { minLength: 10, maxLength: 80 }), (ms) => {
+    const start = R.newGame(3, 3, [[0, 1, 2], [2, 0, 1], [1, 2, 0], []]);
+    let g = start;
+    for (const m of ms) g = R.play(g, m.from, m.to).game;
+    const again = R.replay(start, ms);
+    assert.deepEqual(R.view(again), R.view(g));
+  }), { numRuns: 300 });
+});
+
+test("very long games do not overflow the stack", () => {
+  let g = R.newGame(1, 1, [[0], []]);
+  for (let k = 0; k < 30000; k++) g = R.play(g, k % 2, (k + 1) % 2).game;
+  assert.equal(R.moves(g), 30000);
+  assert.deepEqual(R.view(g).columns, [[0], []]);
+});
