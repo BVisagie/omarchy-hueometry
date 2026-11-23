@@ -29,8 +29,12 @@ Item {
   Game {
     id: g
     anchors.fill: parent
-    host: MemoryHost { files: ({ "settings.json": JSON.stringify({ layout: root.has("circle") ? "circle" : "line", symbols: root.has("symbols") }) }) }
-    Component.onCompleted: g.start(root.has("solved") ? { kind: "tutorial", index: 0 } : { kind: "level", area: "temple", index: 2 })
+    host: MemoryHost { files: ({ "settings.json": JSON.stringify({ muted: true, layout: root.has("circle") ? "circle" : "line", symbols: root.has("symbols") }) }) }
+    Component.onCompleted: {
+      const areas = ["clearing", "river", "ruins", "waterfall", "temple", "heart"]
+      const pick = areas.find(a => root.has(a)) || "temple"
+      g.start(root.has("solved") ? { kind: "tutorial", index: 0 } : { kind: "level", area: pick, index: 2 })
+    }
   }
 
   SequentialAnimation {

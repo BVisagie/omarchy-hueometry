@@ -111,3 +111,19 @@ All defaults in plan.md section 10 were accepted, except:
   pressed twice.
 - Par is hidden on the tutorial, the first two areas and the two smallest
   free-play sizes.
+
+## Look and sound (checkpoint 4)
+
+- The six orbs are yellow, moonstone (pearl), jade, ember, lagoon and orchid.
+  Five are Okabe-Ito colours; the pearl replaces its sky blue, which was too
+  close to its blue for normal vision. `tools/palette/check.py` requires
+  every pair to differ by 30 (CIE76) in normal vision and by 12 under
+  simulated protanopia, deuteranopia and tritanopia.
+- The jungle is drawn in QML per area: canopy light, seeded far trees, the
+  area's feature (river, ruins, waterfall, temple, heart tree), swaying
+  leaves and vines, mist and fireflies; it brightens when a puzzle is solved.
+  Reduced motion stops every ambient animation.
+- Sounds are synthesised by `tools/audio/synth.py`: each orb colour plays its
+  own note of a pentatonic scale when placed, a refusal is a soft low tok,
+  and the music dips under the win fanfare. Effects follow the sounds
+  slider; music and ambience follow the music slider.

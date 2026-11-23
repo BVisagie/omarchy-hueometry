@@ -42,6 +42,12 @@ for f in qml/Hueometry/*.qml; do
   grep -qE "^(singleton )?$n [0-9.]+ $n\.qml$" qml/Hueometry/qmldir || { echo "$n is missing from qml/Hueometry/qmldir" >&2; exit 1; }
 done
 
+step "orb colours stay apart under colour blindness"
+python3 tools/palette/check.py
+
+step "sounds are present, well formed and credited"
+python3 tools/check/audio.py
+
 step "QML tests (Qt's JavaScript engine)"
 QT_QPA_PLATFORM=offscreen QT_LOGGING_RULES="qt.qml.usedbeforedeclared=false" \
   /usr/lib/qt6/bin/qmltestrunner -input tests/qml
