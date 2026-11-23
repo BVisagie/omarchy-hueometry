@@ -36,3 +36,43 @@ These rules come from a shopfloor recipe and apply to work in T3 Code, which tel
 - Run at most one subagent at a time. Wait for it to finish before you start another.
 - Tell every subagent that it may not start subagents of its own.
 <!-- shopfloor:end -->
+
+## Hueometry
+
+A colour-sorting puzzle for Omarchy 4.5+. `docs/plan.md` is the design;
+`docs/decisions.md` overrides it where they differ.
+
+### Layers
+
+- The Bend engine (`engine/*.bend`) owns every rule: legal moves, undo,
+  victory, generation. It imports only Base, other engine files and
+  `SPEC.bend`, never anything about layout, theme or platform.
+- QML (`qml/Hueometry/`) draws the state the engine returns. It never decides
+  whether a move is legal; legal-target highlights come from the engine.
+- The shared QML module imports nothing from Quickshell or the Omarchy shell.
+  Host services (storage, quit, fullscreen, language) come through the `Host`
+  object that `src/` (standalone app) or `plugin/` (shell plugin) provides.
+- Saves go to `$XDG_DATA_HOME/hueometry` and `$XDG_CONFIG_HOME/hueometry`,
+  never inside the plugin folder: the shell reloads a plugin on any write
+  there.
+
+### Laws
+
+- `LAWS.bend` and `SPEC.bend` are the owner's specification. Change them only
+  when the owner asks, and put a `Laws-Change: <reason>` trailer on the
+  commit; `bin/check` fails otherwise. Never weaken, delete or trivialise a
+  law, or change gameplay, to make a proof pass. Report a law you cannot
+  prove instead.
+- No `@unsafe`, `def f?` or foreign code in anything `PROOF.bend` reaches:
+  `--verdict` rejects it.
+
+### Commands
+
+- `bin/setup` installs the pinned Bend and Lean into your home folder.
+- `bin/proof` runs `bend PROOF.bend --verdict`; it must print ALL PROOFS
+  CHECK. Run it after any change under `engine/` or to a `.bend` file.
+- `bin/engine` rebuilds `engine/dist/engine.mjs`. Commit the result; never
+  edit that file by hand.
+- `tools/audio/synth.py` regenerates `assets/audio/`. Commit the output and
+  update `ASSETS.md`.
+- `bin/check` runs everything CI runs. Run it before every commit you push.
