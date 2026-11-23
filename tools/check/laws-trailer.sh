@@ -2,7 +2,9 @@
 # Usage: laws-trailer.sh [BASE] [HEAD]
 # Fails when a commit in BASE..HEAD changes LAWS.bend or SPEC.bend without a
 # "Laws-Change: <reason>" trailer. The laws are the owner's specification.
-# A merge counts as changing a file when it differs from its first parent.
+# A merge counts as changing a file only when its result differs from every
+# parent (the combined diff): merging commits that were already checked
+# passes, while a merge that edits the laws itself must carry the trailer.
 set -euo pipefail
 base="${1:-origin/main}"
 head="${2:-HEAD}"
@@ -10,8 +12,13 @@ if [[ "$base" =~ ^0+$ ]]; then
   base=origin/main
 fi
 if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
-  echo "laws-trailer: cannot resolve base $base" >&2
-  exit 1
+  # e.g. the old head of a force-pushed branch: check against main instead
+  echo "laws-trailer: cannot resolve base $base; checking against origin/main" >&2
+  base=origin/main
+  if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
+    echo "laws-trailer: cannot resolve origin/main either" >&2
+    exit 1
+  fi
 fi
 if ! git rev-parse --verify --quiet "$head^{commit}" >/dev/null; then
   echo "laws-trailer: cannot resolve head $head" >&2
@@ -21,7 +28,9 @@ commits=$(git rev-list "$base..$head")
 bad=0
 while read -r sha; do
   [[ -n "$sha" ]] || continue
-  if git rev-parse --verify --quiet "$sha^1" >/dev/null; then
+  if git rev-parse --verify --quiet "$sha^2" >/dev/null; then
+    files=$(git show --no-renames --format= --name-only "$sha" -- LAWS.bend SPEC.bend)
+  elif git rev-parse --verify --quiet "$sha^1" >/dev/null; then
     files=$(git diff --no-renames --name-only "$sha^1" "$sha" -- LAWS.bend SPEC.bend)
   else
     files=$(git show --no-renames --name-only --format= "$sha" -- LAWS.bend SPEC.bend)

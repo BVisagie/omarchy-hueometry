@@ -60,7 +60,8 @@ A colour-sorting puzzle for Omarchy 4.5+. `docs/plan.md` is the design;
 
 - `LAWS.bend` and `SPEC.bend` are the owner's specification. Change them only
   when the owner asks, and put a `Laws-Change: <reason>` trailer on the
-  commit; `bin/check` fails otherwise. Never weaken, delete or trivialise a
+  commit; `bin/check` fails otherwise. Merge pull requests with a merge
+  commit; a squash merge must end its message with that trailer. Never weaken, delete or trivialise a
   law, or change gameplay, to make a proof pass. Report a law you cannot
   prove instead.
 - No `@unsafe`, `def f?` or foreign code in anything `PROOF.bend` reaches:
