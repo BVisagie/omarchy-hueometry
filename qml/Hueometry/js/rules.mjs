@@ -52,7 +52,12 @@ const REASONS = {
 // cap beads of each colour 0 .. colours - 1, and nothing else?
 export function valid(colours, cap, columns) {
   if (!isIndex(colours) || !isIndex(cap) || !Array.isArray(columns)) return false;
-  if (!columns.every((c) => Array.isArray(c) && c.every(isIndex))) return false;
+  if (columns.length !== colours + 1) return false;
+  for (let i = 0; i < columns.length; i++) {
+    const c = columns[i];
+    if (!Array.isArray(c) || c.length > cap) return false;
+    for (let j = 0; j < c.length; j++) if (!isIndex(c[j]) || c[j] >= colours) return false;
+  }
   return E.valid(colours, cap, toBoard(columns)) === true;
 }
 
@@ -63,7 +68,9 @@ export function newGame(colours, cap, columns) {
   return E.new_game(colours, cap, toBoard(columns));
 }
 
-const toMoves = (ms) => list(ms.filter((m) => m && isIndex(m.from) && isIndex(m.to))
+// A move is { from, to } or, as the level pack stores it, [from, to].
+const moveOf = (m) => (Array.isArray(m) ? { from: m[0], to: m[1] } : m);
+const toMoves = (ms) => list(ms.map(moveOf).filter((m) => m && isIndex(m.from) && isIndex(m.to))
   .map((m) => ({ $: "Mv", from: m.from, to: m.to })));
 const fromMoves = (l) => array(l).map((m) => ({ from: m.from, to: m.to }));
 
@@ -76,7 +83,8 @@ export function generate(colours, cap, seed) {
   return { columns: fromBoard(out.value.board), solution: fromMoves(out.value.cert) };
 }
 
-// A hint along `solution` (oldest move first, from the game's first board):
+// A hint along `solution` (moves as { from, to } or [from, to], oldest
+// first, from the game's first board):
 // { kind: "play", from, to }, { kind: "back", steps } (undo that many moves
 // to return to the solution), { kind: "solved" } or { kind: "none" }.
 export function hint(game, solution) {
@@ -125,7 +133,8 @@ export function history(game) {
   return array(game.history).reverse().map((m) => ({ from: m.from, to: m.to }));
 }
 
-// Replays moves ({ from, to }, oldest first) from the game's current board,
+// Replays moves ({ from, to } or [from, to], oldest first) from the game's
+// current board,
 // exactly as calling play() for each would: a move naming no column is
 // refused like any other illegal move.
 export function replay(game, moveList) {

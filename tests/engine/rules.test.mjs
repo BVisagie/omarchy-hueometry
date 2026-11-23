@@ -26,6 +26,9 @@ test("invalid boards are refused", () => {
     assert.throws(() => R.newGame(c, k, cols), RangeError);
   }
   assert.equal(R.valid(2, 2, [[0, 1], [1, 0], []]), true);
+  assert.equal(R.valid(2, 2, Array(3)), false);
+  assert.equal(R.valid(100000, 2, []), false);
+  assert.equal(R.valid(2, 2, [[0, 1], [1, 0], [], []]), false);
 });
 
 const LEVELS = [[3, 3], [4, 4], [5, 5], [6, 6], [6, 10]];
@@ -37,6 +40,7 @@ test("generated puzzles are valid, unsolved, reproducible and solved by their so
       assert.ok(p, `no puzzle for ${c}x${k} seed ${seed}`);
       assert.ok(R.valid(c, k, p.columns));
       assert.equal(p.columns.filter((col) => col.length === 0).length, 1);
+      assert.ok(p.columns.every((col) => col.length === 0 || col.length === k));
       const g = R.newGame(c, k, p.columns);
       assert.equal(R.solved(g), false);
       const end = R.replay(g, p.solution);
@@ -162,4 +166,20 @@ test("very long games do not overflow the stack", () => {
   for (let k = 0; k < 30000; k++) g = R.play(g, k % 2, (k + 1) % 2).game;
   assert.equal(R.moves(g), 30000);
   assert.deepEqual(R.view(g).columns, [[0], []]);
+});
+
+test("a hint far from the solution answers quickly and without stack growth", () => {
+  const pack = { columns: [[1, 0], [0, 1], []], solution: [[0, 2], [1, 0], [1, 2]] };
+  let g = R.newGame(2, 2, pack.columns);
+  assert.deepEqual(R.hint(g, pack.solution), { kind: "play", from: 0, to: 2 });
+  assert.equal(R.replay(g, pack.solution).history.$, "Con");
+  assert.ok(R.solved(R.replay(g, pack.solution)));
+  // 30,000 moves away (back and forth), then one more step off the path
+  for (let k = 0; k < 30000; k++) g = R.play(g, k % 2 === 0 ? 0 : 2, k % 2 === 0 ? 2 : 0).game;
+  g = R.play(g, 1, 2).game;
+  const t = Date.now();
+  const h = R.hint(g, pack.solution);
+  assert.equal(h.kind, "back");
+  assert.equal(h.steps, 1);
+  assert.ok(Date.now() - t < 2000);
 });

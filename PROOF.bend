@@ -1016,7 +1016,7 @@ def Laws.reason_empty_source(k, b, i, j, w, ws, we):
   %Equal.sym(Bool, Spec.is_empty(Spec.column(b, i)), True{}, holds_eq(Spec.is_empty(Spec.column(b, i)), we)) : {Bool.pick(Core.Reason, _, Core.EmptySource{}, Core.FullTarget{}) == Core.EmptySource{} : Core.Reason}
   {==}
 
-def Laws.reason_full_target(k, b, i, j, w, ws, we):
+def Laws.reason_full_target(k, b, i, j, w, ws, we, wf):
   +r = Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b))
   %Equal.sym(Bool, r, True{}, holds_eq(r, w)) : {Bool.pick(Core.Reason, Bool.not(_), Core.NoSuchColumn{}, Bool.pick(Core.Reason, Nat.is_eq(i, j), Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{}))) == Core.FullTarget{} : Core.Reason}
   %Equal.sym(Bool, Nat.is_eq(i, j), False{}, holds_not_eq(Nat.is_eq(i, j), ws)) : {Bool.pick(Core.Reason, _, Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{})) == Core.FullTarget{} : Core.Reason}

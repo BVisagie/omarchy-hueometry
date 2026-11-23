@@ -339,12 +339,14 @@ law reason_full_target:
   for w: Spec.Holds(Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b)))
   for ws: Spec.Holds(Bool.not(Nat.is_eq(i, j)))
   for we: Spec.Holds(Bool.not(Spec.is_empty(Spec.column(b, i))))
+  for wf: Spec.Holds(Bool.not(Nat.is_lt(Spec.size(Spec.column(b, j)), k)))
   {Core.why(k, b, i, j) == Core.FullTarget{} : Core.Reason}
 
 # Generated puzzles are solvable (section 6)
 # ------------------------------------------
-# Whatever the seed, a puzzle the generator returns is a valid board, is not
-# already solved, and its certificate, replayed by the engine, solves it.
+# Whatever the seed, a puzzle the generator returns is a valid board with
+# exactly one empty column (so every other column is full), is not already
+# solved, and its certificate, replayed by the engine, solves it.
 
 law generated_puzzles_solve:
   for +colours: Nat
@@ -353,4 +355,4 @@ law generated_puzzles_solve:
   for +b: List<&2, List<&2, Nat>>
   for +cert: List<&2, Core.Move>
   for e: {Gen.generate(colours, cap, seed) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>}
-  Spec.Holds(Spec.valid(colours, cap, b) && Bool.not(Spec.solved(colours, cap, b)) && Core.solved(Core.replay(cert, Core.new(colours, cap, b))))
+  Spec.Holds(Spec.valid(colours, cap, b) && Nat.is_eq(Spec.empties(b), 1n) && Bool.not(Spec.solved(colours, cap, b)) && Core.solved(Core.replay(cert, Core.new(colours, cap, b))))

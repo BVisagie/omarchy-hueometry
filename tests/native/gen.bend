@@ -19,6 +19,15 @@ def show_board(b: List<&2, List<&2, Nat>>) -> String:
     case c <> r:
       "[" ++ show_col(c) ++ "]" ++ show_board(r)
 
+def show_moves(ms: List<&2, Core.Move>) -> String:
+  match ms:
+    case Nil{}:
+      ""
+    case m <> r:
+      match m:
+        case Core.Mv{i, j}:
+          Nat.show(i) ++ ">" ++ Nat.show(j) ++ " " ++ show_moves(r)
+
 def show(m: Maybe<&2, Gen.Puzzle>) -> String:
   match m:
     case None{}:
@@ -26,7 +35,7 @@ def show(m: Maybe<&2, Gen.Puzzle>) -> String:
     case Some{p}:
       match p:
         case Gen.Puzzle{b, cert}:
-          show_board(b) ++ " " ++ Nat.show(List.length(&2, Core.Move, cert))
+          show_board(b) ++ " " ++ show_moves(cert)
 
 def line(+colours: Nat, +cap: Nat, +seed: U32) -> String:
   Nat.show(colours) ++ "x" ++ Nat.show(cap) ++ " " ++ U32.show(seed) ++ " " ++ show(Gen.generate(colours, cap, seed))

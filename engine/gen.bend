@@ -248,9 +248,10 @@ def mixed(+colours: Nat, +cap: Nat, +b: List<&2, List<&2, Nat>>) -> Bool:
 # ----------
 
 # What generate promises (law generated_puzzles_solve), checked through the
-# engine's own replay, plus the mixing test.
+# engine's own replay, plus the mixing test. Valid with exactly one empty
+# column means every other column is full: the start shape of section 3.1.
 def sound(+colours: Nat, +cap: Nat, +b: List<&2, List<&2, Nat>>, +cert: List<&2, Core.Move>) -> Bool:
-  Spec.valid(colours, cap, b) && Bool.not(Spec.solved(colours, cap, b)) && Core.solved(Core.replay(cert, Core.new(colours, cap, b)))
+  Spec.valid(colours, cap, b) && Nat.is_eq(Spec.empties(b), 1n) && Bool.not(Spec.solved(colours, cap, b)) && Core.solved(Core.replay(cert, Core.new(colours, cap, b)))
 
 def accept(+colours: Nat, +cap: Nat, +b: List<&2, List<&2, Nat>>, +cert: List<&2, Core.Move>) -> Bool:
   sound(colours, cap, b, cert) && mixed(colours, cap, b)
