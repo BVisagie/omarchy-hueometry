@@ -63,12 +63,14 @@ Item {
     styleColor: "#A0000000"
   }
 
-  // areas, along a winding path
+  // areas
   Grid {
     visible: map.depth === 0
     anchors.centerIn: parent
     anchors.verticalCenterOffset: Theme.em * 1.5
-    columns: map.width > Theme.em * 60 ? 4 : 2
+    // as many columns as fit, from two to four
+    columns: Math.max(2, Math.min(4, Math.floor((map.width - Theme.em * 4) / (Theme.em * 14.2))))
+    horizontalItemAlignment: Grid.AlignHCenter
     spacing: Theme.em * 1.2
     Repeater {
       model: map.areas.length
@@ -78,7 +80,7 @@ Item {
         readonly property bool open: map.isOpen(index)
         readonly property int done: index === 0 ? (map.game.progress.tutorial ? 3 : 0) : Store.doneIn(map.game.progress, S.AREAS[index - 1], map.perArea)
         width: Theme.em * 13
-        height: Theme.em * 8
+        height: Theme.em * 7.6
         Card {
           anchors.fill: parent
           border.color: map.area === tile.index ? Theme.glow : Theme.cardEdge
@@ -90,15 +92,19 @@ Item {
           spacing: Theme.em * 0.4
           Text {
             anchors.horizontalCenter: parent.horizontalCenter
+            width: tile.width - Theme.em
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            maximumLineCount: 2
             text: map.areas[tile.index].name
             color: Theme.ink
             font.family: Theme.font
-            font.pixelSize: Theme.em * 1.2
+            font.pixelSize: Theme.em * 1.15
             font.bold: true
           }
           Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: tile.open ? qsTr("%1 of %2 solved").arg(tile.done).arg(tile.index === 0 ? 3 : map.perArea) : qsTr("Solve 5 in the last area")
+            text: tile.open ? qsTr("%1 of %2 solved").arg(tile.done).arg(tile.index === 0 ? 3 : map.perArea) : qsTr("Solve 5 in the area before")
             color: Theme.inkSoft
             font.family: Theme.font
             font.pixelSize: Theme.em * 0.95
@@ -114,10 +120,10 @@ Item {
   }
 
   // the puzzles of one area: round stones
-  Flow {
+  Grid {
     visible: map.depth === 1
     anchors.centerIn: parent
-    width: Math.min(map.width - Theme.em * 4, Theme.em * 40)
+    columns: 4
     spacing: Theme.em * 1.2
     Repeater {
       model: map.depth === 1 ? map.levelCount() : 0

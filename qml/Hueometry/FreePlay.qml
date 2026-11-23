@@ -50,9 +50,9 @@ Item {
     styleColor: "#A0000000"
   }
 
-  Flow {
+  Grid {
     anchors.centerIn: parent
-    width: Math.min(free.width - Theme.em * 4, Theme.em * 70)
+    columns: free.width > Theme.em * 72 ? 5 : 3
     spacing: Theme.em * 1.2
     Repeater {
       model: free.kinds.length
