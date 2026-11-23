@@ -26,6 +26,7 @@ jobs:
         with:
           path: |
             ~/.local/share/bend-*
+            ~/.local/bin/bend
             ~/.elan
             ~/.bend
           key: toolchain-${{ hashFiles('tools/versions.env') }}
