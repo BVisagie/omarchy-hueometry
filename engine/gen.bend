@@ -326,7 +326,7 @@ def tries(+n: Nat, +colours: Nat, +cap: Nat, +seed: U32, +steps: Nat) -> Maybe<&
 # A puzzle of `colours` colours in columns of `cap`, from `seed`, or None if
 # 16 scrambles in a row were not mixed enough (or colours or cap is 0).
 # Each scramble makes about 8 * colours * (colours + 1) * cap random moves.
-# Seed 0 and seed 2654435769 give the same puzzle (xorshift cannot start
-# from 0); every other seed has its own.
+# xorshift cannot start from 0, so for each attempt one pair of seeds
+# shares a random stream; no seed is special.
 def generate(+colours: Nat, +cap: Nat, +seed: U32) -> Maybe<&2, Puzzle>:
   tries(16n, colours, cap, seed, Nat.mul(4n, Nat.mul(1n+colours, cap)))

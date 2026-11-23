@@ -53,7 +53,7 @@ All defaults in plan.md section 10 were accepted, except:
 - Both channels share one save folder. Instead of a lock file (the plugin
   cannot check whether the app's process is alive), progress only grows and
   every save merges what is on disk first, so neither copy loses the other's
-  progress (`qml/Hueometry/js/store.mjs`).
+  progress (`qml/Hueometry/js/store.mjs`, added with the interface).
 
 ## Verified before the build (gate zero, 2026-11-23)
 
@@ -74,7 +74,7 @@ All defaults in plan.md section 10 were accepted, except:
 
 ## Levels, par and hints (checkpoint 2)
 
-- Progression uses a level pack, `qml/Hueometry/data/levels.json`, built by
+- Progression uses a level pack, `qml/Hueometry/js/levels.mjs`, built by
   `bin/levels`: a three-board tutorial and six areas of eight levels, from
   Beginner (3 colours of 3) to Expert (6 colours of 10). Each level is a
   seed; the game regenerates the board with the engine.

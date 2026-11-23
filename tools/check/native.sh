@@ -3,7 +3,10 @@
 # the puzzles the JavaScript build does: the game runs the JavaScript build,
 # the laws are proved about Bend's semantics, and both lanes must agree.
 set -euo pipefail
-cd "$(dirname "$0")/../.."
+# shellcheck source=bin/env.sh
+source "$(dirname "$0")/../../bin/env.sh"
+need_bend
+cd "$ROOT"
 mkdir -p build
 bend tests/native/gen.bend -o build/gen-native >/dev/null
 ./build/gen-native > build/gen-native.txt

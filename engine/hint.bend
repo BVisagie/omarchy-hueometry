@@ -1,7 +1,7 @@
 # Hueometry: hints.
 #
-# A hint follows a known solution of the puzzle (from the level pack, or a
-# generated puzzle's certificate). If the board is one the solution passes
+# A hint follows a known solution of the puzzle: the short solution the
+# level pack stores for every level and free-play puzzle. If the board is one the solution passes
 # through, the hint is the solution's next move there, checked legal. If the
 # player has left the solution, the hint is how many moves to undo to get
 # back to a board on it. A hint never claims to be the shortest way.

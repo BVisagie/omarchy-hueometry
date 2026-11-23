@@ -4,7 +4,7 @@
 // ES modules rather than JSON, because QML imports them directly.
 //
 // Each level is a seed: the game regenerates the board with the Bend engine,
-// so the JSON holds no board it could get wrong. Each level also stores a
+// so the modules hold no board they could get wrong. Each level also stores a
 // solution found by solve.mjs and verified here by the engine: `par` is its
 // length, and `optimal` is true only when A* proved it shortest.
 
@@ -36,7 +36,7 @@ const AREAS = [
 const PER_AREA = 8;
 // Free play draws from these pre-solved puzzles, so its hints follow a short
 // solution too.
-const FREE = { beginner: 24, easy: 24, medium: 24, hard: 24, expert: 16 };
+const FREE = { beginner: 60, easy: 60, medium: 60, hard: 60, expert: 30 };
 
 // Hand-made first boards: two colours, then three.
 const TUTORIAL = [
