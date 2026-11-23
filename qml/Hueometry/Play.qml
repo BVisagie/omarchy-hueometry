@@ -107,6 +107,7 @@ Item {
     const r = game.recordSolved(ref, S.view(session).moves, assisted)
     result = r
     game.sound.cue("solved")
+    sparkles.burst()
   }
 
   function handleKey(event) {
@@ -234,6 +235,11 @@ Item {
     }
   }
 
+  Sparkles {
+    id: sparkles
+    anchors.fill: board
+  }
+
   Results {
     id: results
     anchors.fill: parent
@@ -245,5 +251,16 @@ Item {
     onReplay: play.restart()
     onNext: play.game.playNext(play.ref)
     onLeave: play.game.goBack()
+  }
+
+  // a friend from the jungle cheers each solved puzzle
+  Friend {
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    anchors.rightMargin: Theme.em * 2
+    anchors.bottomMargin: -Theme.em * 0.5
+    size: Math.min(play.width, play.height) * 0.26
+    kind: play.ref && ["river", "waterfall", "heart"].indexOf(play.ref.area || play.ref.difficulty) >= 0 ? "frog" : "toucan"
+    cheering: !!play.result
   }
 }

@@ -21,3 +21,5 @@ TextButton 1.0 TextButton.qml
 Title 1.0 Title.qml
 SoundBank 1.0 SoundBank.qml
 Leaf 1.0 Leaf.qml
+Friend 1.0 Friend.qml
+Sparkles 1.0 Sparkles.qml
