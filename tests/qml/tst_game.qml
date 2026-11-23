@@ -21,13 +21,10 @@ Item {
     function test_1_menu_to_tutorial() {
       game.forceActiveFocus()
       compare(game.screen, "menu")
-      keyClick(Qt.Key_Return)                 // Adventure
-      compare(game.screen, "map")
-      keyClick(Qt.Key_Left)                   // area 0: First Steps
-      keyClick(Qt.Key_Return)                 // open it
-      keyClick(Qt.Key_Return)                 // puzzle 1
+      keyClick(Qt.Key_Return)                 // Adventure: a first visit goes straight to the first steps
       compare(game.screen, "play")
       compare(game.current.ref.kind, "tutorial")
+      compare(game.current.ref.index, 0)
     }
 
     function test_2_solve_with_keys() {

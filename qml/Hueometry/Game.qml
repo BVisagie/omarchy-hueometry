@@ -131,8 +131,11 @@ Item {
       lastArea = areaIndex(c.ref)
       screen = "play"
       screens.item.open(c.ref, c.moves.map(m => ({ from: m[0], to: m[1] })))
+    } else if (!progress.tutorial && !progress.done["tutorial/0"]) {
+      // a first visit starts with the first steps
+      start({ kind: "tutorial", index: 0 })
     } else {
-      show(progress.tutorial ? "map" : "map")
+      show("map")
     }
   }
 

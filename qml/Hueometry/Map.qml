@@ -7,7 +7,8 @@ import "js/store.mjs" as Store
 Item {
   id: map
   required property var game
-  property int area: game.lastArea
+  // the first steps until they are done, then the area last visited
+  property int area: game.progress.tutorial ? game.lastArea : 0
   property int level: 0
   // 0: choosing an area, 1: choosing a level in it
   property int depth: 0
