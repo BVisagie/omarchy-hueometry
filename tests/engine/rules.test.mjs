@@ -11,6 +11,7 @@ test("a bead may land on a different colour", () => {
   const g = R.newGame(2, 2, [[0], [1], []]);
   const r = R.play(g, 0, 1);
   assert.equal(r.accepted, true);
+  assert.equal(r.bead, 0);
   assert.deepEqual(R.view(r.game).columns, [[], [0, 1], []]);
   assert.equal(R.moves(r.game), 1);
 });
@@ -62,6 +63,7 @@ test("the engine agrees with the model on every move", () => {
       assert.deepEqual(R.targets(g, from).includes(to), ok);
       const r = R.play(g, from, to);
       assert.equal(r.accepted, ok);
+      assert.equal(r.bead, ok ? cols[from][0] : null);
       if (ok) {
         cols = M.move(cols, from, to);
         count++;

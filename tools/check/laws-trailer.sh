@@ -13,8 +13,14 @@ if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
   echo "laws-trailer: cannot resolve base $base" >&2
   exit 1
 fi
+if ! git rev-parse --verify --quiet "$head^{commit}" >/dev/null; then
+  echo "laws-trailer: cannot resolve head $head" >&2
+  exit 1
+fi
+commits=$(git rev-list "$base..$head")
 bad=0
 while read -r sha; do
+  [[ -n "$sha" ]] || continue
   if git rev-parse --verify --quiet "$sha^1" >/dev/null; then
     files=$(git diff --no-renames --name-only "$sha^1" "$sha" -- LAWS.bend SPEC.bend)
   else
@@ -27,5 +33,5 @@ while read -r sha; do
       bad=1
     fi
   fi
-done < <(git rev-list "$base..$head")
+done <<<"$commits"
 exit "$bad"

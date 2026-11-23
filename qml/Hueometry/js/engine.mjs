@@ -519,9 +519,24 @@ function $core_why(_cap_0, _b_0, _i_0, _j_0) {
   return $Bool_pick($$Bool_not($$Bool_and((_i_0 < _w_0), (_j_0 < _w_0))), {$: "NoSuchColumn"}, $$Bool_pick($$Nat_is_eq(_i_0, _j_0), {$: "SameColumn"}, $$Bool_pick($$___SPEC_is_empty($$___SPEC_column(_b_0, _i_0)), {$: "EmptySource"}, {$: "FullTarget"})));
 }
 
+function $core_top(_col_0) {
+  if (_col_0.$ === "Nil") {
+    return 0;
+  } else {
+    const _h_0 = _col_0["head"];
+    return _h_0;
+  }
+}
+
+function $core_lifted(_g_0, _m_0) {
+  const _b_0 = _g_0["board"];
+  const _i_0 = _m_0["from"];
+  return $core_top($$___SPEC_column(_b_0, _i_0));
+}
+
 function $core_step_fin(_ok_0, _g_0, _m_0) {
   if (_ok_0) {
-    return {$: "Accepted", "game": $$core_apply(_g_0, _m_0)};
+    return {$: "Accepted", "game": $$core_apply(_g_0, _m_0), "bead": $$core_lifted(_g_0, _m_0)};
   } else {
     const _cap_0 = _g_0["cap"];
     const _b_0 = _g_0["board"];
@@ -745,6 +760,7 @@ const $$core_transfer = $core_transfer;
 const $$___SPEC_legal = $___SPEC_legal;
 const $$Bool_pick = $Bool_pick;
 const $$core_apply = $core_apply;
+const $$core_lifted = $core_lifted;
 const $$core_why = $core_why;
 const $$core_legal_move = $core_legal_move;
 const $$List_append = $List_append;const BEND = {
@@ -790,6 +806,8 @@ const $$List_append = $List_append;const BEND = {
   "core:apply.fin": run_lib((a0,a1,a2,a3,a4,a5,a6,a7) => run_loop($core_apply_fin(nat_in(a0),nat_in(a1),a2,a3,a4,nat_in(a5),nat_in(a6),a7)), 8),
   "core:apply": run_lib((a0,a1) => run_loop($core_apply(a0,a1)), 2),
   "core:why": run_lib((a0,a1,a2,a3) => run_loop($core_why(nat_in(a0),a1,nat_in(a2),nat_in(a3))), 4),
+  "core:top": run_lib((a0) => run_loop($core_top(a0)), 1),
+  "core:lifted": run_lib((a0,a1) => run_loop($core_lifted(a0,a1)), 2),
   "core:step.fin": run_lib((a0,a1,a2) => run_loop($core_step_fin(a0,a1,a2)), 3),
   "core:legal_move": run_lib((a0,a1) => run_loop($core_legal_move(a0,a1)), 2),
   "core:step": run_lib((a0,a1) => run_loop($core_step(a0,a1)), 2),

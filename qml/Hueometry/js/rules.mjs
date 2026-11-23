@@ -54,12 +54,13 @@ export function newGame(colours, cap, columns) {
 }
 
 // Asks the engine to move the top bead of column `from` onto column `to`.
-// Answers { accepted, game, reason }: the game is unchanged when refused.
+// Answers { accepted, game, bead, reason }: bead is the colour moved; when
+// refused, the game is unchanged and bead is null.
 export function play(game, from, to) {
-  if (!isIndex(from) || !isIndex(to)) return { accepted: false, game, reason: "no-such-column" };
+  if (!isIndex(from) || !isIndex(to)) return { accepted: false, game, bead: null, reason: "no-such-column" };
   const out = E.play(game, from, to);
-  if (out.$ === "Accepted") return { accepted: true, game: out.game, reason: null };
-  return { accepted: false, game, reason: REASONS[out.reason.$] };
+  if (out.$ === "Accepted") return { accepted: true, game: out.game, bead: out.bead, reason: null };
+  return { accepted: false, game, bead: null, reason: REASONS[out.reason.$] };
 }
 
 export function undo(game) {
