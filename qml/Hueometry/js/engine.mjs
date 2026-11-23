@@ -270,6 +270,18 @@ function $___SPEC_bit(_b_0) {
   }
 }
 
+function $___SPEC_has(_xs_0, _n_0) {
+  if (_xs_0.$ === "Nil") {
+    return false;
+  } else {
+    const _x_0 = _xs_0["head"];
+    const _r_0 = _xs_0["tail"];
+    const _x_1 = $$Nat_is_eq(_n_0, _x_0);
+    const _x_2 = $$___SPEC_has(_r_0, _n_0);
+    return (_x_1 || _x_2);
+  }
+}
+
 function $___SPEC_bump(_b_0, _n_0) {
   if (_b_0) {
     return nat_chk(_n_0 + 1);
@@ -643,6 +655,550 @@ function $core_targets(_g_0, _i_0) {
   return $core_targets_go(_cap_0, _b_0, _i_0, $$___SPEC_width(_b_0), {$: "Nil"});
 }
 
+function $gen_rng_next(_x_0) {
+  const _x_1 = (13 >= 32 ? 0 : (_x_0 << 13) >>> 0);
+  const _a_0 = ((_x_0 ^ _x_1) >>> 0);
+  const _x_2 = (17 >= 32 ? 0 : (_a_0 >>> 17) >>> 0);
+  const _b_0 = ((_a_0 ^ _x_2) >>> 0);
+  const _x_3 = (5 >= 32 ? 0 : (_b_0 << 5) >>> 0);
+  return ((_b_0 ^ _x_3) >>> 0);
+}
+
+function $gen_rng_seed(_s_0) {
+  return $gen_rng_next($$Bool_pick((_s_0 === 0), 2654435769, _s_0));
+}
+
+function $gen_rng_below(_x_0, _n_0) {
+  const _x_1 = (_n_0 >>>0);
+  const _x_2 = (_x_1 === 0 ? _x_0 : _x_0 % _x_1);
+  return $Bool_pick($$Nat_is_eq(_n_0, 0), 0, (_x_2 ));
+}
+
+function $gen_column_of(_c_0, _n_0) {
+  if (_n_0 == 0) {
+    return {$: "Nil"};
+  } else {
+    const _p_0 = (_n_0 - 1);
+    return {$: "Con", "head": _c_0, "tail": $$gen_column_of(_c_0, _p_0)};
+  }
+}
+
+function $gen_solved_go(_k_0, _cap_0, _from_0) {
+  if (_k_0 == 0) {
+    return {$: "Con", "head": {$: "Nil"}, "tail": {$: "Nil"}};
+  } else {
+    const _p_0 = (_k_0 - 1);
+    return {$: "Con", "head": $$gen_column_of(_from_0, _cap_0), "tail": $$gen_solved_go(_p_0, _cap_0, nat_chk(_from_0 + 1))};
+  }
+}
+
+function $gen_solved_board(_colours_0, _cap_0) {
+  return $gen_solved_go(_colours_0, _cap_0, 0);
+}
+
+function $gen_moves_from(_i_0, _ts_0) {
+  if (_ts_0.$ === "Nil") {
+    return {$: "Nil"};
+  } else {
+    const _t_0 = _ts_0["head"];
+    const _r_0 = _ts_0["tail"];
+    return {$: "Con", "head": {$: "Mv", "from": _i_0, "to": _t_0}, "tail": $$gen_moves_from(_i_0, _r_0)};
+  }
+}
+
+function $gen_legal_moves_go($0, $1, $2, $3) {
+  for (;;) {
+    {
+      const _cap_0 = $0;
+      const _b_0 = $1;
+      const _k_0 = $2;
+      const _acc_0 = $3;
+      if (_k_0 == 0) {
+        return _acc_0;
+      } else {
+        const _p_0 = (_k_0 - 1);
+        $0 = _cap_0;
+        $1 = _b_0;
+        $2 = _p_0;
+        $3 = $$List_append($$gen_moves_from(_p_0, $$core_targets_go(_cap_0, _b_0, _p_0, $$___SPEC_width(_b_0), {$: "Nil"})), _acc_0);
+        continue;
+      }
+    }
+  }
+}
+
+function $gen_legal_moves(_cap_0, _b_0) {
+  return $gen_legal_moves_go(_cap_0, _b_0, $$___SPEC_width(_b_0), {$: "Nil"});
+}
+
+function $gen_nth($0, $1) {
+  for (;;) {
+    {
+      const _ms_0 = $0;
+      const _n_0 = $1;
+      if (_ms_0.$ === "Nil") {
+        return {$: "None"};
+      } else {
+        const _m_0 = _ms_0["head"];
+        const _r_0 = _ms_0["tail"];
+        if (_n_0 == 0) {
+          return {$: "Some", "value": _m_0};
+        } else {
+          const _p_0 = (_n_0 - 1);
+          $0 = _r_0;
+          $1 = _p_0;
+          continue;
+        }
+      }
+    }
+  }
+}
+
+function $gen_is_move(_m_0, _i_0, _j_0) {
+  return $Bool_and($$Nat_is_eq($$core_from(_m_0), _i_0), $$Nat_is_eq($$core_to(_m_0), _j_0));
+}
+
+function $gen_drop_move(_i_0, _j_0, _ms_0) {
+  if (_ms_0.$ === "Nil") {
+    return {$: "Nil"};
+  } else {
+    const _m_0 = _ms_0["head"];
+    const _r_0 = _ms_0["tail"];
+    const _rest_0 = $$gen_drop_move(_i_0, _j_0, _r_0);
+    return $Bool_pick($$gen_is_move(_m_0, _i_0, _j_0), _rest_0, {$: "Con", "head": _m_0, "tail": _rest_0});
+  }
+}
+
+function $gen_inverse(_m_0) {
+  const _i_0 = _m_0["from"];
+  const _j_0 = _m_0["to"];
+  return {$: "Mv", "from": _j_0, "to": _i_0};
+}
+
+function $gen_walk_pick(_x_0, _all_0, _fresh_0) {
+  const _pool_0 = $$Bool_pick($$List_is_empty(_fresh_0), _all_0, _fresh_0);
+  return $gen_nth(_pool_0, $$gen_rng_below(_x_0, $$core_length_go(_pool_0, 0)));
+}
+
+function $gen_walk_apply(_cap_0, _b_0, _x_0, _last_0, _done_0, _mm_0) {
+  if (_mm_0.$ === "None") {
+    return {$: "Walk", "cap": _cap_0, "board": _b_0, "x": _x_0, "last": _last_0, "done": _done_0};
+  } else {
+    const _m_0 = _mm_0["value"];
+    return {$: "Walk", "cap": _cap_0, "board": $$core_transfer(_b_0, $$core_from(_m_0), $$core_to(_m_0)), "x": $$gen_rng_next(_x_0), "last": _m_0, "done": {$: "Con", "head": _m_0, "tail": _done_0}};
+  }
+}
+
+function $gen_walk_step(_w_0) {
+  const _cap_0 = _w_0["cap"];
+  const _b_0 = _w_0["board"];
+  const _x_0 = _w_0["x"];
+  const _last_0 = _w_0["last"];
+  const _done_0 = _w_0["done"];
+  const _all_0 = $$gen_legal_moves(_cap_0, _b_0);
+  return $gen_walk_apply(_cap_0, _b_0, _x_0, _last_0, _done_0, $$gen_walk_pick(_x_0, _all_0, $$gen_drop_move($$core_to(_last_0), $$core_from(_last_0), _all_0)));
+}
+
+function $gen_walk($0, $1) {
+  for (;;) {
+    {
+      const _n_0 = $0;
+      const _w_0 = $1;
+      if (_n_0 == 0) {
+        return _w_0;
+      } else {
+        const _p_0 = (_n_0 - 1);
+        $0 = _p_0;
+        $1 = $$gen_walk_step(_w_0);
+        continue;
+      }
+    }
+  }
+}
+
+function $gen_room_go(_cap_0, _b_0, _skip_0, _at_0) {
+  if (_b_0.$ === "Nil") {
+    return {$: "None"};
+  } else {
+    const _c_0 = _b_0["head"];
+    const _r_0 = _b_0["tail"];
+    const _x_0 = $$___SPEC_size(_c_0);
+    return $Bool_pick($$Bool_and((_x_0 < _cap_0), $$Bool_not($$Nat_is_eq(_at_0, _skip_0))), {$: "Some", "value": _at_0}, $$gen_room_go(_cap_0, _r_0, _skip_0, nat_chk(_at_0 + 1)));
+  }
+}
+
+function $gen_fewest_go($0, $1, $2, $3) {
+  for (;;) {
+    {
+      const _b_0 = $0;
+      const _at_0 = $1;
+      const _best_0 = $2;
+      const _size_0 = $3;
+      if (_b_0.$ === "Nil") {
+        return _best_0;
+      } else {
+        const _c_0 = _b_0["head"];
+        const _r_0 = _b_0["tail"];
+        const _n_0 = $$___SPEC_size(_c_0);
+        $0 = _r_0;
+        $1 = nat_chk(_at_0 + 1);
+        $2 = $$Bool_pick((_n_0 < _size_0), _at_0, _best_0);
+        $3 = $$Bool_pick((_n_0 < _size_0), _n_0, _size_0);
+        continue;
+      }
+    }
+  }
+}
+
+function $gen_gather_apply(_cap_0, _e_0, _b_0, _x_0, _last_0, _done_0, _to_0) {
+  if (_to_0.$ === "None") {
+    return {$: "Walk", "cap": _cap_0, "board": _b_0, "x": _x_0, "last": _last_0, "done": _done_0};
+  } else {
+    const _t_0 = _to_0["value"];
+    return {$: "Walk", "cap": _cap_0, "board": $$core_transfer(_b_0, _e_0, _t_0), "x": _x_0, "last": {$: "Mv", "from": _e_0, "to": _t_0}, "done": {$: "Con", "head": {$: "Mv", "from": _e_0, "to": _t_0}, "tail": _done_0}};
+  }
+}
+
+function $gen_gather_step(_e_0, _w_0) {
+  const _cap_0 = _w_0["cap"];
+  const _b_0 = _w_0["board"];
+  const _x_0 = _w_0["x"];
+  const _last_0 = _w_0["last"];
+  const _done_0 = _w_0["done"];
+  return $gen_gather_apply(_cap_0, _e_0, _b_0, _x_0, _last_0, _done_0, $$gen_room_go(_cap_0, _b_0, _e_0, 0));
+}
+
+function $gen_gather($0, $1, $2) {
+  for (;;) {
+    {
+      const _n_0 = $0;
+      const _e_0 = $1;
+      const _w_0 = $2;
+      if (_n_0 == 0) {
+        return _w_0;
+      } else {
+        const _p_0 = (_n_0 - 1);
+        $0 = _p_0;
+        $1 = _e_0;
+        $2 = $$gen_gather_step(_e_0, _w_0);
+        continue;
+      }
+    }
+  }
+}
+
+function $gen_pour_step(_a_0, _e_0, _w_0) {
+  const _cap_0 = _w_0["cap"];
+  const _b_0 = _w_0["board"];
+  const _x_0 = _w_0["x"];
+  const _done_0 = _w_0["done"];
+  return {$: "Walk", "cap": _cap_0, "board": $$core_transfer(_b_0, _a_0, _e_0), "x": _x_0, "last": {$: "Mv", "from": _a_0, "to": _e_0}, "done": {$: "Con", "head": {$: "Mv", "from": _a_0, "to": _e_0}, "tail": _done_0}};
+}
+
+function $gen_pour($0, $1, $2, $3) {
+  for (;;) {
+    {
+      const _n_0 = $0;
+      const _a_0 = $1;
+      const _e_0 = $2;
+      const _w_0 = $3;
+      if (_n_0 == 0) {
+        return _w_0;
+      } else {
+        const _p_0 = (_n_0 - 1);
+        $0 = _p_0;
+        $1 = _a_0;
+        $2 = _e_0;
+        $3 = $$gen_pour_step(_a_0, _e_0, _w_0);
+        continue;
+      }
+    }
+  }
+}
+
+function $gen_round_pour(_e_0, _w_0) {
+  const _cap_0 = _w_0["cap"];
+  const _b_0 = _w_0["board"];
+  const _x_0 = _w_0["x"];
+  const _last_0 = _w_0["last"];
+  const _done_0 = _w_0["done"];
+  const _x_1 = $$___SPEC_width(_b_0);
+  const _k_0 = $$gen_rng_below(_x_0, (_x_1 < 1 ? 0 : _x_1 - 1));
+  const _a_0 = $$Bool_pick((_k_0 < _e_0), _k_0, nat_chk(_k_0 + 1));
+  return $gen_pour(_cap_0, _a_0, _e_0, {$: "Walk", "cap": _cap_0, "board": _b_0, "x": $$gen_rng_next(_x_0), "last": _last_0, "done": _done_0});
+}
+
+function $gen_round_gather(_w_0) {
+  const _cap_0 = _w_0["cap"];
+  const _b_0 = _w_0["board"];
+  const _x_0 = _w_0["x"];
+  const _last_0 = _w_0["last"];
+  const _done_0 = _w_0["done"];
+  const _e_0 = $$gen_fewest_go(_b_0, 0, 0, nat_chk(_cap_0 + 1));
+  return $gen_round_pour(_e_0, $$gen_gather(_cap_0, _e_0, {$: "Walk", "cap": _cap_0, "board": _b_0, "x": _x_0, "last": _last_0, "done": _done_0}));
+}
+
+function $gen_rounds($0, $1, $2) {
+  for (;;) {
+    {
+      const _n_0 = $0;
+      const _steps_0 = $1;
+      const _w_0 = $2;
+      if (_n_0 == 0) {
+        return _w_0;
+      } else {
+        const _p_0 = (_n_0 - 1);
+        $0 = _p_0;
+        $1 = _steps_0;
+        $2 = $$gen_round_gather($$gen_walk(_steps_0, _w_0));
+        continue;
+      }
+    }
+  }
+}
+
+function $gen_breaks_go(_t_0, _h_0) {
+  if (_t_0.$ === "Nil") {
+    return 0;
+  } else {
+    const _x_0 = _t_0["head"];
+    const _r_0 = _t_0["tail"];
+    return $___SPEC_bump($$Bool_not($$Nat_is_eq(_h_0, _x_0)), $$gen_breaks_go(_r_0, _x_0));
+  }
+}
+
+function $gen_breaks(_col_0) {
+  if (_col_0.$ === "Nil") {
+    return 0;
+  } else {
+    const _h_0 = _col_0["head"];
+    const _t_0 = _col_0["tail"];
+    return $gen_breaks_go(_t_0, _h_0);
+  }
+}
+
+function $gen_all_breaks(_b_0) {
+  if (_b_0.$ === "Nil") {
+    return 0;
+  } else {
+    const _c_0 = _b_0["head"];
+    const _r_0 = _b_0["tail"];
+    const _x_0 = $$gen_breaks(_c_0);
+    const _x_1 = $$gen_all_breaks(_r_0);
+    return nat_chk(_x_0 + _x_1);
+  }
+}
+
+function $gen_any_done(_cap_0, _b_0) {
+  if (_b_0.$ === "Nil") {
+    return false;
+  } else {
+    const _c_0 = _b_0["head"];
+    const _r_0 = _b_0["tail"];
+    const _x_0 = $$Bool_and($$Bool_and($$Bool_not($$___SPEC_is_empty(_c_0)), $$___SPEC_uniform(_c_0)), $$Nat_is_eq($$___SPEC_size(_c_0), _cap_0));
+    const _x_1 = $$gen_any_done(_cap_0, _r_0);
+    return (_x_0 || _x_1);
+  }
+}
+
+function $gen_mixed(_colours_0, _cap_0, _b_0) {
+  const _x_0 = (_cap_0 < 1 ? 0 : _cap_0 - 1);
+  const _x_1 = nat_chk(_colours_0 * _x_0);
+  const _x_2 = $$gen_all_breaks(_b_0);
+  return $Bool_and($$Bool_not($$gen_any_done(_cap_0, _b_0)), $$Nat_is_le(nat_chk(2 * _x_1), nat_chk(3 * _x_2)));
+}
+
+function $gen_sound(_colours_0, _cap_0, _b_0, _cert_0) {
+  return $Bool_and($$Bool_and($$___SPEC_valid(_colours_0, _cap_0, _b_0), $$Bool_not($$___SPEC_solved(_colours_0, _cap_0, _b_0))), $$core_solved($$core_replay(_cert_0, $$core_new(_colours_0, _cap_0, _b_0))));
+}
+
+function $gen_accept(_colours_0, _cap_0, _b_0, _cert_0) {
+  return $Bool_and($$gen_sound(_colours_0, _cap_0, _b_0, _cert_0), $$gen_mixed(_colours_0, _cap_0, _b_0));
+}
+
+function $gen_reverse_inverse($0, $1) {
+  for (;;) {
+    {
+      const _ms_0 = $0;
+      const _acc_0 = $1;
+      if (_ms_0.$ === "Nil") {
+        return _acc_0;
+      } else {
+        const _m_0 = _ms_0["head"];
+        const _r_0 = _ms_0["tail"];
+        $0 = _r_0;
+        $1 = {$: "Con", "head": $$gen_inverse(_m_0), "tail": _acc_0};
+        continue;
+      }
+    }
+  }
+}
+
+function $gen_candidate_fin(_w_0) {
+  const _b_0 = _w_0["board"];
+  const _done_0 = _w_0["done"];
+  return {$: "Puzzle", "board": _b_0, "cert": $$List_reverse($$gen_reverse_inverse(_done_0, {$: "Nil"}))};
+}
+
+function $gen_candidate(_colours_0, _cap_0, _x_0, _steps_0) {
+  const _x_1 = nat_chk(2 * _colours_0);
+  return $gen_candidate_fin($$gen_rounds(nat_chk(2 + _x_1), _steps_0, {$: "Walk", "cap": _cap_0, "board": $$gen_solved_board(_colours_0, _cap_0), "x": _x_0, "last": {$: "Mv", "from": nat_chk(_colours_0 + 1), "to": nat_chk(_colours_0 + 1)}, "done": {$: "Nil"}}));
+}
+
+function $gen_emit(_ok_0, _p_0, _rest_0) {
+  if (_ok_0) {
+    return {$: "Some", "value": _p_0};
+  } else {
+    return run_tail(_rest_0, {$: "Unit"});
+  }
+}
+
+function $gen_attempt(_colours_0, _cap_0, _p_0, _rest_0) {
+  const _b_0 = _p_0["board"];
+  const _cert_0 = _p_0["cert"];
+  return $gen_emit($$gen_accept(_colours_0, _cap_0, _b_0, _cert_0), {$: "Puzzle", "board": _b_0, "cert": _cert_0}, _rest_0);
+}
+
+function $gen_tries(_n_0, _colours_0, _cap_0, _x_0, _steps_0) {
+  if (_n_0 == 0) {
+    return {$: "None"};
+  } else {
+    const _p_0 = (_n_0 - 1);
+    return $gen_attempt(_colours_0, _cap_0, $$gen_candidate(_colours_0, _cap_0, _x_0, _steps_0), run_clo($gen_tries_c0(_colours_0,_x_0,_cap_0,_steps_0,_p_0)));
+  }
+}
+
+function $gen_tries_c0(_colours_0,_x_0,_cap_0,_steps_0,_p_0) {
+  return (_x_1) => {
+    return $gen_tries(_p_0, _colours_0, _cap_0, $$gen_rng_next($$gen_rng_next(_x_0)), _steps_0);
+  }
+}
+function $gen_generate(_colours_0, _cap_0, _seed_0) {
+  const _x_0 = nat_chk(_colours_0 + 1);
+  const _x_1 = nat_chk(_x_0 * _cap_0);
+  return $gen_tries(16, _colours_0, _cap_0, $$gen_rng_seed(_seed_0), nat_chk(4 * _x_1));
+}
+
+function $hint_same_col(_a_0, _b_0) {
+  if (_a_0.$ === "Nil") {
+    if (_b_0.$ === "Nil") {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    const _x_0 = _a_0["head"];
+    const _r_0 = _a_0["tail"];
+    if (_b_0.$ === "Nil") {
+      return false;
+    } else {
+      const _y_1 = _b_0["head"];
+      const _s_1 = _b_0["tail"];
+      return $Bool_and($$Nat_is_eq(_x_0, _y_1), $$hint_same_col(_r_0, _s_1));
+    }
+  }
+}
+
+function $hint_same_board(_a_0, _b_0) {
+  if (_a_0.$ === "Nil") {
+    if (_b_0.$ === "Nil") {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    const _x_0 = _a_0["head"];
+    const _r_0 = _a_0["tail"];
+    if (_b_0.$ === "Nil") {
+      return false;
+    } else {
+      const _y_1 = _b_0["head"];
+      const _s_1 = _b_0["tail"];
+      return $Bool_and($$hint_same_col(_x_0, _y_1), $$hint_same_board(_r_0, _s_1));
+    }
+  }
+}
+
+function $hint_on(_b_0, _bs_0) {
+  if (_bs_0.$ === "Nil") {
+    return false;
+  } else {
+    const _x_0 = _bs_0["head"];
+    const _r_0 = _bs_0["tail"];
+    const _x_1 = $$hint_same_board(_b_0, _x_0);
+    const _x_2 = $$hint_on(_b_0, _r_0);
+    return (_x_1 || _x_2);
+  }
+}
+
+function $hint_boards($0, $1, $2) {
+  for (;;) {
+    {
+      const _ms_0 = $0;
+      const _g_0 = $1;
+      const _acc_0 = $2;
+      if (_ms_0.$ === "Nil") {
+        return {$: "Con", "head": $$core_board(_g_0), "tail": _acc_0};
+      } else {
+        const _m_0 = _ms_0["head"];
+        const _r_0 = _ms_0["tail"];
+        $0 = _r_0;
+        $1 = $$core_apply(_g_0, _m_0);
+        $2 = {$: "Con", "head": $$core_board(_g_0), "tail": _acc_0};
+        continue;
+      }
+    }
+  }
+}
+
+function $hint_next_move($0, $1, $2, $3) {
+  for (;;) {
+    {
+      const _b_0 = $0;
+      const _ms_0 = $1;
+      const _g_0 = $2;
+      const _found_0 = $3;
+      if (_ms_0.$ === "Nil") {
+        return _found_0;
+      } else {
+        const _m_0 = _ms_0["head"];
+        const _r_0 = _ms_0["tail"];
+        $0 = _b_0;
+        $1 = _r_0;
+        $2 = $$core_apply(_g_0, _m_0);
+        $3 = $$Bool_pick($$hint_same_board(_b_0, $$core_board(_g_0)), {$: "Some", "value": _m_0}, _found_0);
+        continue;
+      }
+    }
+  }
+}
+
+function $hint_back_go(_hs_0, _sol_0, _n_0) {
+  if (_hs_0.$ === "Nil") {
+    return _n_0;
+  } else {
+    const _h_0 = _hs_0["head"];
+    const _r_0 = _hs_0["tail"];
+    return $Bool_pick($$hint_on(_h_0, _sol_0), _n_0, $$hint_back_go(_r_0, _sol_0, nat_chk(_n_0 + 1)));
+  }
+}
+
+function $hint_hint_fin(_g_0, _sol_0, _mm_0) {
+  if (_mm_0.$ === "Some") {
+    const _m_0 = _mm_0["value"];
+    return $Bool_pick($$core_legal_move(_g_0, _m_0), {$: "Play", "move": _m_0}, {$: "NoHint"});
+  } else {
+    const _start_0 = $$core_restart(_g_0);
+    const _path_0 = $$hint_boards(_sol_0, _start_0, {$: "Nil"});
+    const _hs_0 = $$List_tail($$hint_boards($$core_oldest_first($$core_history(_g_0)), _start_0, {$: "Nil"}));
+    return $Bool_pick($$List_is_empty(_hs_0), {$: "NoHint"}, {$: "Back", "steps": $$hint_back_go(_hs_0, _path_0, 1)});
+  }
+}
+
+function $hint_hint(_g_0, _sol_0) {
+  return $Bool_pick($$core_solved(_g_0), {$: "Solved"}, $$hint_hint_fin(_g_0, _sol_0, $$hint_next_move($$core_board(_g_0), _sol_0, $$core_restart(_g_0), {$: "None"})));
+}
+
 function $new_game(_colours_0, _cap_0, _b_0) {
   return $core_new(_colours_0, _cap_0, _b_0);
 }
@@ -673,6 +1229,18 @@ function $moves(_g_0) {
 
 function $targets(_g_0, _i_0) {
   return $core_targets(_g_0, _i_0);
+}
+
+function $valid(_colours_0, _cap_0, _b_0) {
+  return $___SPEC_valid(_colours_0, _cap_0, _b_0);
+}
+
+function $generate(_colours_0, _cap_0, _seed_0) {
+  return $gen_generate(_colours_0, _cap_0, _seed_0);
+}
+
+function $hint(_g_0, _sol_0) {
+  return $hint_hint(_g_0, _sol_0);
 }
 
 function $Bool_and(_a_0, _b_0) {
@@ -717,6 +1285,27 @@ function $Bool_pick(_c_0, _a_0, _b_0) {
   }
 }
 
+function $List_is_empty(_xs_0) {
+  if (_xs_0.$ === "Nil") {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function $List_reverse(_xs_0) {
+  return $List_reverse_go(_xs_0, {$: "Nil"});
+}
+
+function $List_tail(_xs_0) {
+  if (_xs_0.$ === "Nil") {
+    return {$: "Nil"};
+  } else {
+    const _t_0 = _xs_0["tail"];
+    return _t_0;
+  }
+}
+
 function $Cmp_is_eq(_c_0) {
   if (_c_0.$ === "EQ") {
     return true;
@@ -733,6 +1322,24 @@ function $Cmp_is_le(_c_0) {
   }
 }
 
+function $List_reverse_go($0, $1) {
+  for (;;) {
+    {
+      const _xs_0 = $0;
+      const _acc_0 = $1;
+      if (_xs_0.$ === "Nil") {
+        return _acc_0;
+      } else {
+        const _h_0 = _xs_0["head"];
+        const _t_0 = _xs_0["tail"];
+        $0 = _t_0;
+        $1 = {$: "Con", "head": _h_0, "tail": _acc_0};
+        continue;
+      }
+    }
+  }
+}
+
 const $$___SPEC_size = $___SPEC_size;
 const $$___SPEC_width = $___SPEC_width;
 const $$Bool_and = $Bool_and;
@@ -741,6 +1348,7 @@ const $$Bool_not = $Bool_not;
 const $$___SPEC_column = $___SPEC_column;
 const $$___SPEC_is_empty = $___SPEC_is_empty;
 const $$___SPEC_movable = $___SPEC_movable;
+const $$___SPEC_has = $___SPEC_has;
 const $$___SPEC_count_col = $___SPEC_count_col;
 const $$___SPEC_count = $___SPEC_count;
 const $$___SPEC_total = $___SPEC_total;
@@ -763,7 +1371,58 @@ const $$core_apply = $core_apply;
 const $$core_lifted = $core_lifted;
 const $$core_why = $core_why;
 const $$core_legal_move = $core_legal_move;
-const $$List_append = $List_append;const BEND = {
+const $$gen_column_of = $gen_column_of;
+const $$gen_solved_go = $gen_solved_go;
+const $$gen_moves_from = $gen_moves_from;
+const $$core_targets_go = $core_targets_go;
+const $$List_append = $List_append;
+const $$core_from = $core_from;
+const $$core_to = $core_to;
+const $$gen_drop_move = $gen_drop_move;
+const $$gen_is_move = $gen_is_move;
+const $$List_is_empty = $List_is_empty;
+const $$core_length_go = $core_length_go;
+const $$gen_rng_below = $gen_rng_below;
+const $$gen_rng_next = $gen_rng_next;
+const $$gen_legal_moves = $gen_legal_moves;
+const $$gen_walk_pick = $gen_walk_pick;
+const $$gen_walk_step = $gen_walk_step;
+const $$gen_room_go = $gen_room_go;
+const $$gen_gather_step = $gen_gather_step;
+const $$gen_pour_step = $gen_pour_step;
+const $$gen_fewest_go = $gen_fewest_go;
+const $$gen_gather = $gen_gather;
+const $$gen_walk = $gen_walk;
+const $$gen_round_gather = $gen_round_gather;
+const $$gen_breaks_go = $gen_breaks_go;
+const $$gen_breaks = $gen_breaks;
+const $$gen_all_breaks = $gen_all_breaks;
+const $$gen_any_done = $gen_any_done;
+const $$___SPEC_valid = $___SPEC_valid;
+const $$___SPEC_solved = $___SPEC_solved;
+const $$core_new = $core_new;
+const $$core_replay = $core_replay;
+const $$core_solved = $core_solved;
+const $$gen_sound = $gen_sound;
+const $$gen_mixed = $gen_mixed;
+const $$gen_inverse = $gen_inverse;
+const $$gen_reverse_inverse = $gen_reverse_inverse;
+const $$List_reverse = $List_reverse;
+const $$gen_solved_board = $gen_solved_board;
+const $$gen_rounds = $gen_rounds;
+const $$gen_accept = $gen_accept;
+const $$gen_candidate = $gen_candidate;
+const $$gen_rng_seed = $gen_rng_seed;
+const $$hint_same_col = $hint_same_col;
+const $$hint_same_board = $hint_same_board;
+const $$hint_on = $hint_on;
+const $$core_board = $core_board;
+const $$hint_back_go = $hint_back_go;
+const $$core_restart = $core_restart;
+const $$hint_boards = $hint_boards;
+const $$List_tail = $List_tail;
+const $$hint_next_move = $hint_next_move;
+const $$hint_hint_fin = $hint_hint_fin;const BEND = {
   "../SPEC:Holds": run_lib((a0) => run_loop($___SPEC_Holds(a0)), 1),
   "../SPEC:size": run_lib((a0) => run_loop($___SPEC_size(a0)), 1),
   "../SPEC:width": run_lib((a0) => run_loop($___SPEC_width(a0)), 1),
@@ -775,6 +1434,7 @@ const $$List_append = $List_append;const BEND = {
   "../SPEC:movable": run_lib((a0,a1,a2) => run_loop($___SPEC_movable(a0,nat_in(a1),nat_in(a2))), 3),
   "../SPEC:legal": run_lib((a0,a1,a2,a3) => run_loop($___SPEC_legal(nat_in(a0),a1,nat_in(a2),nat_in(a3))), 4),
   "../SPEC:bit": run_lib((a0) => run_loop($___SPEC_bit(a0)), 1),
+  "../SPEC:has": run_lib((a0,a1) => run_loop($___SPEC_has(a0,nat_in(a1))), 2),
   "../SPEC:bump": run_lib((a0,a1) => run_loop($___SPEC_bump(a0,nat_in(a1))), 2),
   "../SPEC:count_col": run_lib((a0,a1) => run_loop($___SPEC_count_col(nat_in(a0),a1)), 2),
   "../SPEC:count": run_lib((a0,a1) => run_loop($___SPEC_count(nat_in(a0),a1)), 2),
@@ -819,6 +1479,55 @@ const $$List_append = $List_append;const BEND = {
   "core:solved": run_lib((a0) => run_loop($core_solved(a0)), 1),
   "core:targets.go": run_lib((a0,a1,a2,a3,a4) => run_loop($core_targets_go(nat_in(a0),a1,nat_in(a2),nat_in(a3),a4)), 5),
   "core:targets": run_lib((a0,a1) => run_loop($core_targets(a0,nat_in(a1))), 2),
+  "gen:rng.next": run_lib((a0) => run_loop($gen_rng_next(a0)), 1),
+  "gen:rng.seed": run_lib((a0) => run_loop($gen_rng_seed(a0)), 1),
+  "gen:rng.below": run_lib((a0,a1) => run_loop($gen_rng_below(a0,nat_in(a1))), 2),
+  "gen:column_of": run_lib((a0,a1) => run_loop($gen_column_of(nat_in(a0),nat_in(a1))), 2),
+  "gen:solved.go": run_lib((a0,a1,a2) => run_loop($gen_solved_go(nat_in(a0),nat_in(a1),nat_in(a2))), 3),
+  "gen:solved_board": run_lib((a0,a1) => run_loop($gen_solved_board(nat_in(a0),nat_in(a1))), 2),
+  "gen:moves_from": run_lib((a0,a1) => run_loop($gen_moves_from(nat_in(a0),a1)), 2),
+  "gen:legal_moves.go": run_lib((a0,a1,a2,a3) => run_loop($gen_legal_moves_go(nat_in(a0),a1,nat_in(a2),a3)), 4),
+  "gen:legal_moves": run_lib((a0,a1) => run_loop($gen_legal_moves(nat_in(a0),a1)), 2),
+  "gen:nth": run_lib((a0,a1) => run_loop($gen_nth(a0,nat_in(a1))), 2),
+  "gen:is_move": run_lib((a0,a1,a2) => run_loop($gen_is_move(a0,nat_in(a1),nat_in(a2))), 3),
+  "gen:drop_move": run_lib((a0,a1,a2) => run_loop($gen_drop_move(nat_in(a0),nat_in(a1),a2)), 3),
+  "gen:inverse": run_lib((a0) => run_loop($gen_inverse(a0)), 1),
+  "gen:walk.pick": run_lib((a0,a1,a2) => run_loop($gen_walk_pick(a0,a1,a2)), 3),
+  "gen:walk.apply": run_lib((a0,a1,a2,a3,a4,a5) => run_loop($gen_walk_apply(nat_in(a0),a1,a2,a3,a4,a5)), 6),
+  "gen:walk.step": run_lib((a0) => run_loop($gen_walk_step(a0)), 1),
+  "gen:walk": run_lib((a0,a1) => run_loop($gen_walk(nat_in(a0),a1)), 2),
+  "gen:room.go": run_lib((a0,a1,a2,a3) => run_loop($gen_room_go(nat_in(a0),a1,nat_in(a2),nat_in(a3))), 4),
+  "gen:fewest.go": run_lib((a0,a1,a2,a3) => run_loop($gen_fewest_go(a0,nat_in(a1),nat_in(a2),nat_in(a3))), 4),
+  "gen:gather.apply": run_lib((a0,a1,a2,a3,a4,a5,a6) => run_loop($gen_gather_apply(nat_in(a0),nat_in(a1),a2,a3,a4,a5,a6)), 7),
+  "gen:gather.step": run_lib((a0,a1) => run_loop($gen_gather_step(nat_in(a0),a1)), 2),
+  "gen:gather": run_lib((a0,a1,a2) => run_loop($gen_gather(nat_in(a0),nat_in(a1),a2)), 3),
+  "gen:pour.step": run_lib((a0,a1,a2) => run_loop($gen_pour_step(nat_in(a0),nat_in(a1),a2)), 3),
+  "gen:pour": run_lib((a0,a1,a2,a3) => run_loop($gen_pour(nat_in(a0),nat_in(a1),nat_in(a2),a3)), 4),
+  "gen:round.pour": run_lib((a0,a1) => run_loop($gen_round_pour(nat_in(a0),a1)), 2),
+  "gen:round.gather": run_lib((a0) => run_loop($gen_round_gather(a0)), 1),
+  "gen:rounds": run_lib((a0,a1,a2) => run_loop($gen_rounds(nat_in(a0),nat_in(a1),a2)), 3),
+  "gen:breaks.go": run_lib((a0,a1) => run_loop($gen_breaks_go(a0,nat_in(a1))), 2),
+  "gen:breaks": run_lib((a0) => run_loop($gen_breaks(a0)), 1),
+  "gen:all_breaks": run_lib((a0) => run_loop($gen_all_breaks(a0)), 1),
+  "gen:any_done": run_lib((a0,a1) => run_loop($gen_any_done(nat_in(a0),a1)), 2),
+  "gen:mixed": run_lib((a0,a1,a2) => run_loop($gen_mixed(nat_in(a0),nat_in(a1),a2)), 3),
+  "gen:sound": run_lib((a0,a1,a2,a3) => run_loop($gen_sound(nat_in(a0),nat_in(a1),a2,a3)), 4),
+  "gen:accept": run_lib((a0,a1,a2,a3) => run_loop($gen_accept(nat_in(a0),nat_in(a1),a2,a3)), 4),
+  "gen:reverse_inverse": run_lib((a0,a1) => run_loop($gen_reverse_inverse(a0,a1)), 2),
+  "gen:candidate.fin": run_lib((a0) => run_loop($gen_candidate_fin(a0)), 1),
+  "gen:candidate": run_lib((a0,a1,a2,a3) => run_loop($gen_candidate(nat_in(a0),nat_in(a1),a2,nat_in(a3))), 4),
+  "gen:emit": run_lib((a0,a1,a2) => run_loop($gen_emit(a0,a1,a2)), 3),
+  "gen:attempt": run_lib((a0,a1,a2,a3) => run_loop($gen_attempt(nat_in(a0),nat_in(a1),a2,a3)), 4),
+  "gen:tries": run_lib((a0,a1,a2,a3,a4) => run_loop($gen_tries(nat_in(a0),nat_in(a1),nat_in(a2),a3,nat_in(a4))), 5),
+  "gen:generate": run_lib((a0,a1,a2) => run_loop($gen_generate(nat_in(a0),nat_in(a1),a2)), 3),
+  "hint:same_col": run_lib((a0,a1) => run_loop($hint_same_col(a0,a1)), 2),
+  "hint:same_board": run_lib((a0,a1) => run_loop($hint_same_board(a0,a1)), 2),
+  "hint:on": run_lib((a0,a1) => run_loop($hint_on(a0,a1)), 2),
+  "hint:boards": run_lib((a0,a1,a2) => run_loop($hint_boards(a0,a1,a2)), 3),
+  "hint:next_move": run_lib((a0,a1,a2,a3) => run_loop($hint_next_move(a0,a1,a2,a3)), 4),
+  "hint:back.go": run_lib((a0,a1,a2) => run_loop($hint_back_go(a0,a1,nat_in(a2))), 3),
+  "hint:hint.fin": run_lib((a0,a1,a2) => run_loop($hint_hint_fin(a0,a1,a2)), 3),
+  "hint:hint": run_lib((a0,a1) => run_loop($hint_hint(a0,a1)), 2),
   "new_game": run_lib((a0,a1,a2) => run_loop($new_game(nat_in(a0),nat_in(a1),a2)), 3),
   "play": run_lib((a0,a1,a2) => run_loop($play(a0,nat_in(a1),nat_in(a2))), 3),
   "undo": run_lib((a0) => run_loop($undo(a0)), 1),
@@ -827,6 +1536,9 @@ const $$List_append = $List_append;const BEND = {
   "solved": run_lib((a0) => run_loop($solved(a0)), 1),
   "moves": run_lib((a0) => run_loop($moves(a0)), 1),
   "targets": run_lib((a0,a1) => run_loop($targets(a0,nat_in(a1))), 2),
+  "valid": run_lib((a0,a1,a2) => run_loop($valid(nat_in(a0),nat_in(a1),a2)), 3),
+  "generate": run_lib((a0,a1,a2) => run_loop($generate(nat_in(a0),nat_in(a1),a2)), 3),
+  "hint": run_lib((a0,a1) => run_loop($hint(a0,a1)), 2),
 };
 
 export default BEND;
@@ -838,3 +1550,6 @@ export const replay = BEND["replay"];
 export const solved = BEND["solved"];
 export const moves = BEND["moves"];
 export const targets = BEND["targets"];
+export const valid = BEND["valid"];
+export const generate = BEND["generate"];
+export const hint = BEND["hint"];

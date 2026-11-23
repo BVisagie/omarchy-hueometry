@@ -8,12 +8,74 @@ const solvedBoard = (colours, cap) =>
   [...Array.from({ length: colours }, (_, c) => Array(cap).fill(c)), []];
 
 test("a bead may land on a different colour", () => {
-  const g = R.newGame(2, 2, [[0], [1], []]);
+  const g = R.newGame(2, 2, [[0, 1], [1], [0]]);
   const r = R.play(g, 0, 1);
   assert.equal(r.accepted, true);
   assert.equal(r.bead, 0);
-  assert.deepEqual(R.view(r.game).columns, [[], [0, 1], []]);
+  assert.deepEqual(R.view(r.game).columns, [[1], [0, 1], [0]]);
   assert.equal(R.moves(r.game), 1);
+});
+
+test("invalid boards are refused", () => {
+  for (const [c, k, cols] of [
+    [2, 2, [[0], [1], []]], [2, 2, [[0, 0], [0, 0], []]], [2, 2, [[0, 1, 1], [0], []]],
+    [2, 2, [[0, 1], [1, 0]]], [2, 2, [[0, 1], [1, 2], []]], [0, 2, [[]]], [2, 0, [[], [], []]],
+    [2, 2, [[0, -1], [1, 0], []]], [2, 2, "nope"],
+  ]) {
+    assert.equal(R.valid(c, k, cols), false, JSON.stringify(cols));
+    assert.throws(() => R.newGame(c, k, cols), RangeError);
+  }
+  assert.equal(R.valid(2, 2, [[0, 1], [1, 0], []]), true);
+});
+
+const LEVELS = [[3, 3], [4, 4], [5, 5], [6, 6], [6, 10]];
+
+test("generated puzzles are valid, unsolved, reproducible and solved by their solution", () => {
+  for (const [c, k] of LEVELS) {
+    for (let seed = 0; seed < 12; seed++) {
+      const p = R.generate(c, k, seed * 7919 + 1);
+      assert.ok(p, `no puzzle for ${c}x${k} seed ${seed}`);
+      assert.ok(R.valid(c, k, p.columns));
+      assert.equal(p.columns.filter((col) => col.length === 0).length, 1);
+      const g = R.newGame(c, k, p.columns);
+      assert.equal(R.solved(g), false);
+      const end = R.replay(g, p.solution);
+      assert.equal(R.solved(end), true);
+      assert.equal(R.moves(end), p.solution.length, "every certificate move is legal");
+      assert.deepEqual(R.generate(c, k, seed * 7919 + 1), p);
+    }
+  }
+  assert.equal(R.generate(0, 3, 1), null);
+  assert.equal(R.generate(3, 0, 1), null);
+});
+
+test("hints follow the solution and lead back to it", () => {
+  const p = R.generate(4, 4, 42);
+  let g = R.newGame(4, 4, p.columns);
+  for (let n = 0; n < p.solution.length && !R.solved(g); n++) {
+    const h = R.hint(g, p.solution);
+    assert.equal(h.kind, "play");
+    const r = R.play(g, h.from, h.to);
+    assert.equal(r.accepted, true);
+    g = r.game;
+  }
+  assert.equal(R.solved(g), true);
+  assert.deepEqual(R.hint(g, p.solution), { kind: "solved" });
+
+  // leave the solution with a move it does not make: the hint says go back
+  g = R.newGame(4, 4, p.columns);
+  const first = R.hint(g, p.solution);
+  const off = R.targets(g, first.from).map((t) => ({ from: first.from, to: t }))
+    .concat(...[0, 1, 2, 3, 4].map((f) => R.targets(g, f).map((t) => ({ from: f, to: t }))))
+    .find((m) => !(m.from === first.from && m.to === first.to));
+  const away = R.play(g, off.from, off.to).game;
+  const back = R.hint(away, p.solution);
+  if (back.kind === "back") {
+    assert.equal(back.steps, 1);
+  } else {
+    // the move happened to land on another board of the solution
+    assert.equal(back.kind, "play");
+  }
 });
 
 test("refusals name their reason and change nothing", () => {
