@@ -81,3 +81,34 @@ law refused_changes_nothing:
   for +m: Core.Move
   for e: {Spec.legal(Core.cap(g), Core.board(g), Core.from(m), Core.to(m)) == False{} : Bool}
   {Core.apply(g, m) == g : Core.Game}
+
+# Law 9: undo
+# -----------
+# Undoing a legal move restores the exact game before it: board, history and
+# move count. With no moves to undo, undo changes nothing.
+
+law undo_takes_back:
+  for +g: Core.Game
+  for +m: Core.Move
+  for e: {Spec.legal(Core.cap(g), Core.board(g), Core.from(m), Core.to(m)) == True{} : Bool}
+  {Core.undo(Core.apply(g, m)) == g : Core.Game}
+
+law undo_without_moves:
+  for +colours: Nat
+  for +cap: Nat
+  for +start: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  {Core.undo(Core.Game{colours, cap, start, b, Nil{}}) == Core.Game{colours, cap, start, b, Nil{}} : Core.Game}
+
+# Law 8: victory
+# --------------
+# On a valid board, the engine's check is exactly the four conditions of
+# section 3.3 (Spec.solved). The engine does not check condition 1 (each
+# colour in exactly one column): on a valid board it follows from the others.
+
+law victory_is_solved:
+  for +colours: Nat
+  for +cap: Nat
+  for +b: List<&2, List<&2, Nat>>
+  for +w: Spec.Holds(Spec.valid(colours, cap, b))
+  {Core.is_solved(cap, b) == Spec.solved(colours, cap, b) : Bool}

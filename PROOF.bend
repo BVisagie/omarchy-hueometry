@@ -518,3 +518,331 @@ def Laws.refused_changes_nothing(g, m, e):
     case Core.Game{+colours, +cap, +start, +b, +history} Core.Mv{+i, +j}:
       %Equal.sym(Bool, Spec.legal(cap, b, i, j), False{}, e) : {Core.apply.fin(colours, cap, start, b, history, i, j, _) == Core.Game{colours, cap, start, b, history} : Core.Game}
       {==}
+
+# Law 9
+# -----
+# The transfer back from j to i rebuilds b: replacing a column twice keeps
+# the second, and putting a column back where it came from changes nothing.
+
+def set_set_same(b: List<&2, List<&2, Nat>>, k: Nat, -v: List<&2, Nat>, -u: List<&2, Nat>)
+  -> {Core.set_col(Core.set_col(b, k, v), k, u) == Core.set_col(b, k, u) : List<&2, List<&2, Nat>>}:
+  match b k:
+    case Nil{} _:
+      {==}
+    case c <> r 0n:
+      {==}
+    case +c <> r 1n+p:
+      %set_set_same(r, p, v, u) : {c <> Core.set_col(Core.set_col(r, p, v), p, u) == c <> _ : List<&2, List<&2, Nat>>}
+      {==}
+
+def set_get(b: List<&2, List<&2, Nat>>, k: Nat) -> {Core.set_col(b, k, Spec.column(b, k)) == b : List<&2, List<&2, Nat>>}:
+  match b k:
+    case Nil{} _:
+      {==}
+    case c <> r 0n:
+      {==}
+    case +c <> +r 1n+p:
+      %set_get(r, p) : {c <> Core.set_col(r, p, Spec.column(r, p)) == c <> _ : List<&2, List<&2, Nat>>}
+      {==}
+
+def btrans(-a: List<&2, List<&2, Nat>>, -b: List<&2, List<&2, Nat>>, -c: List<&2, List<&2, Nat>>,
+  ab: {a == b : List<&2, List<&2, Nat>>}, bc: {b == c : List<&2, List<&2, Nat>>}) -> {a == c : List<&2, List<&2, Nat>>}:
+  Equal.trans(List<&2, List<&2, Nat>>, a, b, c, ab, bc)
+
+def back_go(+b: List<&2, List<&2, Nat>>, +i: Nat, +j: Nat, src: List<&2, Nat>, e: {Spec.column(b, i) == src : List<&2, Nat>},
+  ne: Spec.Holds(Bool.not(Spec.is_empty(src))), +wi: Spec.Holds(Nat.is_lt(i, Spec.width(b))), wj: Spec.Holds(Nat.is_lt(j, Spec.width(b))), +wij: Spec.Holds(Bool.not(Nat.is_eq(i, j))))
+  -> {Core.transfer(Core.transfer.go(b, i, j, src), j, i) == b : List<&2, List<&2, Nat>>}:
+  match src:
+    case Nil{}:
+      match ne:
+    case +h <> +t:
+      +x = Core.set_col(b, i, t)
+      +cj = Spec.column(b, j)
+      +v = {h <> cj : List<&2, Nat>}
+      +y = Core.set_col(x, j, v)
+      +z = Core.set_col(y, j, cj)
+      # transfer(y, j, i) reads column j of y, which is v
+      sa = Equal.cong(List<&2, Nat>, List<&2, List<&2, Nat>>, s => Core.transfer.go(y, j, i, s), Spec.column(y, j), v,
+        get_set_same(x, j, v, lt_eq(j, Spec.width(x), Spec.width(b), width_set(b, i, t), wj)))
+      # column i of y is t
+      yi = Equal.trans(List<&2, Nat>, Spec.column(y, i), Spec.column(x, i), t, get_set_other(x, j, i, v, wij), get_set_same(b, i, t, wi))
+      sb = Equal.cong(List<&2, Nat>, List<&2, List<&2, Nat>>, s => Core.set_col(z, i, h <> s), Spec.column(y, i), t, yi)
+      # replacing column j twice keeps cj, which is column j of x: x again
+      xj = Equal.sym(List<&2, Nat>, Spec.column(x, j), cj, get_set_other(b, i, j, t, ne_sym(i, j, wij)))
+      zx = btrans(z, Core.set_col(x, j, cj), x, set_set_same(x, j, v, cj),
+        btrans(Core.set_col(x, j, cj), Core.set_col(x, j, Spec.column(x, j)), x,
+          Equal.cong(List<&2, Nat>, List<&2, List<&2, Nat>>, s => Core.set_col(x, j, s), cj, Spec.column(x, j), xj),
+          set_get(x, j)))
+      sc = Equal.cong(List<&2, List<&2, Nat>>, List<&2, List<&2, Nat>>, q => Core.set_col(q, i, h <> t), z, x, zx)
+      # column i replaced by t then by h <> t, which is column i of b: b again
+      sd = btrans(Core.set_col(x, i, h <> t), Core.set_col(b, i, h <> t), b, set_set_same(b, i, t, h <> t),
+        btrans(Core.set_col(b, i, h <> t), Core.set_col(b, i, Spec.column(b, i)), b,
+          Equal.cong(List<&2, Nat>, List<&2, List<&2, Nat>>, s => Core.set_col(b, i, s), h <> t, Spec.column(b, i), Equal.sym(List<&2, Nat>, Spec.column(b, i), h <> t, e)),
+          set_get(b, i)))
+      btrans(Core.transfer(y, j, i), Core.transfer.go(y, j, i, v), b, sa,
+        btrans(Core.transfer.go(y, j, i, v), Core.set_col(z, i, h <> t), b, sb,
+          btrans(Core.set_col(z, i, h <> t), Core.set_col(x, i, h <> t), b, sc, sd)))
+
+def bool_disc(b: Bool) -> Data:
+  match b:
+    case True{}:
+      Empty
+    case False{}:
+      Unit
+
+def false_ne_true(e: {False{} == True{} : Bool}) -> Empty:
+  %e : bool_disc(_)
+  Unit{}
+
+def undo_fin(+colours: Nat, +cap: Nat, +start: List<&2, List<&2, Nat>>, +b: List<&2, List<&2, Nat>>, +history: List<&2, Core.Move>, +i: Nat, +j: Nat,
+  ok: Bool, e: {Spec.legal(cap, b, i, j) == ok : Bool}, f: {ok == True{} : Bool})
+  -> {Core.undo(Core.apply.fin(colours, cap, start, b, history, i, j, ok)) == Core.Game{colours, cap, start, b, history} : Core.Game}:
+  match ok:
+    case True{}:
+      +w = legal_mv(cap, b, i, j, holds_true(Spec.legal(cap, b, i, j), e))
+      bb = back_go(b, i, j, Spec.column(b, i), {==}, mv_src(b, i, j, w), mv_i(b, i, j, w), mv_j(b, i, j, w), mv_ne(b, i, j, w))
+      Equal.cong(List<&2, List<&2, Nat>>, Core.Game, q => Core.Game{colours, cap, start, q, history}, Core.transfer(Core.transfer(b, i, j), j, i), b, bb)
+    case False{}:
+      Empty.absurd({Core.undo(Core.Game{colours, cap, start, b, history}) == Core.Game{colours, cap, start, b, history} : Core.Game}, false_ne_true(f))
+
+def Laws.undo_takes_back(g, m, e):
+  match g m:
+    case Core.Game{+colours, +cap, +start, +b, +history} Core.Mv{+i, +j}:
+      undo_fin(colours, cap, start, b, history, i, j, Spec.legal(cap, b, i, j), {==}, e)
+
+def Laws.undo_without_moves(colours, cap, start, b):
+  {==}
+
+# Law 8
+# -----
+# If every occupied column is full and one colour, a colour's count is cap
+# times the number of columns holding it. A valid board has exactly cap of
+# each colour, and cap >= 1, so each colour is in exactly one column.
+
+def holds_eq(+x: Bool, w: Spec.Holds(x)) -> {x == True{} : Bool}:
+  match x:
+    case True{}:
+      {==}
+    case False{}:
+      match w:
+
+def holds_not_eq(+x: Bool, w: Spec.Holds(Bool.not(x))) -> {x == False{} : Bool}:
+  match x:
+    case True{}:
+      match w:
+    case False{}:
+      {==}
+
+def eq_sound(a: Nat, b: Nat, w: Spec.Holds(Nat.is_eq(a, b))) -> {a == b : Nat}:
+  match a b:
+    case 0n 0n:
+      {==}
+    case 0n 1n+q:
+      match w:
+    case 1n+p 0n:
+      match w:
+    case 1n+p 1n+q:
+      Equal.cong(Nat, Nat, n => 1n+n, p, q, eq_sound(p, q, w))
+
+def eq_refl(a: Nat) -> Spec.Holds(Nat.is_eq(a, a)):
+  match a:
+    case 0n:
+      Unit{}
+    case 1n+p:
+      eq_refl(p)
+
+def eq_of(+a: Nat, -b: Nat, e: {a == b : Nat}) -> Spec.Holds(Nat.is_eq(a, b)):
+  %e : Spec.Holds(Nat.is_eq(a, _))
+  eq_refl(a)
+
+def ne_of(+p: Nat, -h: Nat, -x: Nat, e: {h == x : Nat}, w: Spec.Holds(Bool.not(Nat.is_eq(p, h)))) -> Spec.Holds(Bool.not(Nat.is_eq(p, x))):
+  %e : Spec.Holds(Bool.not(Nat.is_eq(p, _)))
+  w
+
+def nat_disc(n: Nat) -> Data:
+  match n:
+    case 0n:
+      Unit
+    case 1n+p:
+      Empty
+
+def succ_ne_zero(-n: Nat, e: {1n+n == 0n : Nat}) -> Empty:
+  %Equal.sym(Nat, 1n+n, 0n, e) : nat_disc(_)
+  Unit{}
+
+# all beads of t have colour h: count p in t is size(t) when p is h, else 0
+
+def all_same(+p: Nat, +h: Nat, t: List<&2, Nat>, +e: Spec.Holds(Nat.is_eq(p, h)), wa: Spec.Holds(Spec.all_colour(h, t)))
+  -> {Spec.count_col(p, t) == Spec.size(t) : Nat}:
+  match t:
+    case Nil{}:
+      {==}
+    case +x <> +u:
+      +wa2 = wa
+      px = Equal.trans(Nat, p, h, x, eq_sound(p, h, e), eq_sound(h, x, and_l(Nat.is_eq(h, x), Spec.all_colour(h, u), wa2)))
+      %Equal.sym(Bool, Nat.is_eq(p, x), True{}, holds_eq(Nat.is_eq(p, x), eq_of(p, x, px))) : {Spec.bump(_, Spec.count_col(p, u)) == 1n+Spec.size(u) : Nat}
+      Equal.cong(Nat, Nat, n => 1n+n, Spec.count_col(p, u), Spec.size(u), all_same(p, h, u, e, and_r(Nat.is_eq(h, x), Spec.all_colour(h, u), wa2)))
+
+def all_other(+p: Nat, +h: Nat, t: List<&2, Nat>, +e: Spec.Holds(Bool.not(Nat.is_eq(p, h))), wa: Spec.Holds(Spec.all_colour(h, t)))
+  -> {Spec.count_col(p, t) == 0n : Nat}:
+  match t:
+    case Nil{}:
+      {==}
+    case +x <> +u:
+      +wa2 = wa
+      nx = ne_of(p, h, x, eq_sound(h, x, and_l(Nat.is_eq(h, x), Spec.all_colour(h, u), wa2)), e)
+      %Equal.sym(Bool, Nat.is_eq(p, x), False{}, holds_not_eq(Nat.is_eq(p, x), nx)) : {Spec.bump(_, Spec.count_col(p, u)) == 0n : Nat}
+      all_other(p, h, u, e, and_r(Nat.is_eq(h, x), Spec.all_colour(h, u), wa2))
+
+def holds_not(-x: Bool, e: {x == False{} : Bool}) -> Spec.Holds(Bool.not(x)):
+  %Equal.sym(Bool, x, False{}, e) : Spec.Holds(Bool.not(_))
+  Unit{}
+
+# a full one-colour column holds cap of its colour and none of the others
+
+def head_cases(+p: Nat, +h: Nat, +t: List<&2, Nat>, +cap: Nat, ee: Bool, +e: {Nat.is_eq(p, h) == ee : Bool},
+  +wa: Spec.Holds(Spec.all_colour(h, t)), ws: Spec.Holds(Nat.is_eq(1n+Spec.size(t), cap)))
+  -> Or({0n == Spec.count_col(p, h <> t) : Nat}, {cap == Spec.count_col(p, h <> t) : Nat}):
+  match ee:
+    case True{}:
+      +same = all_same(p, h, t, holds_true(Nat.is_eq(p, h), e), wa)
+      %Equal.sym(Bool, Nat.is_eq(p, h), True{}, e) : Or({0n == Spec.bump(_, Spec.count_col(p, t)) : Nat}, {cap == Spec.bump(_, Spec.count_col(p, t)) : Nat})
+      Inr{Equal.trans(Nat, cap, 1n+Spec.size(t), 1n+Spec.count_col(p, t),
+        Equal.sym(Nat, 1n+Spec.size(t), cap, eq_sound(1n+Spec.size(t), cap, ws)),
+        Equal.cong(Nat, Nat, n => 1n+n, Spec.size(t), Spec.count_col(p, t), Equal.sym(Nat, Spec.count_col(p, t), Spec.size(t), same)))}
+    case False{}:
+      +other = all_other(p, h, t, holds_not(Nat.is_eq(p, h), e), wa)
+      %Equal.sym(Bool, Nat.is_eq(p, h), False{}, e) : Or({0n == Spec.bump(_, Spec.count_col(p, t)) : Nat}, {cap == Spec.bump(_, Spec.count_col(p, t)) : Nat})
+      Inl{Equal.sym(Nat, Spec.count_col(p, t), 0n, other)}
+
+def col_cases(+p: Nat, +cap: Nat, col: List<&2, Nat>, w: Spec.Holds(Spec.is_empty(col) || (Spec.uniform(col) && Nat.is_eq(Spec.size(col), cap))))
+  -> Or({0n == Spec.count_col(p, col) : Nat}, {cap == Spec.count_col(p, col) : Nat}):
+  match col:
+    case Nil{}:
+      Inl{{==}}
+    case +h <> +t:
+      +w2 = w
+      head_cases(p, h, t, cap, Nat.is_eq(p, h), {==},
+        and_l(Spec.all_colour(h, t), Nat.is_eq(1n+Spec.size(t), cap), w2),
+        and_r(Spec.all_colour(h, t), Nat.is_eq(1n+Spec.size(t), cap), w2))
+
+def col_zero(+p: Nat, -cap: Nat, -col: List<&2, Nat>, -x: Nat, -y: Nat, ih: {x == Nat.mul(y, cap) : Nat}, z: {0n == Spec.count_col(p, col) : Nat})
+  -> {Nat.add(Spec.count_col(p, col), x) == Nat.mul(Spec.bump(Nat.is_lt(0n, Spec.count_col(p, col)), y), cap) : Nat}:
+  %z : {Nat.add(_, x) == Nat.mul(Spec.bump(Nat.is_lt(0n, _), y), cap) : Nat}
+  ih
+
+def col_full.go(cap: Nat, -x: Nat, +y: Nat, ih: {x == Nat.mul(y, cap) : Nat}, wcap: Spec.Holds(Nat.is_lt(0n, cap)))
+  -> {Nat.add(cap, x) == Nat.mul(Spec.bump(Nat.is_lt(0n, cap), y), cap) : Nat}:
+  match cap:
+    case 0n:
+      match wcap:
+    case 1n+c:
+      cong_add(1n+c, x, Nat.mul(y, 1n+c), ih)
+
+def col_full(+p: Nat, +cap: Nat, -col: List<&2, Nat>, -x: Nat, +y: Nat, ih: {x == Nat.mul(y, cap) : Nat}, f: {cap == Spec.count_col(p, col) : Nat}, wcap: Spec.Holds(Nat.is_lt(0n, cap)))
+  -> {Nat.add(Spec.count_col(p, col), x) == Nat.mul(Spec.bump(Nat.is_lt(0n, Spec.count_col(p, col)), y), cap) : Nat}:
+  %f : {Nat.add(_, x) == Nat.mul(Spec.bump(Nat.is_lt(0n, _), y), cap) : Nat}
+  col_full.go(cap, x, y, ih, wcap)
+
+def col_combine(+p: Nat, +cap: Nat, -col: List<&2, Nat>, -x: Nat, +y: Nat, ih: {x == Nat.mul(y, cap) : Nat},
+  d: Or({0n == Spec.count_col(p, col) : Nat}, {cap == Spec.count_col(p, col) : Nat}), wcap: Spec.Holds(Nat.is_lt(0n, cap)))
+  -> {Nat.add(Spec.count_col(p, col), x) == Nat.mul(Spec.bump(Nat.is_lt(0n, Spec.count_col(p, col)), y), cap) : Nat}:
+  match d:
+    case Inl{z}:
+      col_zero(p, cap, col, x, y, ih, z)
+    case Inr{f}:
+      col_full(p, cap, col, x, y, ih, f, wcap)
+
+def count_by_columns(+p: Nat, +cap: Nat, b: List<&2, List<&2, Nat>>, w: Spec.Holds(Spec.occupied_full_uniform(cap, b)), +wcap: Spec.Holds(Nat.is_lt(0n, cap)))
+  -> {Spec.count(p, b) == Nat.mul(Spec.columns_with(p, b), cap) : Nat}:
+  match b:
+    case Nil{}:
+      {==}
+    case +col <> +r:
+      +w2 = w
+      +ok = Spec.is_empty(col) || (Spec.uniform(col) && Nat.is_eq(Spec.size(col), cap))
+      col_combine(p, cap, col, Spec.count(p, r), Spec.columns_with(p, r),
+        count_by_columns(p, cap, r, and_r(ok, Spec.occupied_full_uniform(cap, r), w2), wcap),
+        col_cases(p, cap, col, and_l(ok, Spec.occupied_full_uniform(cap, r), w2)), wcap)
+
+# n * cap = cap with cap >= 1 means n = 1
+
+def zero_cap(-cap: Nat, e: {0n == cap : Nat}, w: Spec.Holds(Nat.is_lt(0n, cap))) -> Spec.Holds(Nat.is_lt(0n, 0n)):
+  %Equal.sym(Nat, 0n, cap, e) : Spec.Holds(Nat.is_lt(0n, _))
+  w
+
+def big_cap(cap: Nat, -z: Nat, e: {Nat.add(cap, z) == 0n : Nat}, w: Spec.Holds(Nat.is_lt(0n, cap))) -> Empty:
+  match cap:
+    case 0n:
+      w
+    case 1n+c:
+      succ_ne_zero(Nat.add(c, z), e)
+
+def one_of_many(+r: Nat, +cap: Nat, e: {Nat.add(cap, Nat.add(cap, Nat.mul(r, cap))) == cap : Nat}, w: Spec.Holds(Nat.is_lt(0n, cap))) -> Empty:
+  +m = Nat.add(cap, Nat.mul(r, cap))
+  z = add_cancel(cap, m, 0n, Equal.trans(Nat, Nat.add(cap, m), cap, Nat.add(cap, 0n), e, Equal.sym(Nat, Nat.add(cap, 0n), cap, add_zero_r(cap))))
+  big_cap(cap, Nat.mul(r, cap), z, w)
+
+def mul_one.go(q: Nat, +cap: Nat, e: {Nat.add(cap, Nat.mul(q, cap)) == cap : Nat}, w: Spec.Holds(Nat.is_lt(0n, cap))) -> Spec.Holds(Nat.is_eq(1n+q, 1n)):
+  match q:
+    case 0n:
+      Unit{}
+    case 1n+r:
+      Empty.absurd(Spec.Holds(Nat.is_eq(2n+r, 1n)), one_of_many(r, cap, e, w))
+
+def mul_one(n: Nat, +cap: Nat, e: {Nat.mul(n, cap) == cap : Nat}, w: Spec.Holds(Nat.is_lt(0n, cap))) -> Spec.Holds(Nat.is_eq(n, 1n)):
+  match n:
+    case 0n:
+      zero_cap(cap, e, w)
+    case 1n+q:
+      mul_one.go(q, cap, e, w)
+
+# each colour in exactly one column
+
+def one_column(+p: Nat, +cap: Nat, +b: List<&2, List<&2, Nat>>, wc: Spec.Holds(Nat.is_eq(Spec.count(p, b), cap)),
+  wo: Spec.Holds(Spec.occupied_full_uniform(cap, b)), +wcap: Spec.Holds(Nat.is_lt(0n, cap)))
+  -> Spec.Holds(Nat.is_eq(Spec.columns_with(p, b), 1n)):
+  mul_one(Spec.columns_with(p, b), cap,
+    Equal.trans(Nat, Nat.mul(Spec.columns_with(p, b), cap), Spec.count(p, b), cap,
+      Equal.sym(Nat, Spec.count(p, b), Nat.mul(Spec.columns_with(p, b), cap), count_by_columns(p, cap, b, wo, wcap)),
+      eq_sound(Spec.count(p, b), cap, wc)), wcap)
+
+def each_one_column(+k: Nat, +cap: Nat, +b: List<&2, List<&2, Nat>>, wc: Spec.Holds(Spec.counts_ok(k, cap, b)),
+  +wo: Spec.Holds(Spec.occupied_full_uniform(cap, b)), +wcap: Spec.Holds(Nat.is_lt(0n, cap)))
+  -> Spec.Holds(Spec.one_column_each(k, b)):
+  match k:
+    case 0n:
+      Unit{}
+    case 1n+p:
+      +wc2 = wc
+      +here = Nat.is_eq(Spec.count(p, b), cap)
+      and_intro(Nat.is_eq(Spec.columns_with(p, b), 1n), Spec.one_column_each(p, b),
+        one_column(p, cap, b, and_l(here, Spec.counts_ok(p, cap, b), wc2), wo, wcap),
+        each_one_column(p, cap, b, and_r(here, Spec.counts_ok(p, cap, b), wc2), wo, wcap))
+
+def victory.go(+ok: Bool, +o: Bool, -e: Bool, k: Spec.Holds(ok) -> Spec.Holds(o)) -> {(ok && e) == ((o && ok) && e) : Bool}:
+  match ok:
+    case True{}:
+      match o:
+        case True{}:
+          {==}
+        case False{}:
+          Empty.absurd({(True{} && e) == ((False{} && True{}) && e) : Bool}, k(Unit{}))
+    case False{}:
+      match o:
+        case True{}:
+          {==}
+        case False{}:
+          {==}
+
+def Laws.victory_is_solved(colours, cap, b, w):
+  +a = Nat.is_lt(0n, colours)
+  +c = Nat.is_lt(0n, cap)
+  +d = Nat.is_eq(Spec.width(b), 1n+colours)
+  +f = Spec.fits(cap, b)
+  +g = Spec.counts_ok(colours, cap, b)
+  +h = Nat.is_eq(Spec.total(b), Nat.mul(colours, cap))
+  +wcap = and_r(a, c, and_l(a && c, d, and_l((a && c) && d, f, and_l(((a && c) && d) && f, g, and_l((((a && c) && d) && f) && g, h, w)))))
+  +wcounts = and_r(((a && c) && d) && f, g, and_l((((a && c) && d) && f) && g, h, w))
+  victory.go(Spec.occupied_full_uniform(cap, b), Spec.one_column_each(colours, b), Nat.is_eq(Spec.empties(b), 1n),
+    wo => each_one_column(colours, cap, b, wcounts, wo, wcap))
