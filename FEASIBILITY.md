@@ -24,7 +24,9 @@ and Omarchy 4.5.0, on an x86-64 laptop.
 | 9 | A way to expose the engine to an application | `bin/engine` compiles it to an ES module that Node, Qt's JavaScript engine, a QML `WorkerScript` and Quickshell all load |
 
 The prototype went further than asked: the exact effect of a move (laws 3 and
-4), undo (law 9) and victory (law 8) are proved too.
+4), victory (law 8) and all of law 9 are proved too: undo restores the game
+before a legal move, restart returns to the first board with no moves, and
+replaying a game's history from its first board rebuilds it exactly.
 
 ## Verification
 
@@ -59,6 +61,7 @@ The prototype went further than asked: the exact effect of a move (laws 3 and
 | Where | What | Time |
 |---|---|---|
 | Node 26 | 500 random games of 20–150 moves, each move checked against a model | 0.1 s |
+| Node 26 | 30,000 moves in one game (no stack growth) | 7 ms |
 | Qt 6.12 JavaScript | 600 accepted moves on the Expert board (6 colours of 10) | 10 ms |
 | Qt 6.12 JavaScript | replaying those 600 moves | 2 ms |
 

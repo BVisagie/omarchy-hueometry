@@ -421,17 +421,49 @@ function $core_history(_g_0) {
   return _h_0;
 }
 
-function $core_length(_h_0) {
-  if (_h_0.$ === "Nil") {
-    return 0;
-  } else {
-    const _r_0 = _h_0["tail"];
-    return nat_chk($$core_length(_r_0) + 1);
+function $core_colours(_g_0) {
+  const _c_0 = _g_0["colours"];
+  return _c_0;
+}
+
+function $core_start(_g_0) {
+  const _s_0 = _g_0["start"];
+  return _s_0;
+}
+
+function $core_length_go($0, $1) {
+  for (;;) {
+    {
+      const _h_0 = $0;
+      const _n_0 = $1;
+      if (_h_0.$ === "Nil") {
+        return _n_0;
+      } else {
+        const _r_0 = _h_0["tail"];
+        $0 = _r_0;
+        $1 = nat_chk(_n_0 + 1);
+        continue;
+      }
+    }
   }
+}
+
+function $core_length(_h_0) {
+  return $core_length_go(_h_0, 0);
 }
 
 function $core_moves(_g_0) {
   return $core_length($$core_history(_g_0));
+}
+
+function $core_oldest_first(_h_0) {
+  if (_h_0.$ === "Nil") {
+    return {$: "Nil"};
+  } else {
+    const _m_0 = _h_0["head"];
+    const _r_0 = _h_0["tail"];
+    return $List_append($$core_oldest_first(_r_0), {$: "Con", "head": _m_0, "tail": {$: "Nil"}});
+  }
 }
 
 function $core_set_col(_b_0, _k_0, _v_0) {
@@ -652,6 +684,16 @@ function $Nat_is_le(_a_0, _b_0) {
   return $Cmp_is_le(cmp_new(_a_0, _b_0));
 }
 
+function $List_append(_xs_0, _ys_0) {
+  if (_xs_0.$ === "Nil") {
+    return _ys_0;
+  } else {
+    const _h_0 = _xs_0["head"];
+    const _t_0 = _xs_0["tail"];
+    return {$: "Con", "head": _h_0, "tail": $$List_append(_t_0, _ys_0)};
+  }
+}
+
 function $Bool_pick(_c_0, _a_0, _b_0) {
   if (!_c_0) {
     return _b_0;
@@ -696,15 +738,16 @@ const $$___SPEC_empties = $___SPEC_empties;
 const $$___SPEC_one_column_each = $___SPEC_one_column_each;
 const $$___SPEC_uniform = $___SPEC_uniform;
 const $$___SPEC_occupied_full_uniform = $___SPEC_occupied_full_uniform;
-const $$core_length = $core_length;
 const $$core_history = $core_history;
+const $$core_oldest_first = $core_oldest_first;
 const $$core_set_col = $core_set_col;
 const $$core_transfer = $core_transfer;
 const $$___SPEC_legal = $___SPEC_legal;
 const $$Bool_pick = $Bool_pick;
 const $$core_apply = $core_apply;
 const $$core_why = $core_why;
-const $$core_legal_move = $core_legal_move;const BEND = {
+const $$core_legal_move = $core_legal_move;
+const $$List_append = $List_append;const BEND = {
   "../SPEC:Holds": run_lib((a0) => run_loop($___SPEC_Holds(a0)), 1),
   "../SPEC:size": run_lib((a0) => run_loop($___SPEC_size(a0)), 1),
   "../SPEC:width": run_lib((a0) => run_loop($___SPEC_width(a0)), 1),
@@ -735,8 +778,12 @@ const $$core_legal_move = $core_legal_move;const BEND = {
   "core:from": run_lib((a0) => run_loop($core_from(a0)), 1),
   "core:to": run_lib((a0) => run_loop($core_to(a0)), 1),
   "core:history": run_lib((a0) => run_loop($core_history(a0)), 1),
+  "core:colours": run_lib((a0) => run_loop($core_colours(a0)), 1),
+  "core:start": run_lib((a0) => run_loop($core_start(a0)), 1),
+  "core:length.go": run_lib((a0,a1) => run_loop($core_length_go(a0,nat_in(a1))), 2),
   "core:length": run_lib((a0) => run_loop($core_length(a0)), 1),
   "core:moves": run_lib((a0) => run_loop($core_moves(a0)), 1),
+  "core:oldest_first": run_lib((a0) => run_loop($core_oldest_first(a0)), 1),
   "core:set_col": run_lib((a0,a1,a2) => run_loop($core_set_col(a0,nat_in(a1),a2)), 3),
   "core:transfer.go": run_lib((a0,a1,a2,a3) => run_loop($core_transfer_go(a0,nat_in(a1),nat_in(a2),a3)), 4),
   "core:transfer": run_lib((a0,a1,a2) => run_loop($core_transfer(a0,nat_in(a1),nat_in(a2))), 3),

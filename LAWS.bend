@@ -112,3 +112,21 @@ law victory_is_solved:
   for +b: List<&2, List<&2, Nat>>
   for +w: Spec.Holds(Spec.valid(colours, cap, b))
   {Core.is_solved(cap, b) == Spec.solved(colours, cap, b) : Bool}
+
+# Restart and replay (rest of law 9)
+# ----------------------------------
+# Restart returns to the puzzle's first board with no moves, never a new
+# puzzle. Replaying a game's history from that first board rebuilds the game
+# exactly, for every game reached by playing moves, legal or not.
+
+law restart_goes_back:
+  for +g: Core.Game
+  {Core.restart(g) == Core.new(Core.colours(g), Core.cap(g), Core.start(g)) : Core.Game}
+
+law replay_rebuilds:
+  for +ms: List<&2, Core.Move>
+  for +colours: Nat
+  for +cap: Nat
+  for +s: List<&2, List<&2, Nat>>
+  g = Core.replay(ms, Core.new(colours, cap, s))
+  {Core.replay(Core.oldest_first(Core.history(g)), Core.restart(g)) == g : Core.Game}

@@ -64,15 +64,39 @@ def history(g: Game) -> List<&2, Move>:
     case Game{colours, cap, start, b, h}:
       h
 
-def length(h: List<&2, Move>) -> Nat:
+def colours(g: Game) -> Nat:
+  match g:
+    case Game{c, k, start, b, h}:
+      c
+
+def start(g: Game) -> List<&2, List<&2, Nat>>:
+  match g:
+    case Game{c, k, s, b, h}:
+      s
+
+# Counts with an accumulator: a game can have tens of thousands of moves, and
+# the JavaScript target spends a stack frame per non-tail call.
+def length.go(h: List<&2, Move>, n: Nat) -> Nat:
   match h:
     case Nil{}:
-      0n
+      n
     case m <> r:
-      1n+length(r)
+      length.go(r, 1n+n)
+
+def length(h: List<&2, Move>) -> Nat:
+  length.go(h, 0n)
 
 def moves(g: Game) -> Nat:
   length(history(g))
+
+# The history oldest first, as replay takes it. Used by the laws; the
+# interface reverses the history itself.
+def oldest_first(h: List<&2, Move>) -> List<&2, Move>:
+  match h:
+    case Nil{}:
+      Nil{}
+    case m <> r:
+      List.append(&2, Move, oldest_first(r), [m])
 
 # Boards
 # ------

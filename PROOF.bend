@@ -846,3 +846,54 @@ def Laws.victory_is_solved(colours, cap, b, w):
   +wcounts = and_r(((a && c) && d) && f, g, and_l((((a && c) && d) && f) && g, h, w))
   victory.go(Spec.occupied_full_uniform(cap, b), Spec.one_column_each(colours, b), Nat.is_eq(Spec.empties(b), 1n),
     wo => each_one_column(colours, cap, b, wcounts, wo, wcap))
+
+# Restart and replay
+# ------------------
+
+def Laws.restart_goes_back(g):
+  match g:
+    case Core.Game{c, k, +s, b, h}:
+      {==}
+
+# a game is rebuilt by replaying its history from its first board
+def Rebuilds(+g: Core.Game) -> Type:
+  {Core.replay(Core.oldest_first(Core.history(g)), Core.restart(g)) == g : Core.Game}
+
+def replay_snoc(xs: List<&2, Core.Move>, g: Core.Game, +m: Core.Move)
+  -> {Core.replay(List.append(&2, Core.Move, xs, [m]), g) == Core.apply(Core.replay(xs, g), m) : Core.Game}:
+  match xs:
+    case Nil{}:
+      {==}
+    case x <> r:
+      replay_snoc(r, Core.apply(g, x), m)
+
+def rebuild_fin(+c: Nat, +k: Nat, +s: List<&2, List<&2, Nat>>, +b: List<&2, List<&2, Nat>>, +h: List<&2, Core.Move>, +i: Nat, +j: Nat,
+  ok: Bool, e: {Spec.legal(k, b, i, j) == ok : Bool}, pg: Rebuilds(Core.Game{c, k, s, b, h}))
+  -> Rebuilds(Core.apply.fin(c, k, s, b, h, i, j, ok)):
+  match ok:
+    case True{}:
+      +g = {Core.Game{c, k, s, b, h} : Core.Game}
+      +mv = {Core.Mv{i, j} : Core.Move}
+      +r = {Core.Game{c, k, s, s, Nil{}} : Core.Game}
+      Equal.trans(Core.Game, Core.replay(List.append(&2, Core.Move, Core.oldest_first(h), [mv]), r), Core.apply(Core.replay(Core.oldest_first(h), r), mv), Core.apply.fin(c, k, s, b, h, i, j, True{}),
+        replay_snoc(Core.oldest_first(h), r, mv),
+        Equal.trans(Core.Game, Core.apply(Core.replay(Core.oldest_first(h), r), mv), Core.apply(g, mv), Core.apply.fin(c, k, s, b, h, i, j, True{}),
+          Equal.cong(Core.Game, Core.Game, x => Core.apply(x, mv), Core.replay(Core.oldest_first(h), r), g, pg),
+          Equal.cong(Bool, Core.Game, o => Core.apply.fin(c, k, s, b, h, i, j, o), Spec.legal(k, b, i, j), True{}, e)))
+    case False{}:
+      pg
+
+def rebuild_apply(g: Core.Game, m: Core.Move, pg: Rebuilds(g)) -> Rebuilds(Core.apply(g, m)):
+  match g m:
+    case Core.Game{+c, +k, +s, +b, +h} Core.Mv{+i, +j}:
+      rebuild_fin(c, k, s, b, h, i, j, Spec.legal(k, b, i, j), {==}, pg)
+
+def rebuild_replay(ms: List<&2, Core.Move>, +g: Core.Game, pg: Rebuilds(g)) -> Rebuilds(Core.replay(ms, g)):
+  match ms:
+    case Nil{}:
+      pg
+    case +m <> r:
+      rebuild_replay(r, Core.apply(g, m), rebuild_apply(g, m, pg))
+
+def Laws.replay_rebuilds(ms, colours, cap, s):
+  rebuild_replay(ms, Core.new(colours, cap, s), {==})
