@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Builds the standalone app into build/app/hueometry.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+mkdir -p "$ROOT/build/app"
+cd "$ROOT/build/app"
+qmake6 "$ROOT/hueometry.pro" >/dev/null
+make -s -j"$(nproc)"
+echo "built $ROOT/build/app/hueometry"
