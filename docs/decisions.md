@@ -95,3 +95,19 @@ All defaults in plan.md section 10 were accepted, except:
   file needs an environment flag.
 - The scramble works in rounds of a random walk, a gather, and pouring a
   full column into the empty one; the pour is what mixes the bottom beads.
+
+## Interface (checkpoint 3)
+
+- The circle layout grows its pillars outwards like spokes from a carved
+  medallion, so tall pillars never stand in front of each other. Beads stack
+  from the centre out; keyboard order is clockwise from the top.
+- Qt's JavaScript engine has no object spread (`{ ...x }`); the shared
+  modules use `Object.assign`.
+- Quickshell only resolves the shared module's types that its `qmldir`
+  lists, so every component is listed and `bin/check` enforces it.
+- A refused move leaves the orb lifted, so the player can choose another
+  pillar; clicking the lifted pillar again (or Esc) puts it back.
+- Restart needs a held button or R pressed twice; quitting the app needs Q
+  pressed twice.
+- Par is hidden on the tutorial, the first two areas and the two smallest
+  free-play sizes.

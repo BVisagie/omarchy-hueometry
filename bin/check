@@ -35,8 +35,22 @@ npm test --silent
 step "native and JavaScript builds generate the same puzzles"
 tools/check/native.sh
 
+step "every component of the shared QML module is listed in its qmldir"
+# Quickshell (the plugin's engine) only sees types the qmldir lists
+for f in qml/Hueometry/*.qml; do
+  n=$(basename "$f" .qml)
+  grep -qE "^(singleton )?$n [0-9.]+ $n\.qml$" qml/Hueometry/qmldir || { echo "$n is missing from qml/Hueometry/qmldir" >&2; exit 1; }
+done
+
 step "QML tests (Qt's JavaScript engine)"
 QT_QPA_PLATFORM=offscreen QT_LOGGING_RULES="qt.qml.usedbeforedeclared=false" \
   /usr/lib/qt6/bin/qmltestrunner -input tests/qml
+
+step "standalone app: build, and the C++ host's tests"
+bin/build
+bin/test
+
+step "shell plugin: assemble and validate"
+bin/plugin --check
 
 printf '\nAll checks passed.\n'
