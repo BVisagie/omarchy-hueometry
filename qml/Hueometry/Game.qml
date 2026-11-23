@@ -173,6 +173,7 @@ Item {
   Jungle {
     anchors.fill: parent
     area: root.screen === "play" ? root.areaIndex(screens.item ? screens.item.ref : null) : root.lastArea
+    restored: root.screen === "play" && !!screens.item && !!screens.item.result
   }
 
   Loader {
