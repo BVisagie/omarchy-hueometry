@@ -1002,10 +1002,15 @@ function $gen_any_done(_cap_0, _b_0) {
 }
 
 function $gen_mixed(_colours_0, _cap_0, _b_0) {
+  const _beads_0 = nat_chk(_colours_0 * _cap_0);
   const _x_0 = (_cap_0 < 1 ? 0 : _cap_0 - 1);
   const _x_1 = nat_chk(_colours_0 * _x_0);
-  const _x_2 = $$gen_all_breaks(_b_0);
-  return $Bool_and($$Bool_not($$gen_any_done(_cap_0, _b_0)), $$Nat_is_le(nat_chk(2 * _x_1), nat_chk(3 * _x_2)));
+  const _x_2 = (_beads_0 < _cap_0 ? 0 : _beads_0 - _cap_0);
+  const _expected_0 = nat_chk(_x_1 * _x_2);
+  const _x_3 = $$gen_all_breaks(_b_0);
+  const _x_4 = nat_chk(5 * _x_3);
+  const _x_5 = (_beads_0 < 1 ? 0 : _beads_0 - 1);
+  return $Bool_and($$Bool_not($$gen_any_done(_cap_0, _b_0)), $$Nat_is_le(nat_chk(4 * _expected_0), nat_chk(_x_4 * _x_5)));
 }
 
 function $gen_sound(_colours_0, _cap_0, _b_0, _cert_0) {
@@ -1034,10 +1039,38 @@ function $gen_reverse_inverse($0, $1) {
   }
 }
 
+function $gen_cancel_push(_m_0, _kept_0) {
+  if (_kept_0.$ === "Nil") {
+    return {$: "Con", "head": _m_0, "tail": {$: "Nil"}};
+  } else {
+    const _t_0 = _kept_0["head"];
+    const _r_0 = _kept_0["tail"];
+    return $Bool_pick($$gen_is_move(_t_0, $$core_to(_m_0), $$core_from(_m_0)), _r_0, {$: "Con", "head": _m_0, "tail": {$: "Con", "head": _t_0, "tail": _r_0}});
+  }
+}
+
+function $gen_cancel($0, $1) {
+  for (;;) {
+    {
+      const _ms_0 = $0;
+      const _kept_0 = $1;
+      if (_ms_0.$ === "Nil") {
+        return _kept_0;
+      } else {
+        const _m_0 = _ms_0["head"];
+        const _r_0 = _ms_0["tail"];
+        $0 = _r_0;
+        $1 = $$gen_cancel_push(_m_0, _kept_0);
+        continue;
+      }
+    }
+  }
+}
+
 function $gen_candidate_fin(_w_0) {
   const _b_0 = _w_0["board"];
   const _done_0 = _w_0["done"];
-  return {$: "Puzzle", "board": _b_0, "cert": $$List_reverse($$gen_reverse_inverse(_done_0, {$: "Nil"}))};
+  return {$: "Puzzle", "board": _b_0, "cert": $$List_reverse($$gen_cancel($$List_reverse($$gen_reverse_inverse(_done_0, {$: "Nil"})), {$: "Nil"}))};
 }
 
 function $gen_candidate(_colours_0, _cap_0, _x_0, _steps_0) {
@@ -1059,24 +1092,30 @@ function $gen_attempt(_colours_0, _cap_0, _p_0, _rest_0) {
   return $gen_emit($$gen_accept(_colours_0, _cap_0, _b_0, _cert_0), {$: "Puzzle", "board": _b_0, "cert": _cert_0}, _rest_0);
 }
 
-function $gen_tries(_n_0, _colours_0, _cap_0, _x_0, _steps_0) {
+function $gen_rng_attempt(_seed_0, _n_0) {
+  const _x_0 = (_n_0 >>>0);
+  const _x_1 = (Math.imul(_x_0, 2246822519) >>> 0);
+  return $gen_rng_seed(((_seed_0 ^ _x_1) >>> 0));
+}
+
+function $gen_tries(_n_0, _colours_0, _cap_0, _seed_0, _steps_0) {
   if (_n_0 == 0) {
     return {$: "None"};
   } else {
     const _p_0 = (_n_0 - 1);
-    return $gen_attempt(_colours_0, _cap_0, $$gen_candidate(_colours_0, _cap_0, _x_0, _steps_0), run_clo($gen_tries_c0(_colours_0,_x_0,_cap_0,_steps_0,_p_0)));
+    return $gen_attempt(_colours_0, _cap_0, $$gen_candidate(_colours_0, _cap_0, $$gen_rng_attempt(_seed_0, _n_0), _steps_0), run_clo($gen_tries_c0(_cap_0,_p_0,_steps_0,_seed_0,_colours_0)));
   }
 }
 
-function $gen_tries_c0(_colours_0,_x_0,_cap_0,_steps_0,_p_0) {
-  return (_x_1) => {
-    return $gen_tries(_p_0, _colours_0, _cap_0, $$gen_rng_next($$gen_rng_next(_x_0)), _steps_0);
+function $gen_tries_c0(_cap_0,_p_0,_steps_0,_seed_0,_colours_0) {
+  return (_x_0) => {
+    return $gen_tries(_p_0, _colours_0, _cap_0, _seed_0, _steps_0);
   }
 }
 function $gen_generate(_colours_0, _cap_0, _seed_0) {
   const _x_0 = nat_chk(_colours_0 + 1);
   const _x_1 = nat_chk(_x_0 * _cap_0);
-  return $gen_tries(16, _colours_0, _cap_0, $$gen_rng_seed(_seed_0), nat_chk(4 * _x_1));
+  return $gen_tries(16, _colours_0, _cap_0, _seed_0, nat_chk(4 * _x_1));
 }
 
 function $hint_same_col(_a_0, _b_0) {
@@ -1193,11 +1232,11 @@ function $hint_on(_key_0, _b_0, _bs_0) {
     const _k_0 = _t_0["key"];
     const _x_0 = _t_0["board"];
     const _r_0 = _bs_0["tail"];
-    return $hint_on_hit((_key_0 === _k_0), _b_0, _x_0, run_clo($hint_on_c0(_key_0,_r_0,_b_0)));
+    return $hint_on_hit((_key_0 === _k_0), _b_0, _x_0, run_clo($hint_on_c0(_b_0,_r_0,_key_0)));
   }
 }
 
-function $hint_on_c0(_key_0,_r_0,_b_0) {
+function $hint_on_c0(_b_0,_r_0,_key_0) {
   return (_x_1) => {
     return $hint_on(_key_0, _b_0, _r_0);
   }
@@ -1292,7 +1331,7 @@ function $hint_buckets($0, $1) {
 function $hint_back_step(_k_0, _h_0, _b_0, _got_0, _rest_0) {
   const _a_0 = _got_0["fst"];
   const _here_0 = _got_0["snd"];
-  return $hint_lazy($$hint_on(_h_0, _b_0, _here_0), run_clo($hint_back_step_c0(_k_0)), run_clo($hint_back_step_c1(_a_0,_rest_0)));
+  return $hint_lazy($$hint_on(_h_0, _b_0, _here_0), run_clo($hint_back_step_c0(_k_0)), run_clo($hint_back_step_c1(_rest_0,_a_0)));
 }
 
 function $hint_back_step_c0(_k_0) {
@@ -1300,7 +1339,7 @@ function $hint_back_step_c0(_k_0) {
     return _k_0;
   }
 }
-function $hint_back_step_c1(_a_0,_rest_0) {
+function $hint_back_step_c1(_rest_0,_a_0) {
   return (_x_1) => {
     return run_tail(_rest_0, _a_0);
   }
@@ -1314,11 +1353,11 @@ function $hint_back_go(_n_0, _a_0, _g_0, _k_0) {
     const _b_0 = $$core_board(_u_0);
     const _h_0 = $$hint_hash(_b_0);
     const _x_0 = $$hint_slot(_h_0);
-    return $hint_back_step(_k_0, _h_0, _b_0, tup_new(_a_0, _a_0[_x_0 % _a_0.length]), run_clo($hint_back_go_c0(_p_0,_u_0,_k_0)));
+    return $hint_back_step(_k_0, _h_0, _b_0, tup_new(_a_0, _a_0[_x_0 % _a_0.length]), run_clo($hint_back_go_c0(_k_0,_p_0,_u_0)));
   }
 }
 
-function $hint_back_go_c0(_p_0,_u_0,_k_0) {
+function $hint_back_go_c0(_k_0,_p_0,_u_0) {
   return (_x_1) => {
     return $hint_back_go(_p_0, _x_1, _u_0, nat_chk(_k_0 + 1));
   }
@@ -1544,13 +1583,15 @@ const $$core_solved = $core_solved;
 const $$gen_sound = $gen_sound;
 const $$gen_mixed = $gen_mixed;
 const $$gen_inverse = $gen_inverse;
+const $$gen_cancel_push = $gen_cancel_push;
 const $$gen_reverse_inverse = $gen_reverse_inverse;
 const $$List_reverse = $List_reverse;
+const $$gen_cancel = $gen_cancel;
 const $$gen_solved_board = $gen_solved_board;
 const $$gen_rounds = $gen_rounds;
 const $$gen_accept = $gen_accept;
+const $$gen_rng_attempt = $gen_rng_attempt;
 const $$gen_candidate = $gen_candidate;
-const $$gen_rng_seed = $gen_rng_seed;
 const $$hint_same_col = $hint_same_col;
 const $$hint_same_board = $hint_same_board;
 const $$hint_mix = $hint_mix;
@@ -1658,10 +1699,13 @@ const $$hint_next_move = $hint_next_move;const BEND = {
   "gen:sound": run_lib((a0,a1,a2,a3) => run_loop($gen_sound(nat_in(a0),nat_in(a1),a2,a3)), 4),
   "gen:accept": run_lib((a0,a1,a2,a3) => run_loop($gen_accept(nat_in(a0),nat_in(a1),a2,a3)), 4),
   "gen:reverse_inverse": run_lib((a0,a1) => run_loop($gen_reverse_inverse(a0,a1)), 2),
+  "gen:cancel.push": run_lib((a0,a1) => run_loop($gen_cancel_push(a0,a1)), 2),
+  "gen:cancel": run_lib((a0,a1) => run_loop($gen_cancel(a0,a1)), 2),
   "gen:candidate.fin": run_lib((a0) => run_loop($gen_candidate_fin(a0)), 1),
   "gen:candidate": run_lib((a0,a1,a2,a3) => run_loop($gen_candidate(nat_in(a0),nat_in(a1),a2,nat_in(a3))), 4),
   "gen:emit": run_lib((a0,a1,a2) => run_loop($gen_emit(a0,a1,a2)), 3),
   "gen:attempt": run_lib((a0,a1,a2,a3) => run_loop($gen_attempt(nat_in(a0),nat_in(a1),a2,a3)), 4),
+  "gen:rng.attempt": run_lib((a0,a1) => run_loop($gen_rng_attempt(a0,nat_in(a1))), 2),
   "gen:tries": run_lib((a0,a1,a2,a3,a4) => run_loop($gen_tries(nat_in(a0),nat_in(a1),nat_in(a2),a3,nat_in(a4))), 5),
   "gen:generate": run_lib((a0,a1,a2) => run_loop($gen_generate(nat_in(a0),nat_in(a1),a2)), 3),
   "hint:same_col": run_lib((a0,a1) => run_loop($hint_same_col(a0,a1)), 2),

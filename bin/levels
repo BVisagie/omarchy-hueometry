@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Rebuilds qml/Hueometry/data/levels.json (a few minutes). Commit the result.
+# Rebuilds qml/Hueometry/js/levels.mjs and free.mjs (about half an hour).
+# Commit the result.
 set -euo pipefail
 # shellcheck source=bin/env.sh
 source "$(dirname "$0")/env.sh"
 cd "$ROOT"
-mkdir -p qml/Hueometry/data
 node --max-old-space-size=6000 tools/levels/build.mjs

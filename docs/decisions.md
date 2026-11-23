@@ -50,7 +50,10 @@ All defaults in plan.md section 10 were accepted, except:
   reloads a plugin on any write inside it).
 - The plugin has no launcher entry; the README documents a keybinding for
   `omarchy-shell shell summon io.github.bvisagie.hueometry '{}'`.
-- Both channels share one save folder; a lock file stops two copies writing.
+- Both channels share one save folder. Instead of a lock file (the plugin
+  cannot check whether the app's process is alive), progress only grows and
+  every save merges what is on disk first, so neither copy loses the other's
+  progress (`qml/Hueometry/js/store.mjs`).
 
 ## Verified before the build (gate zero, 2026-11-23)
 
@@ -79,9 +82,16 @@ All defaults in plan.md section 10 were accepted, except:
   (`tools/levels/solve.mjs`) and verified by the engine. `par` is its length.
   For Beginner and Easy the search is exact (`optimal: true`); harder levels
   use weighted A*, so their par is a known solution, never called optimal.
-- Hints follow the level's stored solution: the next move when the board is
-  on it, or how many moves to undo to get back. Free play (a random seed)
-  follows the generator's certificate, which is valid but long, and shows no
-  par.
+- Hints follow the puzzle's stored solution: the next move when the board is
+  on it, or how many moves to undo to get back.
+- Free play draws a random puzzle from a pool of pre-solved puzzles per
+  difficulty (`qml/Hueometry/js/free.mjs`), with seeds apart from the
+  levels, so its hints follow a short solution too. The generator's
+  certificate (valid but hundreds of moves long) is never used for hints.
+- Levels in an area are ordered by the solver's lower bound, which does not
+  depend on the search weight, then by par.
+- The level pack is generated as ES modules (`levels.mjs`, `free.mjs`), not
+  JSON: Qt's engine imports modules directly, while reading a local JSON
+  file needs an environment flag.
 - The scramble works in rounds of a random walk, a gather, and pouring a
   full column into the empty one; the pour is what mixes the bottom beads.

@@ -14,8 +14,32 @@ import ./engine/gen.bend as Gen
 
 # Reading a game
 # --------------
-# The laws read games through these accessors, so each is pinned to the
-# field it names.
+# The laws read games through these accessors and build them with these
+# functions, so each is pinned to what it names.
+
+law new_is_fresh:
+  for +c: Nat
+  for +k: Nat
+  for +b: List<&2, List<&2, Nat>>
+  {Core.new(c, k, b) == Core.Game{c, k, b, b, Nil{}} : Core.Game}
+
+law moves_is_history:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  {Core.moves(Core.Game{c, k, s, b, h}) == List.length(&2, Core.Move, h) : Nat}
+
+law replay_nothing:
+  for +g: Core.Game
+  {Core.replay(Nil{}, g) == g : Core.Game}
+
+law replay_in_order:
+  for +m: Core.Move
+  for +ms: List<&2, Core.Move>
+  for +g: Core.Game
+  {Core.replay(m <> ms, g) == Core.replay(ms, Core.apply(g, m)) : Core.Game}
 
 law reads_colours:
   for +c: Nat
@@ -248,8 +272,10 @@ law counts_moves:
 
 # Validity is kept
 # ----------------
-# A valid board stays valid after any move, after undoing a legal move, and
-# a restart of a game whose first board was valid is valid.
+# A valid board stays valid after any move. Every game reached by playing
+# moves (legal or not) from a valid first board has a valid board, and so
+# does undoing its last move; a restart of a game whose first board was
+# valid is valid.
 
 law valid_after_move:
   for +c: Nat
@@ -262,17 +288,23 @@ law valid_after_move:
   for +w: Spec.Holds(Spec.valid(c, k, b))
   Spec.Holds(Spec.valid(c, k, Core.board(Core.apply(Core.Game{c, k, s, b, h}, Core.Mv{i, j}))))
 
-law valid_after_undo:
+law valid_when_reached:
+  for +ms: List<&2, Core.Move>
   for +c: Nat
   for +k: Nat
   for +s: List<&2, List<&2, Nat>>
-  for +b: List<&2, List<&2, Nat>>
-  for +h: List<&2, Core.Move>
-  for +i: Nat
-  for +j: Nat
-  for e: {Spec.legal(k, b, i, j) == True{} : Bool}
-  for +w: Spec.Holds(Spec.valid(c, k, b))
-  Spec.Holds(Spec.valid(c, k, Core.board(Core.undo(Core.apply(Core.Game{c, k, s, b, h}, Core.Mv{i, j})))))
+  for +w: Spec.Holds(Spec.valid(c, k, s))
+  g = Core.replay(ms, Core.new(c, k, s))
+  Spec.Holds(Spec.valid(c, k, Core.board(g)))
+
+law valid_after_undo:
+  for +ms: List<&2, Core.Move>
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +w: Spec.Holds(Spec.valid(c, k, s))
+  g = Core.replay(ms, Core.new(c, k, s))
+  Spec.Holds(Spec.valid(c, k, Core.board(Core.undo(g))))
 
 law valid_after_restart:
   for +c: Nat

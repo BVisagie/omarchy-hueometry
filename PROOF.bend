@@ -1089,11 +1089,70 @@ def valid_fin(+c: Nat, +k: Nat, -s: List<&2, List<&2, Nat>>, +b: List<&2, List<&
 def Laws.valid_after_move(c, k, s, b, h, i, j, w):
   valid_fin(c, k, s, b, h, i, j, Spec.legal(k, b, i, j), {==}, w)
 
-def Laws.valid_after_undo(c, k, s, b, h, i, j, e, w):
-  +g = {Core.Game{c, k, s, b, h} : Core.Game}
-  +m = {Core.Mv{i, j} : Core.Move}
-  %Equal.sym(Core.Game, Core.undo(Core.apply(g, m)), g, Laws.undo_takes_back(g, m, e)) : Spec.Holds(Spec.valid(c, k, Core.board(_)))
+# Every reached game keeps colours' cap k, a valid board, and a valid board
+# after one undo.
+def Reached(+c: Nat, +k: Nat, +g: Core.Game) -> Type:
+  {Core.cap(g) == k : Nat} & Spec.Holds(Spec.valid(c, k, Core.board(g)) && Spec.valid(c, k, Core.board(Core.undo(g))))
+
+def undo_cap(+c: Nat, -k2: Nat, -k: Nat, +c2: Nat, +s: List<&2, List<&2, Nat>>, +b: List<&2, List<&2, Nat>>, +h: List<&2, Core.Move>,
+  e: {k2 == k : Nat}, w: Spec.Holds(Spec.valid(c, k, Core.board(Core.undo(Core.Game{c2, k2, s, b, h})))))
+  -> Spec.Holds(Spec.valid(c, k, Core.board(Core.undo(Core.Game{c2, k, s, b, h})))):
+  %e : Spec.Holds(Spec.valid(c, k, Core.board(Core.undo(Core.Game{c2, _, s, b, h}))))
   w
+
+def valid_rw(+c: Nat, +k: Nat, -x: List<&2, List<&2, Nat>>, -y: List<&2, List<&2, Nat>>, e: {x == y : List<&2, List<&2, Nat>>}, w: Spec.Holds(Spec.valid(c, k, y)))
+  -> Spec.Holds(Spec.valid(c, k, x)):
+  %Equal.sym(List<&2, List<&2, Nat>>, x, y, e) : Spec.Holds(Spec.valid(c, k, _))
+  w
+
+def reached_fin(+c: Nat, +k: Nat, +c2: Nat, +s: List<&2, List<&2, Nat>>, +b: List<&2, List<&2, Nat>>, +h: List<&2, Core.Move>, +i: Nat, +j: Nat,
+  ok: Bool, e: {Spec.legal(k, b, i, j) == ok : Bool}, +wv: Spec.Holds(Spec.valid(c, k, b)), wu: Spec.Holds(Spec.valid(c, k, Core.board(Core.undo(Core.Game{c2, k, s, b, h})))))
+  -> Reached(c, k, Core.apply.fin(c2, k, s, b, h, i, j, ok)):
+  match ok:
+    case True{}:
+      +wl = holds_true(Spec.legal(k, b, i, j), e)
+      +wm = legal_mv(k, b, i, j, wl)
+      +t = Core.transfer(b, i, j)
+      ({==}, and_intro(Spec.valid(c, k, t), Spec.valid(c, k, Core.transfer(t, j, i)),
+        valid_transfer(c, k, b, i, j, wl, wv),
+        valid_rw(c, k, Core.transfer(t, j, i), b, back_go(b, i, j, Spec.column(b, i), {==}, mv_src(b, i, j, wm), mv_i(b, i, j, wm), mv_j(b, i, j, wm), mv_ne(b, i, j, wm)), wv)))
+    case False{}:
+      ({==}, and_intro(Spec.valid(c, k, b), Spec.valid(c, k, Core.board(Core.undo(Core.Game{c2, k, s, b, h}))), wv, wu))
+
+def reached_apply(+c: Nat, +k: Nat, g: Core.Game, m: Core.Move, r: Reached(c, k, g)) -> Reached(c, k, Core.apply(g, m)):
+  match g m:
+    case Core.Game{+c2, +k2, +s, +b, +h} Core.Mv{+i, +j}:
+      (ek0, both) = r
+      +ek = ek0
+      +both2 = both
+      +wv = and_l(Spec.valid(c, k, b), Spec.valid(c, k, Core.board(Core.undo(Core.Game{c2, k2, s, b, h}))), both2)
+      +wu = and_r(Spec.valid(c, k, b), Spec.valid(c, k, Core.board(Core.undo(Core.Game{c2, k2, s, b, h}))), both2)
+      %Equal.sym(Nat, k2, k, ek) : Reached(c, k, Core.apply.fin(c2, _, s, b, h, i, j, Spec.legal(_, b, i, j)))
+      reached_fin(c, k, c2, s, b, h, i, j, Spec.legal(k, b, i, j), {==}, wv, undo_cap(c, k2, k, c2, s, b, h, ek, wu))
+
+def reached_replay(ms: List<&2, Core.Move>, +c: Nat, +k: Nat, +g: Core.Game, r: Reached(c, k, g)) -> Reached(c, k, Core.replay(ms, g)):
+  match ms:
+    case Nil{}:
+      r
+    case +m <> rest:
+      reached_replay(rest, c, k, Core.apply(g, m), reached_apply(c, k, g, m, r))
+
+def reached_new(+c: Nat, +k: Nat, +s: List<&2, List<&2, Nat>>, +w: Spec.Holds(Spec.valid(c, k, s))) -> Reached(c, k, Core.new(c, k, s)):
+  ({==}, and_intro(Spec.valid(c, k, s), Spec.valid(c, k, s), w, w))
+
+def reached_board(+c: Nat, +k: Nat, +g: Core.Game, r: Reached(c, k, g)) -> Spec.Holds(Spec.valid(c, k, Core.board(g))):
+  (ek, both) = r
+  and_l(Spec.valid(c, k, Core.board(g)), Spec.valid(c, k, Core.board(Core.undo(g))), both)
+
+def reached_undo(+c: Nat, +k: Nat, +g: Core.Game, r: Reached(c, k, g)) -> Spec.Holds(Spec.valid(c, k, Core.board(Core.undo(g)))):
+  (ek, both) = r
+  and_r(Spec.valid(c, k, Core.board(g)), Spec.valid(c, k, Core.board(Core.undo(g))), both)
+
+def Laws.valid_when_reached(ms, c, k, s, w):
+  reached_board(c, k, Core.replay(ms, Core.new(c, k, s)), reached_replay(ms, c, k, Core.new(c, k, s), reached_new(c, k, s, w)))
+
+def Laws.valid_after_undo(ms, c, k, s, w):
+  reached_undo(c, k, Core.replay(ms, Core.new(c, k, s)), reached_replay(ms, c, k, Core.new(c, k, s), reached_new(c, k, s, w)))
 
 # Legal targets
 # -------------
@@ -1293,17 +1352,42 @@ def attempt_ok(+colours: Nat, +cap: Nat, p: Gen.Puzzle, -b: List<&2, List<&2, Na
     case Gen.Puzzle{+pb, +pc}:
       emit_ok(colours, cap, pb, pc, b, cert, rest, ih, Gen.accept(colours, cap, pb, pc), {==}, e)
 
-def tries_ok(n: Nat, +colours: Nat, +cap: Nat, +x: U32, +steps: Nat, -b: List<&2, List<&2, Nat>>, -cert: List<&2, Core.Move>,
-  e: {Gen.tries(n, colours, cap, x, steps) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>})
+def tries_ok(+n: Nat, +colours: Nat, +cap: Nat, +seed: U32, +steps: Nat, -b: List<&2, List<&2, Nat>>, -cert: List<&2, Core.Move>,
+  e: {Gen.tries(n, colours, cap, seed, steps) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>})
   -> Spec.Holds(Gen.sound(colours, cap, b, cert)):
   match n:
     case 0n:
       Empty.absurd(Spec.Holds(Gen.sound(colours, cap, b, cert)), none_ne_some(Gen.Puzzle{b, cert}, e))
     case 1n+p:
-      attempt_ok(colours, cap, Gen.candidate(colours, cap, x, steps), b, cert,
-        u => Gen.tries(p, colours, cap, Gen.rng.next(Gen.rng.next(x)), steps),
-        e2 => tries_ok(p, colours, cap, Gen.rng.next(Gen.rng.next(x)), steps, b, cert, e2),
+      attempt_ok(colours, cap, Gen.candidate(colours, cap, Gen.rng.attempt(seed, 1n+p), steps), b, cert,
+        u => Gen.tries(p, colours, cap, seed, steps),
+        e2 => tries_ok(p, colours, cap, seed, steps, b, cert, e2),
         e)
 
 def Laws.generated_puzzles_solve(colours, cap, seed, b, cert, e):
-  tries_ok(16n, colours, cap, Gen.rng.seed(seed), Nat.mul(4n, Nat.mul(1n+colours, cap)), b, cert, e)
+  tries_ok(16n, colours, cap, seed, Nat.mul(4n, Nat.mul(1n+colours, cap)), b, cert, e)
+
+
+# Building and reading games
+# --------------------------
+
+def Laws.new_is_fresh(c, k, b):
+  {==}
+
+def length_is(h: List<&2, Core.Move>, +n: Nat) -> {Core.length.go(h, n) == Nat.add(List.length(&2, Core.Move, h), n) : Nat}:
+  match h:
+    case Nil{}:
+      {==}
+    case m <> +r:
+      Equal.trans(Nat, Core.length.go(r, 1n+n), Nat.add(List.length(&2, Core.Move, r), 1n+n), 1n+Nat.add(List.length(&2, Core.Move, r), n),
+        length_is(r, 1n+n), add_succ_r(List.length(&2, Core.Move, r), n))
+
+def Laws.moves_is_history(c, k, s, b, h):
+  Equal.trans(Nat, Core.length.go(h, 0n), Nat.add(List.length(&2, Core.Move, h), 0n), List.length(&2, Core.Move, h),
+    length_is(h, 0n), add_zero_r(List.length(&2, Core.Move, h)))
+
+def Laws.replay_nothing(g):
+  {==}
+
+def Laws.replay_in_order(m, ms, g):
+  {==}

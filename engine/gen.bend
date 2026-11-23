@@ -239,10 +239,14 @@ def any_done(+cap: Nat, b: List<&2, List<&2, Nat>>) -> Bool:
     case +c <> r:
       (Bool.not(Spec.is_empty(c)) && Spec.uniform(c) && Nat.is_eq(Spec.size(c), cap)) || any_done(cap, r)
 
-# Well mixed: no column is already finished, and at least two thirds of the
-# possible colour changes inside columns are there.
+# Well mixed: no column is already finished, and the colour changes inside
+# columns are at least 80% of what a random board has on average. Of the
+# colours * (cap - 1) neighbouring pairs, a random board has a fraction
+# (colours * cap - cap) / (colours * cap - 1) of different colours.
 def mixed(+colours: Nat, +cap: Nat, +b: List<&2, List<&2, Nat>>) -> Bool:
-  Bool.not(any_done(cap, b)) && Nat.is_le(Nat.mul(2n, Nat.mul(colours, Nat.sub(cap, 1n))), Nat.mul(3n, all_breaks(b)))
+  +beads = Nat.mul(colours, cap)
+  +expected = Nat.mul(Nat.mul(colours, Nat.sub(cap, 1n)), Nat.sub(beads, cap))
+  Bool.not(any_done(cap, b)) && Nat.is_le(Nat.mul(4n, expected), Nat.mul(Nat.mul(5n, all_breaks(b)), Nat.sub(beads, 1n)))
 
 # Generating
 # ----------
@@ -263,6 +267,23 @@ def reverse_inverse(ms: List<&2, Core.Move>, acc: List<&2, Core.Move>) -> List<&
     case m <> r:
       reverse_inverse(r, inverse(m) <> acc)
 
+# m followed by its inverse returns to the same board, so such neighbours
+# are dropped (repeatedly, as a stack): the certificate stays a solution, only
+# shorter. Answers the kept moves newest first.
+def cancel.push(+m: Core.Move, kept: List<&2, Core.Move>) -> List<&2, Core.Move>:
+  match kept:
+    case Nil{}:
+      [m]
+    case +t <> +r:
+      Bool.pick(List<&2, Core.Move>, is_move(t, Core.to(m), Core.from(m)), r, m <> t <> r)
+
+def cancel(ms: List<&2, Core.Move>, kept: List<&2, Core.Move>) -> List<&2, Core.Move>:
+  match ms:
+    case Nil{}:
+      kept
+    case +m <> r:
+      cancel(r, cancel.push(m, kept))
+
 # One scramble from the solved board: 2 * colours + 2 rounds of `steps`
 # random moves, gather and pour. The moves are newest first, so the
 # certificate is each move's inverse in that same order (the newest move is
@@ -270,7 +291,7 @@ def reverse_inverse(ms: List<&2, Core.Move>, acc: List<&2, Core.Move>) -> List<&
 def candidate.fin(w: Walk) -> Puzzle:
   match w:
     case Walk{cap, b, x, last, done}:
-      Puzzle{b, List.reverse(&2, Core.Move, reverse_inverse(done, Nil{}))}
+      Puzzle{b, List.reverse(&2, Core.Move, cancel(List.reverse(&2, Core.Move, reverse_inverse(done, Nil{})), Nil{}))}
 
 def candidate(+colours: Nat, +cap: Nat, +x: U32, +steps: Nat) -> Puzzle:
   # `last` starts as a move between columns that do not exist, so no first
@@ -290,15 +311,22 @@ def attempt(+colours: Nat, +cap: Nat, p: Puzzle, rest: Unit -> Maybe<&2, Puzzle>
     case Puzzle{+b, +cert}:
       emit(accept(colours, cap, b, cert), Puzzle{b, cert}, rest)
 
-def tries(n: Nat, +colours: Nat, +cap: Nat, +x: U32, +steps: Nat) -> Maybe<&2, Puzzle>:
+# the random state for attempt n of a seed: each attempt has its own stream,
+# so a seed whose first scramble is rejected does not borrow another seed's
+def rng.attempt(+seed: U32, +n: Nat) -> U32:
+  rng.seed(U32.xor(seed, U32.mul(U32.from_nat(n), 2246822519)))
+
+def tries(+n: Nat, +colours: Nat, +cap: Nat, +seed: U32, +steps: Nat) -> Maybe<&2, Puzzle>:
   match n:
     case 0n:
       None{}
     case 1n+p:
-      attempt(colours, cap, candidate(colours, cap, x, steps), u => tries(p, colours, cap, rng.next(rng.next(x)), steps))
+      attempt(colours, cap, candidate(colours, cap, rng.attempt(seed, n), steps), u => tries(p, colours, cap, seed, steps))
 
 # A puzzle of `colours` colours in columns of `cap`, from `seed`, or None if
 # 16 scrambles in a row were not mixed enough (or colours or cap is 0).
 # Each scramble makes about 8 * colours * (colours + 1) * cap random moves.
+# Seed 0 and seed 2654435769 give the same puzzle (xorshift cannot start
+# from 0); every other seed has its own.
 def generate(+colours: Nat, +cap: Nat, +seed: U32) -> Maybe<&2, Puzzle>:
-  tries(16n, colours, cap, rng.seed(seed), Nat.mul(4n, Nat.mul(1n+colours, cap)))
+  tries(16n, colours, cap, seed, Nat.mul(4n, Nat.mul(1n+colours, cap)))

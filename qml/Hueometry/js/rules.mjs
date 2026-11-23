@@ -41,11 +41,11 @@ export function isIndex(n) {
   return Number.isSafeInteger(n) && n >= 0 && n < 2 ** 31;
 }
 
-// The largest puzzles the game supports. The engine itself has no limit, but
-// Bend's JavaScript lane spends stack on long lists, so the adapter refuses
-// sizes no level or setting uses.
-export const MAX_COLOURS = 12;
-export const MAX_CAP = 20;
+// The largest puzzles the game supports (the biggest level is 6 colours of
+// 10). The engine has no limit, but bigger boards cost time no player should
+// wait for, so the adapter refuses them.
+export const MAX_COLOURS = 8;
+export const MAX_CAP = 12;
 const sizeOk = (colours, cap) => isIndex(colours) && isIndex(cap) && colours <= MAX_COLOURS && cap <= MAX_CAP;
 
 const REASONS = {
@@ -84,7 +84,8 @@ const fromMoves = (l) => array(l).map((m) => ({ from: m.from, to: m.to }));
 // A puzzle from a seed (a 32-bit number): { columns, solution } where the
 // solution (oldest move first) is valid but usually long; or null.
 export function generate(colours, cap, seed) {
-  if (!sizeOk(colours, cap) || !Number.isInteger(seed)) return null;
+  // one colour, or columns of one bead, can never be mixed: answer at once
+  if (!sizeOk(colours, cap) || colours < 2 || cap < 2 || !Number.isInteger(seed)) return null;
   const out = E.generate(colours, cap, seed >>> 0);
   if (out.$ !== "Some") return null;
   return { columns: fromBoard(out.value.board), solution: fromMoves(out.value.cert) };
@@ -95,6 +96,7 @@ export function generate(colours, cap, seed) {
 // { kind: "play", from, to }, { kind: "back", steps } (undo that many moves
 // to return to the solution), { kind: "solved" } or { kind: "none" }.
 export function hint(game, solution) {
+  if (!Array.isArray(solution)) return { kind: "none" };
   const h = E.hint(game, toMoves(solution));
   switch (h.$) {
     case "Play": return { kind: "play", from: h.move.from, to: h.move.to };

@@ -21,6 +21,13 @@ bin/proof
 step "engine.mjs matches the Bend sources"
 bin/engine --check
 
+step "no shipped file is over the marketplace scanner's 512 KiB"
+big=$(find qml -type f -size +512k)
+if [[ -n "$big" ]]; then
+  echo "too big for the marketplace scan: $big" >&2
+  exit 1
+fi
+
 step "engine tests (node)"
 [[ -d node_modules ]] || npm ci --no-audit --no-fund
 npm test --silent
