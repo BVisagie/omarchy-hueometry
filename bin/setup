@@ -13,7 +13,7 @@ fetch() { # url sha256 out
   echo "$2  $3" | sha256sum -c --quiet -
 }
 
-if [[ "$(bend version 2>/dev/null)" != *"$BEND_VERSION"* ]]; then
+if [[ "$(bend version 2>/dev/null)" != "bend $BEND_VERSION" ]]; then
   echo "Installing Bend $BEND_VERSION"
   fetch "https://github.com/bendlang/bend/releases/download/v$BEND_VERSION/bend-$BEND_VERSION-linux-x64.tar.gz" \
     "$BEND_SHA256" "$tmp/bend.tar.gz"
@@ -32,7 +32,7 @@ if ! command -v elan >/dev/null; then
 fi
 # Bend runs this toolchain from ~/.elan/toolchains directly, so your default
 # Lean version is left alone.
-elan toolchain install "$LEAN_TOOLCHAIN" >/dev/null 2>&1 || true
+elan toolchain install "$LEAN_TOOLCHAIN"
 
 bend version
-"$HOME/.elan/toolchains/${LEAN_TOOLCHAIN//[\/:]/--}/bin/lean" --version
+elan run "$LEAN_TOOLCHAIN" lean --version

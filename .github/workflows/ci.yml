@@ -35,4 +35,6 @@ jobs:
         env:
           # the commits this run must check for the Laws-Change rule
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: bin/check "$BASE"
+          # the authored head, not the merge commit GitHub checks out for a PR
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: bin/check "$BASE" "$HEAD_SHA"
