@@ -29,7 +29,8 @@ bad=0
 while read -r sha; do
   [[ -n "$sha" ]] || continue
   if git rev-parse --verify --quiet "$sha^2" >/dev/null; then
-    files=$(git show --no-renames --format= --name-only "$sha" -- LAWS.bend SPEC.bend)
+    # --cc shows only hunks that differ from every parent
+    files=$(git show --cc --no-renames --format= "$sha" -- LAWS.bend SPEC.bend | sed -n "s|^diff --cc \(.*\)$|\1|p")
   elif git rev-parse --verify --quiet "$sha^1" >/dev/null; then
     files=$(git diff --no-renames --name-only "$sha^1" "$sha" -- LAWS.bend SPEC.bend)
   else
