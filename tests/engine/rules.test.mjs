@@ -29,6 +29,8 @@ test("invalid boards are refused", () => {
   assert.equal(R.valid(2, 2, Array(3)), false);
   assert.equal(R.valid(100000, 2, []), false);
   assert.equal(R.valid(2, 2, [[0, 1], [1, 0], [], []]), false);
+  assert.equal(R.valid(10000, 1, Array.from({ length: 10001 }, () => [])), false);
+  assert.equal(R.generate(3, 30000, 1), null);
 });
 
 const LEVELS = [[3, 3], [4, 4], [5, 5], [6, 6], [6, 10]];
@@ -174,12 +176,13 @@ test("a hint far from the solution answers quickly and without stack growth", ()
   assert.deepEqual(R.hint(g, pack.solution), { kind: "play", from: 0, to: 2 });
   assert.equal(R.replay(g, pack.solution).history.$, "Con");
   assert.ok(R.solved(R.replay(g, pack.solution)));
-  // 30,000 moves away (back and forth), then one more step off the path
-  for (let k = 0; k < 30000; k++) g = R.play(g, k % 2 === 0 ? 0 : 2, k % 2 === 0 ? 2 : 0).game;
+  // step off the path first, then 30,000 moves between two boards that are
+  // both off it: the way back is all 30,001 moves
   g = R.play(g, 1, 2).game;
+  for (let k = 0; k < 30000; k++) g = R.play(g, k % 2 === 0 ? 0 : 2, k % 2 === 0 ? 2 : 0).game;
   const t = Date.now();
   const h = R.hint(g, pack.solution);
   assert.equal(h.kind, "back");
-  assert.equal(h.steps, 1);
+  assert.equal(h.steps, 30001);
   assert.ok(Date.now() - t < 2000);
 });

@@ -41,6 +41,13 @@ export function isIndex(n) {
   return Number.isSafeInteger(n) && n >= 0 && n < 2 ** 31;
 }
 
+// The largest puzzles the game supports. The engine itself has no limit, but
+// Bend's JavaScript lane spends stack on long lists, so the adapter refuses
+// sizes no level or setting uses.
+export const MAX_COLOURS = 12;
+export const MAX_CAP = 20;
+const sizeOk = (colours, cap) => isIndex(colours) && isIndex(cap) && colours <= MAX_COLOURS && cap <= MAX_CAP;
+
 const REASONS = {
   NoSuchColumn: "no-such-column",
   SameColumn: "same-column",
@@ -51,7 +58,7 @@ const REASONS = {
 // Is this a valid puzzle: colours + 1 columns of at most cap beads, exactly
 // cap beads of each colour 0 .. colours - 1, and nothing else?
 export function valid(colours, cap, columns) {
-  if (!isIndex(colours) || !isIndex(cap) || !Array.isArray(columns)) return false;
+  if (!sizeOk(colours, cap) || !Array.isArray(columns)) return false;
   if (columns.length !== colours + 1) return false;
   for (let i = 0; i < columns.length; i++) {
     const c = columns[i];
@@ -77,7 +84,7 @@ const fromMoves = (l) => array(l).map((m) => ({ from: m.from, to: m.to }));
 // A puzzle from a seed (a 32-bit number): { columns, solution } where the
 // solution (oldest move first) is valid but usually long; or null.
 export function generate(colours, cap, seed) {
-  if (!isIndex(colours) || !isIndex(cap) || !Number.isInteger(seed)) return null;
+  if (!sizeOk(colours, cap) || !Number.isInteger(seed)) return null;
   const out = E.generate(colours, cap, seed >>> 0);
   if (out.$ !== "Some") return null;
   return { columns: fromBoard(out.value.board), solution: fromMoves(out.value.cert) };
