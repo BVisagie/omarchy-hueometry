@@ -71,8 +71,9 @@ A colour-sorting puzzle for Omarchy 4.5+. `docs/plan.md` is the design;
 - `bin/setup` installs the pinned Bend and Lean into your home folder.
 - `bin/proof` runs `bend PROOF.bend --verdict`; it must print ALL PROOFS
   CHECK. Run it after any change under `engine/` or to a `.bend` file.
-- `bin/engine` rebuilds `engine/dist/engine.mjs`. Commit the result; never
-  edit that file by hand.
+- `bin/engine` rebuilds `qml/Hueometry/js/engine.mjs` from `engine/api.bend`.
+  Commit the result; never edit that file by hand. Only
+  `qml/Hueometry/js/rules.mjs` imports it.
 - `tools/audio/synth.py` regenerates `assets/audio/`. Commit the output and
   update `ASSETS.md`.
 - `bin/check` runs everything CI runs. Run it before every commit you push.

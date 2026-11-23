@@ -40,7 +40,9 @@ All defaults in plan.md section 10 were accepted, except:
   `qt6-multimedia` is not a dependency of Quickshell or Omarchy.
 - Images are PNG or JPEG, not WebP: `qt6-imageformats` is not guaranteed.
 - The engine is exposed through a generated wrapper with named exports.
-- `engine/dist/engine.mjs` must stay under 512 KiB, the marketplace scanner's
+- The generated engine lives at `qml/Hueometry/js/engine.mjs` (not
+  `engine/dist/`), so the shared QML module is self-contained for both hosts.
+  It must stay under 512 KiB, the marketplace scanner's
   per-file limit.
 - Hard time caps in the generator; textures capped to the screen; the plugin
   overlay is not kept loaded, so closing it frees everything.
