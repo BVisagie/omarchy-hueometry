@@ -65,9 +65,9 @@ function f32_read(s) {
     s.replace(/inf\w*/i, "Infinity"))} : {$: "None"};
 }
 
-const f32_round = function f32_round(s) {
+function f32_round(s) {
   throw "hueometry: F32 text is not supported in this build";
-};
+}
 
 const char_new = function char_new(c) {
   return c < 55296 || c >= 57344 && c <= 1114111 ? String.fromCodePoint(c) : String.fromCharCode(56320, c >>> 22, c >>> 11 & 2047, c & 2047);
@@ -166,6 +166,98 @@ function io_eff(k, run) {
 }
 // Program
 // =======
+
+const $$___SPEC_size = $___SPEC_size;
+const $$___SPEC_width = $___SPEC_width;
+const $$Bool_and = $Bool_and;
+const $$Nat_is_eq = $Nat_is_eq;
+const $$Bool_not = $Bool_not;
+const $$___SPEC_column = $___SPEC_column;
+const $$___SPEC_is_empty = $___SPEC_is_empty;
+const $$___SPEC_movable = $___SPEC_movable;
+const $$___SPEC_has = $___SPEC_has;
+const $$___SPEC_count_col = $___SPEC_count_col;
+const $$___SPEC_count = $___SPEC_count;
+const $$___SPEC_total = $___SPEC_total;
+const $$Nat_is_le = $Nat_is_le;
+const $$___SPEC_fits = $___SPEC_fits;
+const $$___SPEC_counts_ok = $___SPEC_counts_ok;
+const $$___SPEC_all_colour = $___SPEC_all_colour;
+const $$___SPEC_columns_with = $___SPEC_columns_with;
+const $$___SPEC_empties = $___SPEC_empties;
+const $$___SPEC_one_column_each = $___SPEC_one_column_each;
+const $$___SPEC_uniform = $___SPEC_uniform;
+const $$___SPEC_occupied_full_uniform = $___SPEC_occupied_full_uniform;
+const $$core_history = $core_history;
+const $$core_oldest_first = $core_oldest_first;
+const $$core_set_col = $core_set_col;
+const $$core_transfer = $core_transfer;
+const $$___SPEC_legal = $___SPEC_legal;
+const $$Bool_pick = $Bool_pick;
+const $$core_apply = $core_apply;
+const $$core_lifted = $core_lifted;
+const $$core_why = $core_why;
+const $$core_legal_move = $core_legal_move;
+const $$gen_column_of = $gen_column_of;
+const $$gen_solved_go = $gen_solved_go;
+const $$gen_moves_from = $gen_moves_from;
+const $$core_targets_go = $core_targets_go;
+const $$List_append = $List_append;
+const $$core_from = $core_from;
+const $$core_to = $core_to;
+const $$gen_drop_move = $gen_drop_move;
+const $$gen_is_move = $gen_is_move;
+const $$List_is_empty = $List_is_empty;
+const $$core_length_go = $core_length_go;
+const $$gen_rng_below = $gen_rng_below;
+const $$gen_rng_next = $gen_rng_next;
+const $$gen_legal_moves = $gen_legal_moves;
+const $$gen_walk_pick = $gen_walk_pick;
+const $$gen_walk_step = $gen_walk_step;
+const $$gen_room_go = $gen_room_go;
+const $$gen_gather_step = $gen_gather_step;
+const $$gen_pour_step = $gen_pour_step;
+const $$gen_fewest_go = $gen_fewest_go;
+const $$gen_gather = $gen_gather;
+const $$gen_walk = $gen_walk;
+const $$gen_round_gather = $gen_round_gather;
+const $$gen_breaks_go = $gen_breaks_go;
+const $$gen_breaks = $gen_breaks;
+const $$gen_all_breaks = $gen_all_breaks;
+const $$gen_any_done = $gen_any_done;
+const $$___SPEC_valid = $___SPEC_valid;
+const $$___SPEC_solved = $___SPEC_solved;
+const $$core_new = $core_new;
+const $$core_replay = $core_replay;
+const $$core_solved = $core_solved;
+const $$gen_sound = $gen_sound;
+const $$gen_mixed = $gen_mixed;
+const $$gen_inverse = $gen_inverse;
+const $$gen_cancel_push = $gen_cancel_push;
+const $$gen_reverse_inverse = $gen_reverse_inverse;
+const $$List_reverse = $List_reverse;
+const $$gen_cancel = $gen_cancel;
+const $$gen_solved_board = $gen_solved_board;
+const $$gen_rounds = $gen_rounds;
+const $$gen_accept = $gen_accept;
+const $$gen_rng_attempt = $gen_rng_attempt;
+const $$gen_candidate = $gen_candidate;
+const $$hint_same_col = $hint_same_col;
+const $$hint_same_board = $hint_same_board;
+const $$hint_mix = $hint_mix;
+const $$hint_hash_col = $hint_hash_col;
+const $$core_board = $core_board;
+const $$hint_hash = $hint_hash;
+const $$hint_slot = $hint_slot;
+const $$hint_bucket_add = $hint_bucket_add;
+const $$hint_on = (a0,a1,a2) => run_loop($hint_on(a0,a1,a2));
+const $$core_undo = $core_undo;
+const $$core_restart = $core_restart;
+const $$hint_boards = $hint_boards;
+const $$hint_buckets = $hint_buckets;
+const $$core_moves = $core_moves;
+const $$hint_back_go = (a0,a1,a2,a3) => run_loop($hint_back_go(a0,a1,a2,a3));
+const $$hint_next_move = $hint_next_move;
 
 function $___SPEC_Holds(_b_0) {
   if (_b_0) {
@@ -1517,97 +1609,7 @@ function $List_reverse_go($0, $1) {
   }
 }
 
-const $$___SPEC_size = $___SPEC_size;
-const $$___SPEC_width = $___SPEC_width;
-const $$Bool_and = $Bool_and;
-const $$Nat_is_eq = $Nat_is_eq;
-const $$Bool_not = $Bool_not;
-const $$___SPEC_column = $___SPEC_column;
-const $$___SPEC_is_empty = $___SPEC_is_empty;
-const $$___SPEC_movable = $___SPEC_movable;
-const $$___SPEC_has = $___SPEC_has;
-const $$___SPEC_count_col = $___SPEC_count_col;
-const $$___SPEC_count = $___SPEC_count;
-const $$___SPEC_total = $___SPEC_total;
-const $$Nat_is_le = $Nat_is_le;
-const $$___SPEC_fits = $___SPEC_fits;
-const $$___SPEC_counts_ok = $___SPEC_counts_ok;
-const $$___SPEC_all_colour = $___SPEC_all_colour;
-const $$___SPEC_columns_with = $___SPEC_columns_with;
-const $$___SPEC_empties = $___SPEC_empties;
-const $$___SPEC_one_column_each = $___SPEC_one_column_each;
-const $$___SPEC_uniform = $___SPEC_uniform;
-const $$___SPEC_occupied_full_uniform = $___SPEC_occupied_full_uniform;
-const $$core_history = $core_history;
-const $$core_oldest_first = $core_oldest_first;
-const $$core_set_col = $core_set_col;
-const $$core_transfer = $core_transfer;
-const $$___SPEC_legal = $___SPEC_legal;
-const $$Bool_pick = $Bool_pick;
-const $$core_apply = $core_apply;
-const $$core_lifted = $core_lifted;
-const $$core_why = $core_why;
-const $$core_legal_move = $core_legal_move;
-const $$gen_column_of = $gen_column_of;
-const $$gen_solved_go = $gen_solved_go;
-const $$gen_moves_from = $gen_moves_from;
-const $$core_targets_go = $core_targets_go;
-const $$List_append = $List_append;
-const $$core_from = $core_from;
-const $$core_to = $core_to;
-const $$gen_drop_move = $gen_drop_move;
-const $$gen_is_move = $gen_is_move;
-const $$List_is_empty = $List_is_empty;
-const $$core_length_go = $core_length_go;
-const $$gen_rng_below = $gen_rng_below;
-const $$gen_rng_next = $gen_rng_next;
-const $$gen_legal_moves = $gen_legal_moves;
-const $$gen_walk_pick = $gen_walk_pick;
-const $$gen_walk_step = $gen_walk_step;
-const $$gen_room_go = $gen_room_go;
-const $$gen_gather_step = $gen_gather_step;
-const $$gen_pour_step = $gen_pour_step;
-const $$gen_fewest_go = $gen_fewest_go;
-const $$gen_gather = $gen_gather;
-const $$gen_walk = $gen_walk;
-const $$gen_round_gather = $gen_round_gather;
-const $$gen_breaks_go = $gen_breaks_go;
-const $$gen_breaks = $gen_breaks;
-const $$gen_all_breaks = $gen_all_breaks;
-const $$gen_any_done = $gen_any_done;
-const $$___SPEC_valid = $___SPEC_valid;
-const $$___SPEC_solved = $___SPEC_solved;
-const $$core_new = $core_new;
-const $$core_replay = $core_replay;
-const $$core_solved = $core_solved;
-const $$gen_sound = $gen_sound;
-const $$gen_mixed = $gen_mixed;
-const $$gen_inverse = $gen_inverse;
-const $$gen_cancel_push = $gen_cancel_push;
-const $$gen_reverse_inverse = $gen_reverse_inverse;
-const $$List_reverse = $List_reverse;
-const $$gen_cancel = $gen_cancel;
-const $$gen_solved_board = $gen_solved_board;
-const $$gen_rounds = $gen_rounds;
-const $$gen_accept = $gen_accept;
-const $$gen_rng_attempt = $gen_rng_attempt;
-const $$gen_candidate = $gen_candidate;
-const $$hint_same_col = $hint_same_col;
-const $$hint_same_board = $hint_same_board;
-const $$hint_mix = $hint_mix;
-const $$hint_hash_col = $hint_hash_col;
-const $$core_board = $core_board;
-const $$hint_hash = $hint_hash;
-const $$hint_slot = $hint_slot;
-const $$hint_bucket_add = $hint_bucket_add;
-const $$hint_on = (a0,a1,a2) => run_loop($hint_on(a0,a1,a2));
-const $$core_undo = $core_undo;
-const $$core_restart = $core_restart;
-const $$hint_boards = $hint_boards;
-const $$hint_buckets = $hint_buckets;
-const $$core_moves = $core_moves;
-const $$hint_back_go = (a0,a1,a2,a3) => run_loop($hint_back_go(a0,a1,a2,a3));
-const $$hint_next_move = $hint_next_move;const BEND = {
+const BEND = {
   "../SPEC:Holds": run_lib((a0) => run_loop($___SPEC_Holds(a0)), 1),
   "../SPEC:size": run_lib((a0) => run_loop($___SPEC_size(a0)), 1),
   "../SPEC:width": run_lib((a0) => run_loop($___SPEC_width(a0)), 1),

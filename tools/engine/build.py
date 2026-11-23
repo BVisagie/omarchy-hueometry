@@ -6,7 +6,8 @@ Two changes, both checked so a Bend upgrade that moves them fails loudly:
 1. Qt's JavaScript engine cannot parse BigInt literals. They appear only in
    Bend's F32 text rounding helper, which the engine never calls (it has no
    F32). That helper is replaced with one that throws.
-2. The default export becomes a constant, and each def of engine/api.bend is
+2. Alias constants move before the functions (see below).
+3. The default export becomes a constant, and each def of engine/api.bend is
    also exported by name, so QML can import the module directly.
 """
 import re
@@ -20,12 +21,21 @@ end = js.find("\n};\n", start)
 if start < 0 or end < 0:
     sys.exit("build.py: f32_round not found; check the Bend upgrade")
 js = js[:start] + (
-    "const f32_round = function f32_round(s) {\n"
+    "function f32_round(s) {\n"
     '  throw "hueometry: F32 text is not supported in this build";\n'
-    "};\n"
+    "}\n"
 ) + js[end + 4:]
 if re.search(r"\bBigInt\b|\b\d+n\b(?![\"'])", js.split("// Program", 1)[0]):
     sys.exit("build.py: the runtime still uses BigInt; Qt cannot load it")
+
+# Bend binds `const $$f = $f;` after all the functions that use it. That is
+# valid (the uses run later), but Qt's engine warns about every one, flooding
+# the desktop shell's log. Function declarations are hoisted, so the aliases
+# can move to the start of the program.
+ALIAS = r"^const \$\$[\w$]+ = (?:\$[\w$]+|\([\w,]*\) => run_loop\(\$[\w$]+\([\w,]*\)\));"
+aliases = re.findall(ALIAS, js, re.M)
+js = re.sub(ALIAS + r"\n?", "", js, flags=re.M)
+js = js.replace("// Program\n// =======\n", "// Program\n// =======\n\n" + "\n".join(aliases) + "\n", 1)
 
 marker = "export default {\n"
 at = js.rfind(marker)
