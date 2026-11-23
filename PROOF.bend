@@ -3,6 +3,7 @@
 import Base
 import ./SPEC.bend as Spec
 import ./engine/core.bend as Core
+import ./engine/gen.bend as Gen
 import ./LAWS.bend as Laws
 
 # Kit
@@ -971,3 +972,338 @@ def Laws.step_accepts_legal(c, k, s, b, h, i, j, e):
 def Laws.step_refuses_illegal(c, k, s, b, h, i, j, e):
   %Equal.sym(Bool, Spec.legal(k, b, i, j), False{}, e) : {Core.step.fin(_, Core.Game{c, k, s, b, h}, Core.Mv{i, j}) == Core.Rejected{Core.why(k, b, i, j)} : Core.Outcome}
   {==}
+
+
+# Law 7
+# -----
+
+def length_succ(h: List<&2, Core.Move>, +n: Nat) -> {Core.length.go(h, 1n+n) == 1n+Core.length.go(h, n) : Nat}:
+  match h:
+    case Nil{}:
+      {==}
+    case m <> r:
+      length_succ(r, 1n+n)
+
+def count_fin(+c: Nat, +k: Nat, +s: List<&2, List<&2, Nat>>, +b: List<&2, List<&2, Nat>>, +h: List<&2, Core.Move>, +i: Nat, +j: Nat, ok: Bool)
+  -> {Core.moves(Core.apply.fin(c, k, s, b, h, i, j, ok)) == Nat.add(Spec.bit(ok), Core.moves(Core.Game{c, k, s, b, h})) : Nat}:
+  match ok:
+    case True{}:
+      length_succ(h, 0n)
+    case False{}:
+      {==}
+
+def Laws.counts_moves(c, k, s, b, h, i, j):
+  count_fin(c, k, s, b, h, i, j, Spec.legal(k, b, i, j))
+
+# Why a move is refused
+# ---------------------
+
+def Laws.reason_no_column(k, b, i, j, w):
+  +r = Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b))
+  %Equal.sym(Bool, Bool.not(r), True{}, holds_eq(Bool.not(r), w)) : {Bool.pick(Core.Reason, _, Core.NoSuchColumn{}, Bool.pick(Core.Reason, Nat.is_eq(i, j), Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{}))) == Core.NoSuchColumn{} : Core.Reason}
+  {==}
+
+def Laws.reason_same_column(k, b, i, j, w, ws):
+  +r = Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b))
+  %Equal.sym(Bool, r, True{}, holds_eq(r, w)) : {Bool.pick(Core.Reason, Bool.not(_), Core.NoSuchColumn{}, Bool.pick(Core.Reason, Nat.is_eq(i, j), Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{}))) == Core.SameColumn{} : Core.Reason}
+  %Equal.sym(Bool, Nat.is_eq(i, j), True{}, holds_eq(Nat.is_eq(i, j), ws)) : {Bool.pick(Core.Reason, _, Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{})) == Core.SameColumn{} : Core.Reason}
+  {==}
+
+def Laws.reason_empty_source(k, b, i, j, w, ws, we):
+  +r = Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b))
+  %Equal.sym(Bool, r, True{}, holds_eq(r, w)) : {Bool.pick(Core.Reason, Bool.not(_), Core.NoSuchColumn{}, Bool.pick(Core.Reason, Nat.is_eq(i, j), Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{}))) == Core.EmptySource{} : Core.Reason}
+  %Equal.sym(Bool, Nat.is_eq(i, j), False{}, holds_not_eq(Nat.is_eq(i, j), ws)) : {Bool.pick(Core.Reason, _, Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{})) == Core.EmptySource{} : Core.Reason}
+  %Equal.sym(Bool, Spec.is_empty(Spec.column(b, i)), True{}, holds_eq(Spec.is_empty(Spec.column(b, i)), we)) : {Bool.pick(Core.Reason, _, Core.EmptySource{}, Core.FullTarget{}) == Core.EmptySource{} : Core.Reason}
+  {==}
+
+def Laws.reason_full_target(k, b, i, j, w, ws, we):
+  +r = Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b))
+  %Equal.sym(Bool, r, True{}, holds_eq(r, w)) : {Bool.pick(Core.Reason, Bool.not(_), Core.NoSuchColumn{}, Bool.pick(Core.Reason, Nat.is_eq(i, j), Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{}))) == Core.FullTarget{} : Core.Reason}
+  %Equal.sym(Bool, Nat.is_eq(i, j), False{}, holds_not_eq(Nat.is_eq(i, j), ws)) : {Bool.pick(Core.Reason, _, Core.SameColumn{}, Bool.pick(Core.Reason, Spec.is_empty(Spec.column(b, i)), Core.EmptySource{}, Core.FullTarget{})) == Core.FullTarget{} : Core.Reason}
+  %Equal.sym(Bool, Spec.is_empty(Spec.column(b, i)), False{}, holds_not_eq(Spec.is_empty(Spec.column(b, i)), we)) : {Bool.pick(Core.Reason, _, Core.EmptySource{}, Core.FullTarget{}) == Core.FullTarget{} : Core.Reason}
+  {==}
+
+# Validity is kept
+# ----------------
+
+def Laws.valid_after_restart(c, k, s, b, h, w):
+  w
+
+def eq_rw(-x: Nat, -y: Nat, e: {x == y : Nat}, +n: Nat, w: Spec.Holds(Nat.is_eq(y, n))) -> Spec.Holds(Nat.is_eq(x, n)):
+  %Equal.sym(Nat, x, y, e) : Spec.Holds(Nat.is_eq(_, n))
+  w
+
+def width_rw(-x: Nat, -y: Nat, e: {x == y : Nat}, +n: Nat, w: Spec.Holds(Nat.is_eq(y, n))) -> Spec.Holds(Nat.is_eq(x, n)):
+  eq_rw(x, y, e, n, w)
+
+def counts_keep(+kk: Nat, +k: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, +j: Nat, +wm: Spec.Holds(Spec.movable(b, i, j)), w: Spec.Holds(Spec.counts_ok(kk, k, b)))
+  -> Spec.Holds(Spec.counts_ok(kk, k, Core.transfer(b, i, j))):
+  match kk:
+    case 0n:
+      Unit{}
+    case 1n+p:
+      +w2 = w
+      +here = Nat.is_eq(Spec.count(p, b), k)
+      and_intro(Nat.is_eq(Spec.count(p, Core.transfer(b, i, j)), k), Spec.counts_ok(p, k, Core.transfer(b, i, j)),
+        eq_rw(Spec.count(p, Core.transfer(b, i, j)), Spec.count(p, b),
+          cons_go(p, b, i, j, Spec.column(b, i), {==}, mv_i(b, i, j, wm), mv_j(b, i, j, wm), mv_ne(b, i, j, wm)), k,
+          and_l(here, Spec.counts_ok(p, k, b), w2)),
+        counts_keep(p, k, b, i, j, wm, and_r(here, Spec.counts_ok(p, k, b), w2)))
+
+def valid_transfer(+c: Nat, +k: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, +j: Nat, +wl: Spec.Holds(Spec.legal(k, b, i, j)), +w: Spec.Holds(Spec.valid(c, k, b)))
+  -> Spec.Holds(Spec.valid(c, k, Core.transfer(b, i, j))):
+  +t = Core.transfer(b, i, j)
+  +wm = legal_mv(k, b, i, j, wl)
+  +a = Nat.is_lt(0n, c)
+  +bb = Nat.is_lt(0n, k)
+  +cc = Nat.is_eq(Spec.width(b), 1n+c)
+  +d = Spec.fits(k, b)
+  +e = Spec.counts_ok(c, k, b)
+  +f = Nat.is_eq(Spec.total(b), Nat.mul(c, k))
+  +cc2 = Nat.is_eq(Spec.width(t), 1n+c)
+  +d2 = Spec.fits(k, t)
+  +e2 = Spec.counts_ok(c, k, t)
+  +f2 = Nat.is_eq(Spec.total(t), Nat.mul(c, k))
+  +wab = and_l((((a && bb) && cc) && d), e, and_l(((((a && bb) && cc) && d) && e), f, w))
+  +wabc = and_l((a && bb) && cc, d, wab)
+  and_intro(((((a && bb) && cc2) && d2) && e2), f2,
+    and_intro((((a && bb) && cc2) && d2), e2,
+      and_intro(((a && bb) && cc2), d2,
+        and_intro((a && bb), cc2,
+          and_l(a && bb, cc, wabc),
+          width_rw(Spec.width(t), Spec.width(b), width_go(b, i, j, Spec.column(b, i)), 1n+c, and_r(a && bb, cc, wabc))),
+        cap_go(k, b, i, j, Spec.column(b, i), {==}, and_r((a && bb) && cc, d, wab), legal_room(k, b, i, j, wl))),
+      counts_keep(c, k, b, i, j, wm, and_r((((a && bb) && cc) && d), e, and_l(((((a && bb) && cc) && d) && e), f, w)))),
+    eq_rw(Spec.total(t), Spec.total(b), tot_go(b, i, j, Spec.column(b, i), {==}, mv_i(b, i, j, wm), mv_j(b, i, j, wm), mv_ne(b, i, j, wm)), Nat.mul(c, k),
+      and_r(((((a && bb) && cc) && d) && e), f, w)))
+
+def valid_fin(+c: Nat, +k: Nat, -s: List<&2, List<&2, Nat>>, +b: List<&2, List<&2, Nat>>, -h: List<&2, Core.Move>, +i: Nat, +j: Nat,
+  ok: Bool, e: {Spec.legal(k, b, i, j) == ok : Bool}, +w: Spec.Holds(Spec.valid(c, k, b)))
+  -> Spec.Holds(Spec.valid(c, k, Core.board(Core.apply.fin(c, k, s, b, h, i, j, ok)))):
+  match ok:
+    case True{}:
+      valid_transfer(c, k, b, i, j, holds_true(Spec.legal(k, b, i, j), e), w)
+    case False{}:
+      w
+
+def Laws.valid_after_move(c, k, s, b, h, i, j, w):
+  valid_fin(c, k, s, b, h, i, j, Spec.legal(k, b, i, j), {==}, w)
+
+def Laws.valid_after_undo(c, k, s, b, h, i, j, e, w):
+  +g = {Core.Game{c, k, s, b, h} : Core.Game}
+  +m = {Core.Mv{i, j} : Core.Move}
+  %Equal.sym(Core.Game, Core.undo(Core.apply(g, m)), g, Laws.undo_takes_back(g, m, e)) : Spec.Holds(Spec.valid(c, k, Core.board(_)))
+  w
+
+# Legal targets
+# -------------
+# below(t, n): t is one of the first n columns and a legal target.
+
+def below(+k: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, +t: Nat, +n: Nat) -> Bool:
+  match n:
+    case 0n:
+      False{}
+    case 1n+p:
+      (Nat.is_eq(t, p) && Spec.legal(k, b, i, p)) || below(k, b, i, t, p)
+
+def bool_a(x: Bool, y: Bool, z: Bool) -> {(y || (x || z)) == (((x && True{}) || y) || z) : Bool}:
+  match x y z:
+    case True{} True{} True{}:
+      {==}
+    case True{} True{} False{}:
+      {==}
+    case True{} False{} True{}:
+      {==}
+    case True{} False{} False{}:
+      {==}
+    case False{} True{} True{}:
+      {==}
+    case False{} True{} False{}:
+      {==}
+    case False{} False{} True{}:
+      {==}
+    case False{} False{} False{}:
+      {==}
+
+def bool_b(x: Bool, y: Bool, z: Bool) -> {(y || z) == (((x && False{}) || y) || z) : Bool}:
+  match x y z:
+    case True{} True{} True{}:
+      {==}
+    case True{} True{} False{}:
+      {==}
+    case True{} False{} True{}:
+      {==}
+    case True{} False{} False{}:
+      {==}
+    case False{} True{} True{}:
+      {==}
+    case False{} True{} False{}:
+      {==}
+    case False{} False{} True{}:
+      {==}
+    case False{} False{} False{}:
+      {==}
+
+def tg_step(l: Bool, +p: Nat, +acc: List<&2, Nat>, +t: Nat, +y: Bool)
+  -> {(y || Spec.has(Bool.pick(List<&2, Nat>, l, p <> acc, acc), t)) == (((Nat.is_eq(t, p) && l) || y) || Spec.has(acc, t)) : Bool}:
+  match l:
+    case True{}:
+      bool_a(Nat.is_eq(t, p), y, Spec.has(acc, t))
+    case False{}:
+      bool_b(Nat.is_eq(t, p), y, Spec.has(acc, t))
+
+def tg_go(+k: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, +t: Nat, +n: Nat, +acc: List<&2, Nat>)
+  -> {Spec.has(Core.targets.go(k, b, i, n, acc), t) == (below(k, b, i, t, n) || Spec.has(acc, t)) : Bool}:
+  match n:
+    case 0n:
+      {==}
+    case 1n+p:
+      +l = Spec.legal(k, b, i, p)
+      +acc2 = Bool.pick(List<&2, Nat>, l, p <> acc, acc)
+      Equal.trans(Bool, Spec.has(Core.targets.go(k, b, i, p, acc2), t), below(k, b, i, t, p) || Spec.has(acc2, t),
+        ((Nat.is_eq(t, p) && l) || below(k, b, i, t, p)) || Spec.has(acc, t),
+        tg_go(k, b, i, t, p, acc2),
+        tg_step(l, p, acc, t, below(k, b, i, t, p)))
+
+def or_false(x: Bool) -> {(x || False{}) == x : Bool}:
+  match x:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
+
+def below_step.top(r: Nat, -y: Bool) -> {(False{} || False{}) == (Nat.is_lt(1n+r, 1n) && y) : Bool}:
+  match r:
+    case 0n:
+      {==}
+    case 1n+s:
+      {==}
+
+def below_step(t: Nat, p: Nat, +x: Bool, -y: Bool, f: {t == p : Nat} -> {x == y : Bool})
+  -> {((Nat.is_eq(t, p) && x) || (Nat.is_lt(t, p) && y)) == (Nat.is_lt(t, 1n+p) && y) : Bool}:
+  match t p:
+    case 0n 0n:
+      Equal.trans(Bool, x || False{}, x, y, or_false(x), f({==}))
+    case 0n 1n+q:
+      {==}
+    case 1n+r 0n:
+      below_step.top(r, y)
+    case 1n+r 1n+q:
+      below_step(r, q, x, y, e => f(Equal.cong(Nat, Nat, n => 1n+n, r, q, e)))
+
+def below_zero(+k: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, t: Nat) -> {False{} == (Nat.is_lt(t, 0n) && Spec.legal(k, b, i, t)) : Bool}:
+  match t:
+    case 0n:
+      {==}
+    case 1n+r:
+      {==}
+
+def below_eq(+k: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, +t: Nat, +n: Nat)
+  -> {below(k, b, i, t, n) == (Nat.is_lt(t, n) && Spec.legal(k, b, i, t)) : Bool}:
+  match n:
+    case 0n:
+      below_zero(k, b, i, t)
+    case 1n+p:
+      %Equal.sym(Bool, below(k, b, i, t, p), Nat.is_lt(t, p) && Spec.legal(k, b, i, t), below_eq(k, b, i, t, p)) : {((Nat.is_eq(t, p) && Spec.legal(k, b, i, p)) || _) == (Nat.is_lt(t, 1n+p) && Spec.legal(k, b, i, t)) : Bool}
+      below_step(t, p, Spec.legal(k, b, i, p), Spec.legal(k, b, i, t),
+        e => Equal.cong(Nat, Bool, q => Spec.legal(k, b, i, q), p, t, Equal.sym(Nat, t, p, e)))
+
+def and_implied(+l: Bool, +a: Bool, f: Spec.Holds(l) -> Spec.Holds(a)) -> {(a && l) == l : Bool}:
+  match l:
+    case True{}:
+      match a:
+        case True{}:
+          {==}
+        case False{}:
+          Empty.absurd({(False{} && True{}) == True{} : Bool}, f(Unit{}))
+    case False{}:
+      match a:
+        case True{}:
+          {==}
+        case False{}:
+          {==}
+
+def Laws.targets_are_legal(c, k, s, b, h, i, t):
+  +w = Spec.width(b)
+  +l = Spec.legal(k, b, i, t)
+  +bl = below(k, b, i, t, w)
+  Equal.trans(Bool, Spec.has(Core.targets.go(k, b, i, w, Nil{}), t), bl || False{}, l, tg_go(k, b, i, t, w, Nil{}),
+    Equal.trans(Bool, bl || False{}, bl, l, or_false(bl),
+      Equal.trans(Bool, bl, Nat.is_lt(t, w) && l, l, below_eq(k, b, i, t, w),
+        and_implied(l, Nat.is_lt(t, w), wl => mv_j(b, i, t, legal_mv(k, b, i, t, wl))))))
+
+# Generated puzzles are solvable
+# ------------------------------
+# generate answers Some only from emit, and only when the puzzle passed
+# accept, whose first half is exactly what the law claims.
+
+def maybe_disc(m: Maybe<&2, Gen.Puzzle>) -> Data:
+  match m:
+    case None{}:
+      Unit
+    case Some{p}:
+      Empty
+
+def none_ne_some(-p: Gen.Puzzle, e: {None{} == Some{p} : Maybe<&2, Gen.Puzzle>}) -> Empty:
+  %e : maybe_disc(_)
+  Unit{}
+
+def pboard(m: Maybe<&2, Gen.Puzzle>) -> List<&2, List<&2, Nat>>:
+  match m:
+    case None{}:
+      Nil{}
+    case Some{p}:
+      match p:
+        case Gen.Puzzle{b, c}:
+          b
+
+def pcert(m: Maybe<&2, Gen.Puzzle>) -> List<&2, Core.Move>:
+  match m:
+    case None{}:
+      Nil{}
+    case Some{p}:
+      match p:
+        case Gen.Puzzle{b, c}:
+          c
+
+def emit_ok(+colours: Nat, +cap: Nat, +pb: List<&2, List<&2, Nat>>, +pc: List<&2, Core.Move>, -b: List<&2, List<&2, Nat>>, -cert: List<&2, Core.Move>,
+  -rest: Unit -> Maybe<&2, Gen.Puzzle>,
+  ih: {rest(Unit{}) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>} -> Spec.Holds(Gen.sound(colours, cap, b, cert)),
+  ok: Bool, eo: {Gen.accept(colours, cap, pb, pc) == ok : Bool},
+  +e: {Gen.emit(ok, Gen.Puzzle{pb, pc}, rest) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>})
+  -> Spec.Holds(Gen.sound(colours, cap, b, cert)):
+  match ok:
+    case True{}:
+      +so = Gen.sound(colours, cap, pb, pc)
+      ws = and_l(so, Gen.mixed(colours, cap, pb), holds_true(Gen.accept(colours, cap, pb, pc), eo))
+      eb = Equal.cong(Maybe<&2, Gen.Puzzle>, List<&2, List<&2, Nat>>, pboard, Some{Gen.Puzzle{pb, pc}}, Some{Gen.Puzzle{b, cert}}, e)
+      ec = Equal.cong(Maybe<&2, Gen.Puzzle>, List<&2, Core.Move>, pcert, Some{Gen.Puzzle{pb, pc}}, Some{Gen.Puzzle{b, cert}}, e)
+      %eb : Spec.Holds(Gen.sound(colours, cap, _, cert))
+      %ec : Spec.Holds(Gen.sound(colours, cap, pb, _))
+      ws
+    case False{}:
+      ih(e)
+
+def attempt_ok(+colours: Nat, +cap: Nat, p: Gen.Puzzle, -b: List<&2, List<&2, Nat>>, -cert: List<&2, Core.Move>,
+  -rest: Unit -> Maybe<&2, Gen.Puzzle>,
+  ih: {rest(Unit{}) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>} -> Spec.Holds(Gen.sound(colours, cap, b, cert)),
+  e: {Gen.attempt(colours, cap, p, rest) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>})
+  -> Spec.Holds(Gen.sound(colours, cap, b, cert)):
+  match p:
+    case Gen.Puzzle{+pb, +pc}:
+      emit_ok(colours, cap, pb, pc, b, cert, rest, ih, Gen.accept(colours, cap, pb, pc), {==}, e)
+
+def tries_ok(n: Nat, +colours: Nat, +cap: Nat, +x: U32, +steps: Nat, -b: List<&2, List<&2, Nat>>, -cert: List<&2, Core.Move>,
+  e: {Gen.tries(n, colours, cap, x, steps) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>})
+  -> Spec.Holds(Gen.sound(colours, cap, b, cert)):
+  match n:
+    case 0n:
+      Empty.absurd(Spec.Holds(Gen.sound(colours, cap, b, cert)), none_ne_some(Gen.Puzzle{b, cert}, e))
+    case 1n+p:
+      attempt_ok(colours, cap, Gen.candidate(colours, cap, x, steps), b, cert,
+        u => Gen.tries(p, colours, cap, Gen.rng.next(Gen.rng.next(x)), steps),
+        e2 => tries_ok(p, colours, cap, Gen.rng.next(Gen.rng.next(x)), steps, b, cert, e2),
+        e)
+
+def Laws.generated_puzzles_solve(colours, cap, seed, b, cert, e):
+  tries_ok(16n, colours, cap, Gen.rng.seed(seed), Nat.mul(4n, Nat.mul(1n+colours, cap)), b, cert, e)

@@ -10,6 +10,7 @@
 import Base
 import ./SPEC.bend as Spec
 import ./engine/core.bend as Core
+import ./engine/gen.bend as Gen
 
 # Reading a game
 # --------------
@@ -229,3 +230,127 @@ law replay_rebuilds:
   for +s: List<&2, List<&2, Nat>>
   g = Core.replay(ms, Core.new(colours, cap, s))
   {Core.replay(List.reverse(&2, Core.Move, Core.history(g)), Core.restart(g)) == g : Core.Game}
+
+# Law 7: move counting
+# --------------------
+# Every move adds one to the move count when it is legal and nothing when it
+# is not.
+
+law counts_moves:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  for +i: Nat
+  for +j: Nat
+  {Core.moves(Core.apply(Core.Game{c, k, s, b, h}, Core.Mv{i, j})) == Nat.add(Spec.bit(Spec.legal(k, b, i, j)), Core.moves(Core.Game{c, k, s, b, h})) : Nat}
+
+# Validity is kept
+# ----------------
+# A valid board stays valid after any move, after undoing a legal move, and
+# a restart of a game whose first board was valid is valid.
+
+law valid_after_move:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  for +i: Nat
+  for +j: Nat
+  for +w: Spec.Holds(Spec.valid(c, k, b))
+  Spec.Holds(Spec.valid(c, k, Core.board(Core.apply(Core.Game{c, k, s, b, h}, Core.Mv{i, j}))))
+
+law valid_after_undo:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  for +i: Nat
+  for +j: Nat
+  for e: {Spec.legal(k, b, i, j) == True{} : Bool}
+  for +w: Spec.Holds(Spec.valid(c, k, b))
+  Spec.Holds(Spec.valid(c, k, Core.board(Core.undo(Core.apply(Core.Game{c, k, s, b, h}, Core.Mv{i, j})))))
+
+law valid_after_restart:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  for +w: Spec.Holds(Spec.valid(c, k, s))
+  Spec.Holds(Spec.valid(c, k, Core.board(Core.restart(Core.Game{c, k, s, b, h}))))
+
+# Legal targets
+# -------------
+# The columns the interface highlights for a lifted bead are exactly the
+# columns it may legally go to.
+
+law targets_are_legal:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  for +i: Nat
+  for +t: Nat
+  {Spec.has(Core.targets(Core.Game{c, k, s, b, h}, i), t) == Spec.legal(k, b, i, t) : Bool}
+
+# Why a move is refused
+# ---------------------
+# The reason the interface shows, in the rules' own terms, checked in order:
+# a column that does not exist, the same column, an empty source, and
+# otherwise a full target.
+
+law reason_no_column:
+  for +k: Nat
+  for +b: List<&2, List<&2, Nat>>
+  for +i: Nat
+  for +j: Nat
+  for w: Spec.Holds(Bool.not(Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b))))
+  {Core.why(k, b, i, j) == Core.NoSuchColumn{} : Core.Reason}
+
+law reason_same_column:
+  for +k: Nat
+  for +b: List<&2, List<&2, Nat>>
+  for +i: Nat
+  for +j: Nat
+  for w: Spec.Holds(Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b)))
+  for ws: Spec.Holds(Nat.is_eq(i, j))
+  {Core.why(k, b, i, j) == Core.SameColumn{} : Core.Reason}
+
+law reason_empty_source:
+  for +k: Nat
+  for +b: List<&2, List<&2, Nat>>
+  for +i: Nat
+  for +j: Nat
+  for w: Spec.Holds(Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b)))
+  for ws: Spec.Holds(Bool.not(Nat.is_eq(i, j)))
+  for we: Spec.Holds(Spec.is_empty(Spec.column(b, i)))
+  {Core.why(k, b, i, j) == Core.EmptySource{} : Core.Reason}
+
+law reason_full_target:
+  for +k: Nat
+  for +b: List<&2, List<&2, Nat>>
+  for +i: Nat
+  for +j: Nat
+  for w: Spec.Holds(Nat.is_lt(i, Spec.width(b)) && Nat.is_lt(j, Spec.width(b)))
+  for ws: Spec.Holds(Bool.not(Nat.is_eq(i, j)))
+  for we: Spec.Holds(Bool.not(Spec.is_empty(Spec.column(b, i))))
+  {Core.why(k, b, i, j) == Core.FullTarget{} : Core.Reason}
+
+# Generated puzzles are solvable (section 6)
+# ------------------------------------------
+# Whatever the seed, a puzzle the generator returns is a valid board, is not
+# already solved, and its certificate, replayed by the engine, solves it.
+
+law generated_puzzles_solve:
+  for +colours: Nat
+  for +cap: Nat
+  for +seed: U32
+  for +b: List<&2, List<&2, Nat>>
+  for +cert: List<&2, Core.Move>
+  for e: {Gen.generate(colours, cap, seed) == Some{Gen.Puzzle{b, cert}} : Maybe<&2, Gen.Puzzle>}
+  Spec.Holds(Spec.valid(colours, cap, b) && Bool.not(Spec.solved(colours, cap, b)) && Core.solved(Core.replay(cert, Core.new(colours, cap, b))))

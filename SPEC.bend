@@ -103,6 +103,14 @@ def bit(b: Bool) -> Nat:
     case False{}:
       0n
 
+# does the list of column numbers include n?
+def has(xs: List<&2, Nat>, +n: Nat) -> Bool:
+  match xs:
+    case Nil{}:
+      False{}
+    case x <> r:
+      Nat.is_eq(n, x) || has(r, n)
+
 # Counting beads
 # --------------
 
