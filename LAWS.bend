@@ -11,9 +11,100 @@ import Base
 import ./SPEC.bend as Spec
 import ./engine/core.bend as Core
 
+# Reading a game
+# --------------
+# The laws read games through these accessors, so each is pinned to the
+# field it names.
+
+law reads_colours:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  {Core.colours(Core.Game{c, k, s, b, h}) == c : Nat}
+
+law reads_cap:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  {Core.cap(Core.Game{c, k, s, b, h}) == k : Nat}
+
+law reads_start:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  {Core.start(Core.Game{c, k, s, b, h}) == s : List<&2, List<&2, Nat>>}
+
+law reads_board:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  {Core.board(Core.Game{c, k, s, b, h}) == b : List<&2, List<&2, Nat>>}
+
+law reads_history:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  {Core.history(Core.Game{c, k, s, b, h}) == h : List<&2, Core.Move>}
+
+law reads_move:
+  for +i: Nat
+  for +j: Nat
+  {(Core.from(Core.Mv{i, j}), Core.to(Core.Mv{i, j})) == (i, j) : Nat & Nat}
+
+# A legal move is played
+# ----------------------
+# A legal move changes exactly the board, by transfer, and records itself in
+# the history; colours, capacity and the first board stay. What the
+# interface calls (step) answers that game and the bead it lifted, or, for an
+# illegal move, a refusal.
+
+law legal_is_played:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  for +i: Nat
+  for +j: Nat
+  for e: {Spec.legal(k, b, i, j) == True{} : Bool}
+  {Core.apply(Core.Game{c, k, s, b, h}, Core.Mv{i, j}) == Core.Game{c, k, s, Core.transfer(b, i, j), Core.Mv{i, j} <> h} : Core.Game}
+
+law step_accepts_legal:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  for +i: Nat
+  for +j: Nat
+  for e: {Spec.legal(k, b, i, j) == True{} : Bool}
+  {Core.step(Core.Game{c, k, s, b, h}, Core.Mv{i, j}) == Core.Accepted{Core.apply(Core.Game{c, k, s, b, h}, Core.Mv{i, j}), Spec.top(Spec.column(b, i))} : Core.Outcome}
+
+law step_refuses_illegal:
+  for +c: Nat
+  for +k: Nat
+  for +s: List<&2, List<&2, Nat>>
+  for +b: List<&2, List<&2, Nat>>
+  for +h: List<&2, Core.Move>
+  for +i: Nat
+  for +j: Nat
+  for e: {Spec.legal(k, b, i, j) == False{} : Bool}
+  {Core.step(Core.Game{c, k, s, b, h}, Core.Mv{i, j}) == Core.Rejected{Core.why(k, b, i, j)} : Core.Outcome}
+
 # Law 3 and Law 4: a move takes exactly the top bead
 # ---------------------------------------------------
-# For any movable pair of columns, transfer leaves the source column as it
+# For any movable pair of columns, transfer (which a legal move performs, by
+# legal_is_played) leaves the source column as it
 # was without its top bead, puts that bead on top of the target column, and
 # changes no other column and no column count.
 
@@ -129,4 +220,4 @@ law replay_rebuilds:
   for +cap: Nat
   for +s: List<&2, List<&2, Nat>>
   g = Core.replay(ms, Core.new(colours, cap, s))
-  {Core.replay(Core.oldest_first(Core.history(g)), Core.restart(g)) == g : Core.Game}
+  {Core.replay(List.reverse(&2, Core.Move, Core.history(g)), Core.restart(g)) == g : Core.Game}

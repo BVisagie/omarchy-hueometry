@@ -895,5 +895,76 @@ def rebuild_replay(ms: List<&2, Core.Move>, +g: Core.Game, pg: Rebuilds(g)) -> R
     case +m <> r:
       rebuild_replay(r, Core.apply(g, m), rebuild_apply(g, m, pg))
 
+def append_nil(xs: List<&2, Core.Move>) -> {List.append(&2, Core.Move, xs, Nil{}) == xs : List<&2, Core.Move>}:
+  match xs:
+    case Nil{}:
+      {==}
+    case +x <> r:
+      %append_nil(r) : {x <> List.append(&2, Core.Move, r, Nil{}) == x <> _ : List<&2, Core.Move>}
+      {==}
+
+def append_assoc(xs: List<&2, Core.Move>, -ys: List<&2, Core.Move>, -zs: List<&2, Core.Move>)
+  -> {List.append(&2, Core.Move, List.append(&2, Core.Move, xs, ys), zs) == List.append(&2, Core.Move, xs, List.append(&2, Core.Move, ys, zs)) : List<&2, Core.Move>}:
+  match xs:
+    case Nil{}:
+      {==}
+    case +x <> r:
+      %append_assoc(r, ys, zs) : {x <> List.append(&2, Core.Move, List.append(&2, Core.Move, r, ys), zs) == x <> _ : List<&2, Core.Move>}
+      {==}
+
+# Base's reverse, with its accumulator, is oldest_first followed by the
+# accumulator
+def rev_go(xs: List<&2, Core.Move>, +acc: List<&2, Core.Move>)
+  -> {List.reverse.go(&2, Core.Move, xs, acc) == List.append(&2, Core.Move, Core.oldest_first(xs), acc) : List<&2, Core.Move>}:
+  match xs:
+    case Nil{}:
+      {==}
+    case +x <> +r:
+      Equal.trans(List<&2, Core.Move>, List.reverse.go(&2, Core.Move, r, x <> acc), List.append(&2, Core.Move, Core.oldest_first(r), x <> acc),
+        List.append(&2, Core.Move, List.append(&2, Core.Move, Core.oldest_first(r), [x]), acc),
+        rev_go(r, x <> acc),
+        Equal.sym(List<&2, Core.Move>, List.append(&2, Core.Move, List.append(&2, Core.Move, Core.oldest_first(r), [x]), acc), List.append(&2, Core.Move, Core.oldest_first(r), x <> acc),
+          append_assoc(Core.oldest_first(r), [x], acc)))
+
+def oldest_is_reverse(+h: List<&2, Core.Move>) -> {Core.oldest_first(h) == List.reverse(&2, Core.Move, h) : List<&2, Core.Move>}:
+  Equal.sym(List<&2, Core.Move>, List.reverse.go(&2, Core.Move, h, Nil{}), Core.oldest_first(h),
+    Equal.trans(List<&2, Core.Move>, List.reverse.go(&2, Core.Move, h, Nil{}), List.append(&2, Core.Move, Core.oldest_first(h), Nil{}), Core.oldest_first(h),
+      rev_go(h, Nil{}), append_nil(Core.oldest_first(h))))
+
 def Laws.replay_rebuilds(ms, colours, cap, s):
+  +g = Core.replay(ms, Core.new(colours, cap, s))
+  %oldest_is_reverse(Core.history(g)) : {Core.replay(_, Core.restart(g)) == g : Core.Game}
   rebuild_replay(ms, Core.new(colours, cap, s), {==})
+
+# Reading a game, and playing a legal move
+# ----------------------------------------
+
+def Laws.reads_colours(c, k, s, b, h):
+  {==}
+
+def Laws.reads_cap(c, k, s, b, h):
+  {==}
+
+def Laws.reads_start(c, k, s, b, h):
+  {==}
+
+def Laws.reads_board(c, k, s, b, h):
+  {==}
+
+def Laws.reads_history(c, k, s, b, h):
+  {==}
+
+def Laws.reads_move(i, j):
+  {==}
+
+def Laws.legal_is_played(c, k, s, b, h, i, j, e):
+  %Equal.sym(Bool, Spec.legal(k, b, i, j), True{}, e) : {Core.apply.fin(c, k, s, b, h, i, j, _) == Core.Game{c, k, s, Core.transfer(b, i, j), Core.Mv{i, j} <> h} : Core.Game}
+  {==}
+
+def Laws.step_accepts_legal(c, k, s, b, h, i, j, e):
+  %Equal.sym(Bool, Spec.legal(k, b, i, j), True{}, e) : {Core.step.fin(_, Core.Game{c, k, s, b, h}, Core.Mv{i, j}) == Core.Accepted{Core.apply(Core.Game{c, k, s, b, h}, Core.Mv{i, j}), Spec.top(Spec.column(b, i))} : Core.Outcome}
+  {==}
+
+def Laws.step_refuses_illegal(c, k, s, b, h, i, j, e):
+  %Equal.sym(Bool, Spec.legal(k, b, i, j), False{}, e) : {Core.step.fin(_, Core.Game{c, k, s, b, h}, Core.Mv{i, j}) == Core.Rejected{Core.why(k, b, i, j)} : Core.Outcome}
+  {==}

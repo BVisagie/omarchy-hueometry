@@ -148,18 +148,10 @@ def why(+cap: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, +j: Nat) -> Reason:
     Bool.pick(Reason, Nat.is_eq(i, j), SameColumn{},
       Bool.pick(Reason, Spec.is_empty(Spec.column(b, i)), EmptySource{}, FullTarget{})))
 
-# the top bead of a column (0 for an empty one, which a legal move never lifts)
-def top(col: List<&2, Nat>) -> Nat:
-  match col:
-    case Nil{}:
-      0n
-    case h <> t:
-      h
-
 def lifted(g: Game, m: Move) -> Nat:
   match g m:
     case Game{colours, cap, start, b, history} Mv{i, j}:
-      top(Spec.column(b, i))
+      Spec.top(Spec.column(b, i))
 
 def step.fin(ok: Bool, +g: Game, +m: Move) -> Outcome:
   match ok:

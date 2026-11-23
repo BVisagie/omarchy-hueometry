@@ -224,6 +224,15 @@ function $___SPEC_is_empty(_col_0) {
   }
 }
 
+function $___SPEC_top(_col_0) {
+  if (_col_0.$ === "Nil") {
+    return 0;
+  } else {
+    const _h_0 = _col_0["head"];
+    return _h_0;
+  }
+}
+
 function $___SPEC_rest(_col_0) {
   if (_col_0.$ === "Nil") {
     return {$: "Nil"};
@@ -519,19 +528,10 @@ function $core_why(_cap_0, _b_0, _i_0, _j_0) {
   return $Bool_pick($$Bool_not($$Bool_and((_i_0 < _w_0), (_j_0 < _w_0))), {$: "NoSuchColumn"}, $$Bool_pick($$Nat_is_eq(_i_0, _j_0), {$: "SameColumn"}, $$Bool_pick($$___SPEC_is_empty($$___SPEC_column(_b_0, _i_0)), {$: "EmptySource"}, {$: "FullTarget"})));
 }
 
-function $core_top(_col_0) {
-  if (_col_0.$ === "Nil") {
-    return 0;
-  } else {
-    const _h_0 = _col_0["head"];
-    return _h_0;
-  }
-}
-
 function $core_lifted(_g_0, _m_0) {
   const _b_0 = _g_0["board"];
   const _i_0 = _m_0["from"];
-  return $core_top($$___SPEC_column(_b_0, _i_0));
+  return $___SPEC_top($$___SPEC_column(_b_0, _i_0));
 }
 
 function $core_step_fin(_ok_0, _g_0, _m_0) {
@@ -769,6 +769,7 @@ const $$List_append = $List_append;const BEND = {
   "../SPEC:width": run_lib((a0) => run_loop($___SPEC_width(a0)), 1),
   "../SPEC:column": run_lib((a0,a1) => run_loop($___SPEC_column(a0,nat_in(a1))), 2),
   "../SPEC:is_empty": run_lib((a0) => run_loop($___SPEC_is_empty(a0)), 1),
+  "../SPEC:top": run_lib((a0) => run_loop($___SPEC_top(a0)), 1),
   "../SPEC:rest": run_lib((a0) => run_loop($___SPEC_rest(a0)), 1),
   "../SPEC:moved": run_lib((a0,a1) => run_loop($___SPEC_moved(a0,a1)), 2),
   "../SPEC:movable": run_lib((a0,a1,a2) => run_loop($___SPEC_movable(a0,nat_in(a1),nat_in(a2))), 3),
@@ -806,7 +807,6 @@ const $$List_append = $List_append;const BEND = {
   "core:apply.fin": run_lib((a0,a1,a2,a3,a4,a5,a6,a7) => run_loop($core_apply_fin(nat_in(a0),nat_in(a1),a2,a3,a4,nat_in(a5),nat_in(a6),a7)), 8),
   "core:apply": run_lib((a0,a1) => run_loop($core_apply(a0,a1)), 2),
   "core:why": run_lib((a0,a1,a2,a3) => run_loop($core_why(nat_in(a0),a1,nat_in(a2),nat_in(a3))), 4),
-  "core:top": run_lib((a0) => run_loop($core_top(a0)), 1),
   "core:lifted": run_lib((a0,a1) => run_loop($core_lifted(a0,a1)), 2),
   "core:step.fin": run_lib((a0,a1,a2) => run_loop($core_step_fin(a0,a1,a2)), 3),
   "core:legal_move": run_lib((a0,a1) => run_loop($core_legal_move(a0,a1)), 2),

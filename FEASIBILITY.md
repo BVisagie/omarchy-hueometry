@@ -14,8 +14,8 @@ and Omarchy 4.5.0, on an x86-64 laptop.
 | # | Brief 7.11 | Result |
 |---|---|---|
 | 1 | Representation of the standard seven-column puzzle | `engine/core.bend`: a board is a list of columns, top bead first; `Game` adds colours, capacity, the start board and the move history. Any size works; the standard puzzle is 6 colours of 6 in 7 columns. |
-| 2 | A function that applies a move | `Core.apply` and `Core.step` |
-| 3 | Rejection of invalid moves | `Core.step` answers `Rejected{reason}`; law `refused_changes_nothing` |
+| 2 | A function that applies a move | `Core.apply` and `Core.step`; laws `legal_is_played` (a legal move is exactly `transfer` plus one history entry), `step_accepts_legal` and `step_refuses_illegal` |
+| 3 | Rejection of invalid moves | `Core.step` answers `Rejected{reason}` (law `step_refuses_illegal`); `Core.apply` changes nothing (law `refused_changes_nothing`) |
 | 4 | Victory detection | `Core.is_solved`; law `victory_is_solved` proves it equals the four conditions of section 3.3 on every valid board |
 | 5 | Proof of bead conservation | laws `conserves_colours` and `conserves_beads` |
 | 6 | Proof of capacity preservation | law `keeps_capacity` |
@@ -24,7 +24,8 @@ and Omarchy 4.5.0, on an x86-64 laptop.
 | 9 | A way to expose the engine to an application | `bin/engine` compiles it to an ES module that Node, Qt's JavaScript engine, a QML `WorkerScript` and Quickshell all load |
 
 The prototype went further than asked: the exact effect of a move (laws 3 and
-4), victory (law 8) and all of law 9 are proved too: undo restores the game
+4: `transfer` changes only the two columns, as the rules say, and a legal
+move is that transfer), victory (law 8) and all of law 9 are proved too: undo restores the game
 before a legal move, restart returns to the first board with no moves, and
 replaying a game's history from its first board rebuilds it exactly.
 
@@ -36,6 +37,8 @@ replaying a game's history from its first board rebuilds it exactly.
   and the command exits 1.
 - The kernel is built once per machine with Lean 4.34.0 (about 20 s) and
   cached in `~/.bend/bendtt`. After that the whole check takes about 0.2 s.
+- The laws read games through engine accessors (`Core.board`, `Core.cap`,
+  ...); laws `reads_*` pin each one to its field.
 - Limits, as Bend documents them: the parser and the translation into the
   kernel are not proved, the compiler is not audited, and the laws are about
   Bend's semantics, not about the JavaScript it emits. Conventional tests

@@ -3,7 +3,10 @@
 # This file is part of the owner's specification, with LAWS.bend. Change it
 # only when the owner asks, with a `Laws-Change:` commit trailer. It says what
 # the words in the laws mean, as plainly as possible, and imports nothing but
-# Base, so no editable engine code can change what a law means.
+# Base. Where a law reads a game through an engine accessor, another law pins
+# that accessor to the field it names (LAWS.bend, "Reading a game").
+#
+# The rules quoted here are from the brief, docs/brief.md, section 3.
 #
 # A board is a list of columns, numbered from 0. A column lists its beads
 # from the TOP down. A bead is its colour's number, from 0.
@@ -54,6 +57,14 @@ def is_empty(col: List<&2, Nat>) -> Bool:
     case h <> t:
       False{}
 
+# the top bead of a column (0 for an empty column, which no legal move lifts)
+def top(col: List<&2, Nat>) -> Nat:
+  match col:
+    case Nil{}:
+      0n
+    case h <> t:
+      h
+
 # the column without its top bead
 def rest(col: List<&2, Nat>) -> List<&2, Nat>:
   match col:
@@ -73,13 +84,13 @@ def moved(src: List<&2, Nat>, dst: List<&2, Nat>) -> List<&2, Nat>:
 # Moves
 # -----
 
-# Rules 1, 2, 5, 6 and 7: a move takes the top bead of column i and puts it
+# Rules 1, 2, 5, 6 and 7 of the brief (docs/brief.md, section 3.2): a move takes the top bead of column i and puts it
 # on column j. Both columns exist, they differ, and column i has a bead.
 # Neither the colours nor where the columns sit on screen matter.
 def movable(+b: List<&2, List<&2, Nat>>, +i: Nat, +j: Nat) -> Bool:
   Nat.is_lt(i, width(b)) && Nat.is_lt(j, width(b)) && Bool.not(Nat.is_eq(i, j)) && Bool.not(is_empty(column(b, i)))
 
-# Rule 4 added: column j has room for one more bead. Rule 3: a bead may land
+# Rule 4 added (section 3.2): column j has room for one more bead. Rule 3: a bead may land
 # on any colour, so colour is not checked.
 def legal(+cap: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, +j: Nat) -> Bool:
   movable(b, i, j) && Nat.is_lt(size(column(b, j)), cap)
