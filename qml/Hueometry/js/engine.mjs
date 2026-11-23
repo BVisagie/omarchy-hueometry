@@ -1252,25 +1252,75 @@ function $hint_lazy(_c_0, _a_0, _b_0) {
   }
 }
 
-function $hint_back_go(_n_0, _sol_0, _g_0, _k_0) {
+function $hint_slot(_key_0) {
+  return ((_key_0 & 4095) >>> 0);
+}
+
+function $hint_bucket_put(_k_0, _x_0, _got_0) {
+  const _a_0 = _got_0["fst"];
+  const _old_0 = _got_0["snd"];
+  const _x_1 = $$hint_slot(_k_0);
+  const _x_2 = {$: "Con", "head": {$: "Seen", "key": _k_0, "board": _x_0}, "tail": _old_0};
+  return (_a_0[_x_1 % _a_0.length] = _x_2, _a_0);
+}
+
+function $hint_bucket_add(_a_0, _s_0) {
+  const _k_0 = _s_0["key"];
+  const _x_0 = _s_0["board"];
+  const _x_1 = $$hint_slot(_k_0);
+  return $hint_bucket_put(_k_0, _x_0, tup_new(_a_0, _a_0[_x_1 % _a_0.length]));
+}
+
+function $hint_buckets($0, $1) {
+  for (;;) {
+    {
+      const _ss_0 = $0;
+      const _a_0 = $1;
+      if (_ss_0.$ === "Nil") {
+        return _a_0;
+      } else {
+        const _s_0 = _ss_0["head"];
+        const _r_0 = _ss_0["tail"];
+        $0 = _r_0;
+        $1 = $$hint_bucket_add(_a_0, _s_0);
+        continue;
+      }
+    }
+  }
+}
+
+function $hint_back_step(_k_0, _h_0, _b_0, _got_0, _rest_0) {
+  const _a_0 = _got_0["fst"];
+  const _here_0 = _got_0["snd"];
+  return $hint_lazy($$hint_on(_h_0, _b_0, _here_0), run_clo($hint_back_step_c0(_k_0)), run_clo($hint_back_step_c1(_a_0,_rest_0)));
+}
+
+function $hint_back_step_c0(_k_0) {
+  return (_x_0) => {
+    return _k_0;
+  }
+}
+function $hint_back_step_c1(_a_0,_rest_0) {
+  return (_x_1) => {
+    return run_tail(_rest_0, _a_0);
+  }
+}
+function $hint_back_go(_n_0, _a_0, _g_0, _k_0) {
   if (_n_0 == 0) {
     return 0;
   } else {
     const _p_0 = (_n_0 - 1);
     const _u_0 = $$core_undo(_g_0);
     const _b_0 = $$core_board(_u_0);
-    return $hint_lazy($$hint_on($$hint_hash(_b_0), _b_0, _sol_0), run_clo($hint_back_go_c0(_k_0)), run_clo($hint_back_go_c1(_u_0,_p_0,_sol_0,_k_0)));
+    const _h_0 = $$hint_hash(_b_0);
+    const _x_0 = $$hint_slot(_h_0);
+    return $hint_back_step(_k_0, _h_0, _b_0, tup_new(_a_0, _a_0[_x_0 % _a_0.length]), run_clo($hint_back_go_c0(_p_0,_u_0,_k_0)));
   }
 }
 
-function $hint_back_go_c0(_k_0) {
-  return (_x_0) => {
-    return _k_0;
-  }
-}
-function $hint_back_go_c1(_u_0,_p_0,_sol_0,_k_0) {
+function $hint_back_go_c0(_p_0,_u_0,_k_0) {
   return (_x_1) => {
-    return $hint_back_go(_p_0, _sol_0, _u_0, nat_chk(_k_0 + 1));
+    return $hint_back_go(_p_0, _x_1, _u_0, nat_chk(_k_0 + 1));
   }
 }
 function $hint_hint_fin(_g_0, _sol_0, _mm_0) {
@@ -1278,7 +1328,8 @@ function $hint_hint_fin(_g_0, _sol_0, _mm_0) {
     const _m_0 = _mm_0["value"];
     return $Bool_pick($$core_legal_move(_g_0, _m_0), {$: "Play", "move": _m_0}, {$: "NoHint"});
   } else {
-    const _steps_0 = $$hint_back_go($$core_moves(_g_0), $$hint_boards(_sol_0, $$core_restart(_g_0), {$: "Nil"}), _g_0, 1);
+    const _table_0 = $$hint_buckets($$hint_boards(_sol_0, $$core_restart(_g_0), {$: "Nil"}), array_new(12, {$: "Nil"}, 0));
+    const _steps_0 = $$hint_back_go($$core_moves(_g_0), _table_0, _g_0, 1);
     return $Bool_pick($$Nat_is_eq(_steps_0, 0), {$: "NoHint"}, {$: "Back", "steps": _steps_0});
   }
 }
@@ -1506,11 +1557,14 @@ const $$hint_mix = $hint_mix;
 const $$hint_hash_col = $hint_hash_col;
 const $$core_board = $core_board;
 const $$hint_hash = $hint_hash;
-const $$core_undo = $core_undo;
+const $$hint_slot = $hint_slot;
+const $$hint_bucket_add = $hint_bucket_add;
 const $$hint_on = (a0,a1,a2) => run_loop($hint_on(a0,a1,a2));
-const $$core_moves = $core_moves;
+const $$core_undo = $core_undo;
 const $$core_restart = $core_restart;
 const $$hint_boards = $hint_boards;
+const $$hint_buckets = $hint_buckets;
+const $$core_moves = $core_moves;
 const $$hint_back_go = (a0,a1,a2,a3) => run_loop($hint_back_go(a0,a1,a2,a3));
 const $$hint_next_move = $hint_next_move;const BEND = {
   "../SPEC:Holds": run_lib((a0) => run_loop($___SPEC_Holds(a0)), 1),
@@ -1622,6 +1676,11 @@ const $$hint_next_move = $hint_next_move;const BEND = {
   "hint:boards": run_lib((a0,a1,a2) => run_loop($hint_boards(a0,a1,a2)), 3),
   "hint:next_move": run_lib((a0,a1,a2,a3) => run_loop($hint_next_move(a0,a1,a2,a3)), 4),
   "hint:lazy": run_lib((a0,a1,a2) => run_loop($hint_lazy(a0,a1,a2)), 3),
+  "hint:slot": run_lib((a0) => run_loop($hint_slot(a0)), 1),
+  "hint:bucket.put": run_lib((a0,a1,a2) => run_loop($hint_bucket_put(a0,a1,a2)), 3),
+  "hint:bucket.add": run_lib((a0,a1) => run_loop($hint_bucket_add(a0,a1)), 2),
+  "hint:buckets": run_lib((a0,a1) => run_loop($hint_buckets(a0,a1)), 2),
+  "hint:back.step": run_lib((a0,a1,a2,a3,a4) => run_loop($hint_back_step(nat_in(a0),a1,a2,a3,a4)), 5),
   "hint:back.go": run_lib((a0,a1,a2,a3) => run_loop($hint_back_go(nat_in(a0),a1,a2,nat_in(a3))), 4),
   "hint:hint.fin": run_lib((a0,a1,a2) => run_loop($hint_hint_fin(a0,a1,a2)), 3),
   "hint:hint.solved": run_lib((a0,a1,a2) => run_loop($hint_hint_solved(a0,a1,a2)), 3),

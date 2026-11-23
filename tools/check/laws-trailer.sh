@@ -3,7 +3,7 @@
 # Fails when a commit in BASE..HEAD changes LAWS.bend or SPEC.bend without a
 # "Laws-Change: <reason>" trailer. The laws are the owner's specification.
 # A merge counts as changing a file only when its result differs from what
-# Git's own merge of its parents gives (or that merge conflicts on the file):
+# Git's own merge of its two parents gives, or that merge conflicts on it:
 # merging commits that were already checked passes, while a merge that edits
 # or hand-resolves the laws must carry the trailer.
 set -euo pipefail
@@ -29,13 +29,23 @@ commits=$(git rev-list "$base..$head")
 bad=0
 while read -r sha; do
   [[ -n "$sha" ]] || continue
-  if git rev-parse --verify --quiet "$sha^2" >/dev/null; then
-    if auto=$(git merge-tree --write-tree "$sha^1" "$sha^2" 2>/dev/null | head -1); then
-      files=$(git diff --no-renames --name-only "$auto" "$sha" -- LAWS.bend SPEC.bend)
-    else
-      # Git's merge conflicts: count the laws only if they were part of it
-      files=$(git diff --no-renames --name-only "$sha^1" "$sha" -- LAWS.bend SPEC.bend)
+  if git rev-parse --verify --quiet "$sha^3" >/dev/null; then
+    # An octopus merge: this project merges pull requests with two parents,
+    # so fail closed and ask for a trailer if the laws differ from parent 1.
+    files=$(git diff --no-renames --name-only "$sha^1" "$sha" -- LAWS.bend SPEC.bend)
+  elif git rev-parse --verify --quiet "$sha^2" >/dev/null; then
+    # what Git's own merge of the parents gives, and the paths it conflicts on
+    set +e
+    auto=$(git merge-tree --write-tree --name-only "$sha^1" "$sha^2" 2>/dev/null)
+    status=$?
+    set -e
+    tree=$(head -1 <<<"$auto")
+    conflicted=$(sed -n '2,/^$/p' <<<"$auto" | grep -x -e LAWS.bend -e SPEC.bend || true)
+    if (( status > 1 )); then
+      echo "laws-trailer: git merge-tree failed on $sha" >&2
+      exit 1
     fi
+    files=$( { printf '%s\n' "$conflicted"; git diff --no-renames --name-only "$tree" "$sha" -- LAWS.bend SPEC.bend; } | sed '/^$/d')
   elif git rev-parse --verify --quiet "$sha^1" >/dev/null; then
     files=$(git diff --no-renames --name-only "$sha^1" "$sha" -- LAWS.bend SPEC.bend)
   else

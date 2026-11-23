@@ -115,23 +115,50 @@ def lazy(c: Bool, a: Unit -> Nat, b: Unit -> Nat) -> Nat:
     case False{}:
       b(Unit{})
 
+# The solution's boards in 4096 buckets by hash, so each board checked costs
+# one bucket rather than the whole solution.
+def slot(+key: U32) -> U32:
+  U32.and(key, 4095)
+
+def bucket.put(+k: U32, x: List<&2, List<&2, Nat>>, got: Array<List<&2, Seen>> & List<&2, Seen>) -> Array<List<&2, Seen>>:
+  (a, old) = got
+  Array.set(List<&2, Seen>, a, slot(k), Seen{k, x} <> old)
+
+def bucket.add(a: Array<List<&2, Seen>>, s: Seen) -> Array<List<&2, Seen>>:
+  match s:
+    case Seen{+k, x}:
+      bucket.put(k, x, Array.get(List<&2, Seen>, a, slot(k)))
+
+def buckets(ss: List<&2, Seen>, a: Array<List<&2, Seen>>) -> Array<List<&2, Seen>>:
+  match ss:
+    case Nil{}:
+      a
+    case s <> r:
+      buckets(r, bucket.add(a, s))
+
 # Undoes one move at a time (n moves at most) until the board is one the
 # solution passes through; answers how many undos that took, or 0 if none.
-def back.go(n: Nat, +sol: List<&2, Seen>, +g: Core.Game, +k: Nat) -> Nat:
+def back.step(+k: Nat, +h: U32, +b: List<&2, List<&2, Nat>>, got: Array<List<&2, Seen>> & List<&2, Seen>, rest: Array<List<&2, Seen>> -> Nat) -> Nat:
+  (a, here) = got
+  lazy(on(h, b, here), x => k, x => rest(a))
+
+def back.go(n: Nat, a: Array<List<&2, Seen>>, +g: Core.Game, +k: Nat) -> Nat:
   match n:
     case 0n:
       0n
     case 1n+p:
       +u = Core.undo(g)
       +b = Core.board(u)
-      lazy(on(hash(b), b, sol), x => k, x => back.go(p, sol, u, 1n+k))
+      +h = hash(b)
+      back.step(k, h, b, Array.get(List<&2, Seen>, a, slot(h)), a2 => back.go(p, a2, u, 1n+k))
 
 def hint.fin(+g: Core.Game, +sol: List<&2, Core.Move>, mm: Maybe<&2, Core.Move>) -> Hint:
   match mm:
     case Some{+m}:
       Bool.pick(Hint, Core.legal_move(g, m), Play{m}, NoHint{})
     case None{}:
-      +steps = back.go(Core.moves(g), boards(sol, Core.restart(g), Nil{}), g, 1n)
+      table = buckets(boards(sol, Core.restart(g), Nil{}), Array.new(List<&2, Seen>, 12n, Nil{}))
+      +steps = back.go(Core.moves(g), table, g, 1n)
       Bool.pick(Hint, Nat.is_eq(steps, 0n), NoHint{}, Back{steps})
 
 # A hint for game g, following sol (a solution of g's first board, oldest
