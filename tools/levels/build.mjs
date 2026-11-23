@@ -70,6 +70,9 @@ function sample(name, count) {
     out.push({ seed, par: s.moves.length, optimal: s.optimal, solution: s.moves.map((m) => [m.from, m.to]) });
     process.stderr.write(`${tag} par ${s.moves.length}${s.optimal ? " (optimal)" : ""}\n`);
   }
+  if (out.length < count) {
+    throw new Error(`${name}: found only ${out.length} of ${count} qualifying seeds; the pack was not written`);
+  }
   return out;
 }
 
