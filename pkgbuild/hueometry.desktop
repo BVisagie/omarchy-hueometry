@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Hueometry
+GenericName=Colour-sorting puzzle
+Comment=Sort the jungle orbs so every pillar holds one colour
+Exec=hueometry
+Icon=hueometry
+Terminal=false
+Categories=Game;LogicGame;KidsGame;
+Keywords=puzzle;colour;color;sort;kids;jungle;
+StartupWMClass=hueometry
