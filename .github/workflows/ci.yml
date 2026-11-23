@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
 
 permissions:
@@ -33,4 +32,7 @@ jobs:
       - name: Install the pinned toolchain
         run: bin/setup
       - name: Check
-        run: bin/check "origin/${{ github.base_ref || 'main' }}"
+        env:
+          # the commits this run must check for the Laws-Change rule
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: bin/check "$BASE"

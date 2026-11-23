@@ -30,8 +30,9 @@ if ! command -v elan >/dev/null; then
   tar xzf "$tmp/elan.tar.gz" -C "$tmp"
   "$tmp/elan-init" -y --default-toolchain none --no-modify-path >/dev/null
 fi
+# Bend runs this toolchain from ~/.elan/toolchains directly, so your default
+# Lean version is left alone.
 elan toolchain install "$LEAN_TOOLCHAIN" >/dev/null 2>&1 || true
-elan default "$LEAN_TOOLCHAIN" >/dev/null
 
 bend version
-lean --version
+"$HOME/.elan/toolchains/${LEAN_TOOLCHAIN//[\/:]/--}/bin/lean" --version
