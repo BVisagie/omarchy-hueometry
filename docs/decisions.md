@@ -68,3 +68,20 @@ All defaults in plan.md section 10 were accepted, except:
 - Qt's `offscreen` platform forces the software renderer, which cannot draw
   `MultiEffect`. `tools/shot` renders through `QQuickRenderControl` on the
   GPU instead, with animations stepped frame by frame.
+
+## Levels, par and hints (checkpoint 2)
+
+- Progression uses a level pack, `qml/Hueometry/data/levels.json`, built by
+  `bin/levels`: a three-board tutorial and six areas of eight levels, from
+  Beginner (3 colours of 3) to Expert (6 colours of 10). Each level is a
+  seed; the game regenerates the board with the engine.
+- Each level stores a solution found offline by an A* search
+  (`tools/levels/solve.mjs`) and verified by the engine. `par` is its length.
+  For Beginner and Easy the search is exact (`optimal: true`); harder levels
+  use weighted A*, so their par is a known solution, never called optimal.
+- Hints follow the level's stored solution: the next move when the board is
+  on it, or how many moves to undo to get back. Free play (a random seed)
+  follows the generator's certificate, which is valid but long, and shows no
+  par.
+- The scramble works in rounds of a random walk, a gather, and pouring a
+  full column into the empty one; the pour is what mixes the bottom beads.

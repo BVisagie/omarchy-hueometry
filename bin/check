@@ -25,6 +25,9 @@ step "engine tests (node)"
 [[ -d node_modules ]] || npm ci --no-audit --no-fund
 npm test --silent
 
+step "native and JavaScript builds generate the same puzzles"
+tools/check/native.sh
+
 step "QML tests (Qt's JavaScript engine)"
 QT_QPA_PLATFORM=offscreen QT_LOGGING_RULES="qt.qml.usedbeforedeclared=false" \
   /usr/lib/qt6/bin/qmltestrunner -input tests/qml
