@@ -321,5 +321,3 @@ Visual structure of the jungle
 9. Laws change control. [only Bernard approves LAWS.bend and SPEC.bend edits]
 10. Localisation. [English only in v1; strings kept in one file]
 
-Build model: Opus 5.5 with effort high. Switch to it if this thread runs a
-model or a setting that is not listed under Build, then say "execute the plan".
