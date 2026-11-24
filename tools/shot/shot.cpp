@@ -122,11 +122,14 @@ int main(int argc, char **argv) {
     QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
     QThread::msleep(5);
   }
+  bool ok = true;
   for (int i = 1; i <= frames; ++i) {
     QCoreApplication::processEvents();
     driver.step(16);
     render();
-    if (every > 0 && i % every == 0) save(QString(pos[1]).arg(i, 4, 10, QChar('0')));
+    if (every > 0 && i % every == 0) ok = save(QString(pos[1]).arg(i, 4, 10, QChar('0'))) && ok;
   }
-  return save(QString(pos[1]).arg(frames, 4, 10, QChar('0'))) ? 0 : 1;
+  // the last frame (already saved when --every divides it)
+  if (!(every > 0 && frames % every == 0)) ok = save(QString(pos[1]).arg(frames, 4, 10, QChar('0'))) && ok;
+  return ok ? 0 : 1;
 }

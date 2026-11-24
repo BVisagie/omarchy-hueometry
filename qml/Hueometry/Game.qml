@@ -138,6 +138,8 @@ Item {
 
   function show(name) {
     helpShown = false
+    // the other host may have solved or opened something since
+    if (name === "map" || name === "free") refreshProgress()
     screen = name
     sound.cue("select")
   }

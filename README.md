@@ -49,8 +49,13 @@ shell, opened from an orb (◉) in the bar. Once it is listed in the
 omarchy plugin add https://github.com/BVisagie/omarchy-hueometry-plugin --enable
 ```
 
-To open it with a key, bind `omarchy-shell shell summon
-io.github.bvisagie.hueometry '{}'`. Sound needs Qt Multimedia
+To open it with a key, add to `~/.config/hypr/bindings.lua`:
+
+```lua
+o.bind("SUPER + SHIFT + H", "Hueometry", "omarchy-shell shell summon io.github.bvisagie.hueometry '{}'")
+```
+
+Sound needs Qt Multimedia
 (`omarchy-pkg-add qt6-multimedia`); without it the plugin plays silently. To
 remove it: `omarchy plugin remove io.github.bvisagie.hueometry`.
 
@@ -73,7 +78,8 @@ shares its pillar with only its own colour and one pillar is empty.
 | H | a hint |
 | ? | all keys |
 | F11 | full screen (app) |
-| Q, then Q | quit |
+| Q, then Q | quit (app) |
+| Q | close (shell plugin) |
 
 Settings: music and sound volumes, silence, symbols on the orbs (for colour
 blindness), less movement, line or circle boards, and the size of words and

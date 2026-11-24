@@ -117,6 +117,19 @@ Item {
       game.setSetting("reducedMotion", false); game.setSetting("symbols", false)
     }
 
+    function test_8_a_bigger_size_keeps_its_row_in_view() {
+      game.show("settings")
+      const page = game.current
+      const scroller = findChild(page, "scroller")
+      page.cursor = page.rows.length - 1
+      keyClick(Qt.Key_Right); keyClick(Qt.Key_Right); keyClick(Qt.Key_Right); keyClick(Qt.Key_Right)
+      compare(game.settings.scale, 1.5)
+      const row = scroller.contentItem.children[0].children.find(c => c.index === page.cursor && c.r !== undefined)
+      verify(row.y >= scroller.contentY && row.y + row.height <= scroller.contentY + scroller.height + 1, "the size row is in view")
+      game.setSetting("scale", 1)
+      game.show("menu")
+    }
+
     function test_7_a_move_after_the_clock_went_back_is_kept() {
       // the plugin saved its puzzle with a clock far ahead of this one
       const other = { done: {}, current: { ref: { kind: "tutorial", index: 2 }, moves: [], assisted: false, pack: Store.PACK }, currentAt: Date.now() + 1e9 }

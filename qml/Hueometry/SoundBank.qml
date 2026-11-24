@@ -56,7 +56,8 @@ Item {
     case "restart": restart.play(0.8); break
     case "hint": hint.play(0.8); break
     case "select": select.play(0.6); break
-    case "solved": solved.play(1.0); duckAnim.restart(); break
+    // the music steps back only for a fanfare that can be heard
+    case "solved": solved.play(1.0); if (effects > 0) duckAnim.restart(); break
     }
   }
 

@@ -20,10 +20,10 @@ Then click the orb (◉) in the bar, or bind a key to:
 omarchy-shell shell summon io.github.bvisagie.hueometry '{}'
 ```
 
-For example, in `~/.config/hypr/bindings.conf`:
+For example, in `~/.config/hypr/bindings.lua`:
 
-```
-bindd = SUPER SHIFT, H, Hueometry, exec, omarchy-shell shell summon io.github.bvisagie.hueometry '{}'
+```lua
+o.bind("SUPER + SHIFT + H", "Hueometry", "omarchy-shell shell summon io.github.bvisagie.hueometry '{}'")
 ```
 
 ## Sound

@@ -24,11 +24,17 @@ Item {
     if (r.kind === "level") game.setSetting(r.key, Math.max(0, Math.min(1, Math.round((s[r.key] + dir * 0.1) * 10) / 10)))
     else if (r.kind === "switch") game.setSetting(r.key, !s[r.key])
     else if (r.kind === "layout") game.setSetting(r.key, s.layout === "line" ? "circle" : "line")
-    else if (r.kind === "size") game.setSetting(r.key, Math.max(0.75, Math.min(1.5, Math.round((s.scale + dir * 0.125) * 8) / 8)))
+    else if (r.kind === "size") {
+      game.setSetting(r.key, Math.max(0.75, Math.min(1.5, Math.round((s.scale + dir * 0.125) * 8) / 8)))
+      // every row changed size: lay them out now, then keep this one in view
+      list.forceLayout()
+      reveal()
+    }
   }
 
   // keep the chosen row in view
-  onCursorChanged: {
+  onCursorChanged: reveal()
+  function reveal() {
     // (the Repeater is a child of the column too, so find the row by index)
     const row = list.children.find(c => c.index === cursor && c.r !== undefined)
     if (!row) return
@@ -81,6 +87,7 @@ Item {
 
     Flickable {
       id: scroller
+      objectName: "scroller"
       anchors.fill: parent
       anchors.margins: Theme.em * 1.2
       clip: true

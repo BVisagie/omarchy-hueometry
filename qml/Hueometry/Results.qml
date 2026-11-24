@@ -85,6 +85,8 @@ Item {
           if (r.assisted && r.best && !r.best.assisted)
             return qsTr("Your best without hints is %1.").arg(r.best.best)
           if (r.record === "first") return root.par > 0 ? qsTr("Par for this puzzle is %1.").arg(root.par) : ""
+          if (r.record === "better" && r.previous.assisted && r.previous.best <= r.best.best)
+            return qsTr("Your first solve without hints! Before, you used a hint and took %1.").arg(r.previous.best)
           if (r.record === "better") return qsTr("New personal best! Your last best was %1.").arg(r.previous.best)
           if (r.record === "same") return qsTr("You matched your best of %1.").arg(r.previous.best)
           return qsTr("Your best is %1. Want to try for fewer moves?").arg(r.previous.best)
