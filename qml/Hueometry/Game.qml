@@ -81,14 +81,22 @@ Item {
     if (host) progress = Store.merge(readProgress(), progress)
   }
 
+  // what is on disk with this copy's unsaved changes on top: the other host
+  // may have changed something else
+  function settingsWith(pending) {
+    let next = host ? host.readText("settings.json") : JSON.stringify(settings)
+    for (const k of Object.keys(pending)) next = JSON.stringify(Store.withSetting(next, k, pending[k]))
+    return Store.settings(next)
+  }
+
+  function refreshSettings() {
+    if (host) settings = settingsWith(unsavedSettings)
+  }
+
   function setSetting(key, value) {
     const pending = Object.assign({}, unsavedSettings)
     pending[key] = value
-    // apply this copy's changes to what is on disk: the other host may have
-    // changed something else
-    let next = host ? host.readText("settings.json") : JSON.stringify(settings)
-    for (const k of Object.keys(pending)) next = JSON.stringify(Store.withSetting(next, k, pending[k]))
-    settings = Store.settings(next)
+    settings = settingsWith(pending)
     if (!host) return
     unsavedSettings = host.writeText("settings.json", JSON.stringify(settings)) ? ({}) : pending
   }
@@ -138,8 +146,9 @@ Item {
 
   function show(name) {
     helpShown = false
-    // the other host may have solved or opened something since
-    if (name === "map" || name === "free") refreshProgress()
+    // the other host may have solved, opened or changed something since
+    refreshProgress()
+    refreshSettings()
     screen = name
     sound.cue("select")
   }

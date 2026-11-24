@@ -77,6 +77,11 @@ Item {
     ][i] || ""
   }
 
+  // the words shown with no hint: the tutorial's lesson, or nothing
+  function defaultText() {
+    return ref && ref.kind === "tutorial" ? tutorialText(ref.index) : ""
+  }
+
   function touch(column) {
     if (!session || won) return
     const out = S.touch(session, column)
@@ -85,7 +90,11 @@ Item {
     // a hint stays lit while its orb is lifted, even through a refusal,
     // until the orb lands or goes back
     const keep = hint && ((out.effect.kind === "lift" && hint.from === column) || out.effect.kind === "refuse")
-    if (!keep) hint = null
+    if (hint && !keep) {
+      hint = null
+      // the hint's words go with its highlight
+      if (out.effect.kind !== "move") message = defaultText()
+    }
     if (out.effect.kind === "move") message = ""
     board.effect(out.effect)
     game.sound.effect(out.effect)
@@ -121,7 +130,7 @@ Item {
     if (!session || won || S.view(session).moves === 0) return
     session = S.undo(session)
     hint = null
-    message = ref.kind === "tutorial" ? tutorialText(ref.index) : ""
+    message = defaultText()
     game.sound.cue("undo")
     game.saveCurrent(ref, S.history(session), assisted)
   }

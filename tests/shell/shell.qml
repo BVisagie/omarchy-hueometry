@@ -16,7 +16,7 @@ ShellRoot {
     onTriggered: {
       const window = overlay.children.find(c => c.shown !== undefined)
       const game = window.children[0].item
-      const ok = !!game && !!game.host && game.host.kind === "plugin" && game.screen === "menu" && game.settings.music >= 0
+      const ok = !!game && !!game.host && game.host.kind === "plugin" && game.screen === "menu" && game.settings.muted === true
         && orb.moduleName === "io.github.bvisagie.hueometry"
       if (!ok) { console.log("OVERLAY broken"); Qt.quit(); return }
       game.start({ kind: "tutorial", index: 0 })

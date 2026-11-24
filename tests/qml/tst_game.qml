@@ -130,6 +130,19 @@ Item {
       game.show("menu")
     }
 
+    function test_9_screens_show_the_other_hosts_changes() {
+      game.show("menu")
+      // the plugin changed the music and finished the unfinished puzzle
+      const s = JSON.parse(memory.files["settings.json"]); s.music = 0.2
+      const done = JSON.parse(memory.files["progress-app.json"])
+      const other = { done: done.done, current: null, currentAt: done.currentAt + 1 }
+      memory.files = Object.assign({}, memory.files, { "settings.json": JSON.stringify(s), "progress-plugin.json": JSON.stringify(other) })
+      game.show("settings")
+      compare(game.settings.music, 0.2)
+      game.show("menu")
+      compare(game.progress.current, null, "no stale Continue")
+    }
+
     function test_7_a_move_after_the_clock_went_back_is_kept() {
       // the plugin saved its puzzle with a clock far ahead of this one
       const other = { done: {}, current: { ref: { kind: "tutorial", index: 2 }, moves: [], assisted: false, pack: Store.PACK }, currentAt: Date.now() + 1e9 }

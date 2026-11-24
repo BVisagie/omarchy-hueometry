@@ -18,8 +18,13 @@ Item {
 
   readonly property string pluginId: (manifest && manifest.id) || "io.github.bvisagie.hueometry"
   readonly property string home: Quickshell.env("HOME")
-  readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || home + "/.local/share") + "/hueometry"
-  readonly property string configDir: (Quickshell.env("XDG_CONFIG_HOME") || home + "/.config") + "/hueometry"
+  // as the app (and the XDG spec) does: a relative or empty path is ignored
+  function xdg(name, fallback) {
+    const v = Quickshell.env(name)
+    return typeof v === "string" && v.startsWith("/") ? v : home + fallback
+  }
+  readonly property string dataDir: xdg("XDG_DATA_HOME", "/.local/share") + "/hueometry"
+  readonly property string configDir: xdg("XDG_CONFIG_HOME", "/.config") + "/hueometry"
 
   function open(payloadJson) { root.opened = true }
   function close() { root.opened = false }
