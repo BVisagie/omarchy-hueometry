@@ -46,7 +46,8 @@ Item {
     if (!view) { stack = []; bloomed = []; return }
     bloomExcept(view.selected)
     const cols = copy(view.columns)
-    if (view.selected >= 0 && cols[view.selected].length > 0) {
+    // (with no room to draw the board, nothing is lifted into view)
+    if (view.selected >= 0 && cols[view.selected].length > 0 && geom.columns[view.selected]) {
       const top = cols[view.selected].shift()
       flyer.colour = top
       flyer.place(Layout.liftedAt(geom.columns[view.selected], cap, unit))

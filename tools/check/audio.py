@@ -94,6 +94,8 @@ def main():
         p = SOUNDS / f"{name}.ogg"
         if not p.exists() or p.stat().st_size < 50_000 or p.read_bytes()[:4] != b"OggS":
             bad.append(f"{p.name}: missing or not an Ogg file")
+        elif len(channels(p)[0]) != 2:
+            bad.append(f"{p.name}: not stereo")
     for p in SOUNDS.iterdir():
         if p.name not in credits:
             bad.append(f"{p.name}: not credited in ASSETS.md")
