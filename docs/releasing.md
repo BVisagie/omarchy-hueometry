@@ -20,7 +20,8 @@ release.
 
 1. In one reviewed pull request: set the new version in `hueometry.pro`,
    `pkgbuild/PKGBUILD` and `plugin/manifest.json` (`bin/check` fails unless
-   they agree), and date its CHANGELOG entry.
+   they agree), update the package file name in the README's install
+   command, and date the CHANGELOG entry.
 2. After it merges, on an Omarchy machine at that commit of `main`: run
    `bin/check` (CI cannot run the plugin's checks against a real shell).
 3. Optionally run the release workflow by hand first (Actions, Release, Run
