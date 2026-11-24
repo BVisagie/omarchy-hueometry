@@ -168,6 +168,7 @@ Item {
       hinted: !!board.hint && board.hint.kind === "play" && (board.hint.from === index || board.hint.to === index)
       empty: !!board.view && board.view.columns[index].length === 0
       seed: index + 1
+      bloomAtEnd: board.pattern === "circle"
       complete: board.bloomed[index] === true
       tone: board.view && board.view.columns[index] && board.view.columns[index].length ? Palette.orb(board.view.columns[index][0]) : null
 

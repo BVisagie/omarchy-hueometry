@@ -170,7 +170,8 @@ All defaults in plan.md section 10 were accepted, except:
   and a fern on some pillars, shaped by the pillar's position so each
   pillar differs but never changes.
 - A pillar that is full of one colour opens a flower in that colour on its
-  plinth (its heart shows the colour's symbol in symbols mode). The engine
+  plinth, or on its outer end on the circle layout, where the spokes have
+  room (its heart shows the colour's symbol in symbols mode). The engine
   decides which pillars are done (`complete` in engine/core.bend, built
   from SPEC.bend's own tests); the board opens a flower only once that
   pillar's last orb has landed, and closes it while an orb is lifted from

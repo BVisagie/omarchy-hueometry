@@ -125,6 +125,13 @@ Item {
   property bool complete: false
   // the colour the pillar holds (palette.mjs), for the flower
   property var tone: null
+  // on the circle layout the bases crowd the centre: the flower opens on
+  // the pillar's outer end instead, where the spokes are far apart
+  property bool bloomAtEnd: false
+  // the flower keeps the colour it opened in while it closes
+  property var bloomTone: null
+  onCompleteChanged: if (complete && tone) bloomTone = tone
+  onToneChanged: if (complete && tone) bloomTone = tone
   function rnd(k) { const v = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v) }
 
   // a moss cushion on each shoulder of the plinth, beside the shaft and
@@ -216,14 +223,16 @@ Item {
   // the flower: opens on the plinth when the pillar is done, in its colour
   Item {
     id: flower
-    width: root.w * 0.5
+    // never so small that its symbol cannot be read (thin circle spokes)
+    width: Math.max(root.w * 0.5, Theme.em * 1.5)
     height: width
     x: root.w / 2 - width / 2
-    y: root.h - root.w * 0.17 - height / 2
-    visible: scale > 0
+    y: root.bloomAtEnd ? root.w * 0.15 - height / 2 : root.h - root.w * 0.17 - height / 2
+    visible: scale > 0 && !!root.bloomTone
     scale: root.complete && root.tone ? 1 : 0
     Behavior on scale { NumberAnimation { duration: Theme.ms(420); easing.type: Easing.OutBack } }
-    readonly property color petal: root.tone ? root.tone.base : "white"
+    readonly property var tone: root.bloomTone
+    readonly property color petal: tone ? tone.base : "white"
     // a pale halo, so a green flower still shows against the moss
     Rectangle {
       anchors.centerIn: parent
@@ -244,7 +253,7 @@ Item {
         transformOrigin: Item.Bottom
         rotation: index * 72
         gradient: Gradient {
-          GradientStop { position: 0.0; color: root.tone ? root.tone.light : "white" }
+          GradientStop { position: 0.0; color: flower.tone ? flower.tone.light : "white" }
           GradientStop { position: 1.0; color: flower.petal }
         }
         border.color: Theme.glow
@@ -254,18 +263,18 @@ Item {
     // its heart, carrying the colour's symbol in symbols mode
     Rectangle {
       anchors.centerIn: parent
-      width: flower.width * 0.36; height: width; radius: width / 2
+      width: flower.width * 0.42; height: width; radius: width / 2
       color: Theme.gold
       border.color: Qt.darker(Theme.gold, 1.6)
       border.width: Math.max(1, root.w * 0.015)
       Symbol {
         anchors.centerIn: parent
-        size: parent.width * 0.7
+        size: parent.width * 0.75
         // upright on every spoke of the circle layout
         rotation: -root.angle
-        kind: root.tone ? root.tone.symbol : "circle"
-        visible: Theme.symbols && !!root.tone
-        colour: root.tone ? root.tone.dark : "black"
+        kind: flower.tone ? flower.tone.symbol : "circle"
+        visible: Theme.symbols && !!flower.tone
+        colour: flower.tone ? flower.tone.dark : "black"
       }
     }
   }

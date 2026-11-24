@@ -176,8 +176,10 @@ Item {
   }
 
   function finished() {
-    if (won) showResult()
+    // let the last pillar's flower open before the card covers the board
+    if (won) bloomWait.restart()
   }
+  Timer { id: bloomWait; interval: Math.max(1, Theme.ms(550)); onTriggered: play.showResult() }
 
   function handleKey(event) {
     if (result) return results.handleKey(event)

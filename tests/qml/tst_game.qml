@@ -206,8 +206,11 @@ Item {
       compare(board.bloomed[0], false, "closed while its top orb is lifted")
       game.current.touch(0)
       tryVerify(() => board.bloomed[0] === true, 2000)
+      const pillar = board.children.find(c => c.seed === 1)
+      const opened = pillar.bloomTone.name
       keyClick(Qt.Key_U)
       compare(board.bloomed[0], false, "closed again after undo")
+      compare(pillar.bloomTone.name, opened, "it closes in the colour it opened in")
       game.show("menu")
     }
 
