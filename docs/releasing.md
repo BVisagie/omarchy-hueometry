@@ -26,20 +26,28 @@ release.
 3. Optionally run the release workflow by hand first (Actions, Release, Run
    workflow): a dry run builds both, keeps them as files on the run, and
    publishes the plugin to the plugin repository's `dry-run` branch only.
-4. Tag that commit and push the tag:
+4. Tag that commit with `v` and the version (the first release is 0.1.0;
+   use the version you are releasing) and push the tag:
 
    ```sh
-   git tag -a v0.2.0 -m "Hueometry 0.2.0"
-   git push origin v0.2.0
+   git tag -a v0.1.0 -m "Hueometry 0.1.0"
+   git push origin v0.1.0
    ```
 
    The workflow refuses a tag that does not match the version or is not on
-   the commit it builds. A build of the tag shows plain `v0.2.0` on the menu.
+   the commit it builds. A build of the tag shows the plain version (`v0.1.0`)
+   on the menu.
 
-## Update the marketplace listing
+## The marketplace listing
+
+The first release is submitted as a new plugin, following the marketplace's
+[submission guide](https://github.com/omacom/omarchy-plugin-marketplace/blob/main/SUBMISSION.md):
+an issue titled `[Plugin]: Hueometry` for the plugin repository, category
+Kids, tags games, kids and education.
 
 The marketplace approves one exact commit of the plugin repository; a newer
-commit shows as "Update unverified" until it is verified. After each release:
+commit shows as "Update unverified" until it is verified. After each later
+release:
 
 1. Note the plugin repository's new `main` commit (the full 40-character
    SHA): `git ls-remote https://github.com/BVisagie/omarchy-hueometry-plugin main`.

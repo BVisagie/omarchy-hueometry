@@ -20,12 +20,12 @@ Hueometry needs Omarchy 4.5 or newer.
 
 ### As an app (recommended)
 
-Download the package from the
+Download the package (`hueometry-<version>-1-x86_64.pkg.tar.zst`) from the
 [latest release](https://github.com/BVisagie/omarchy-hueometry/releases/latest)
-and install it:
+and install it from the folder you saved it in:
 
 ```sh
-sudo pacman -U hueometry-0.1.0-1-x86_64.pkg.tar.zst
+sudo pacman -U hueometry-*-x86_64.pkg.tar.zst
 ```
 
 Or build it yourself from a checkout (needs `base-devel`):
