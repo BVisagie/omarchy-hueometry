@@ -243,6 +243,26 @@ Item {
       memory.version = ""
     }
 
+    function test_9bf_redo_replays_an_undone_move() {
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      const sol = game.current.session.puzzle.solution
+      // every move but the winning one, then U and Ctrl+Shift+Z
+      for (const m of sol.slice(0, -1)) { game.current.touch(m.from); game.current.touch(m.to); tryVerify(() => !board.busy, 2000) }
+      const before = game.current.view.moves
+      keyClick(Qt.Key_U)
+      compare(game.current.view.moves, before - 1)
+      keyClick(Qt.Key_Z, Qt.ControlModifier | Qt.ShiftModifier)
+      tryVerify(() => !board.busy, 2000)
+      compare(game.current.view.moves, before, "Ctrl+Shift+Z redid the move, and did not also undo")
+      // and the game still plays on to its win
+      const last = sol[sol.length - 1]
+      game.current.touch(last.from); game.current.touch(last.to)
+      tryVerify(() => !!game.current.won, 2000)
+      game.show("menu")
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3, muted: true })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })

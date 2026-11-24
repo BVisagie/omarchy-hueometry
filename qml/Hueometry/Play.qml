@@ -9,6 +9,10 @@ Item {
   required property var game
 
   property var session: null
+  // a narrow window: smaller round buttons without labels, so the title
+  // keeps room (the Keys card still names every action)
+  readonly property bool compact: width < Theme.em * 46
+  readonly property real toolSize: compact ? Theme.em * 2.7 : Theme.em * 3.2
   property var ref: null
   property bool assisted: false
   property var hint: null
@@ -97,9 +101,15 @@ Item {
       if (out.effect.kind !== "move") message = defaultText()
     }
     if (out.effect.kind === "move") message = ""
-    board.effect(out.effect)
-    game.sound.effect(out.effect)
-    if (out.effect.kind === "move") {
+    played(out.effect)
+  }
+
+  // after the session changed: animate and sound the effect, and for a move
+  // win or save (a touch and a redo both end here)
+  function played(effect) {
+    board.effect(effect)
+    game.sound.effect(effect)
+    if (effect.kind === "move") {
       if (S.view(session).solved) {
         board.celebrating = true
         win()
@@ -137,6 +147,19 @@ Item {
     message = defaultText()
     game.sound.cue("undo")
     game.saveCurrent(ref, S.history(session), assisted)
+  }
+
+  // plays the move taken back last, again (Ctrl+Shift+Z, or the button)
+  function redo() {
+    if (!session || won || !S.canRedo(session)) return
+    if (session.selected >= 0) { session = S.cancel(session); board.stop() }
+    const out = S.redo(session)
+    if (out.effect.kind !== "move") return
+    session = out.state
+    focusColumn = out.effect.to
+    hint = null
+    message = ""
+    played(out.effect)
   }
 
   function restart() {
@@ -203,7 +226,11 @@ Item {
       else game.goBack()
       return true
     case Qt.Key_U: undo(); return true
-    case Qt.Key_Z: if (ctrl) { undo(); return true } return false
+    // Ctrl+Shift+Z redoes, Ctrl+Z undoes (never both)
+    case Qt.Key_Z:
+      if (!ctrl) return false
+      if (event.modifiers & Qt.ShiftModifier) redo(); else undo()
+      return true
     case Qt.Key_H: askHint(); return true
     case Qt.Key_R:
       // a held key repeats; only a second press confirms
@@ -238,7 +265,7 @@ Item {
       anchors.top: parent.top
       // the title and counts never run under the buttons on the right
       width: parent.width - tools.width - Theme.em
-      RoundButton { id: backButton; icon: "back"; label: qsTr("Back"); onActivated: play.game.goBack() }
+      RoundButton { id: backButton; icon: "back"; size: play.toolSize; label: play.compact ? "" : qsTr("Back"); onActivated: play.game.goBack() }
       Column {
         width: parent.width - backButton.width - parent.spacing
         anchors.verticalCenter: parent.verticalCenter
@@ -291,13 +318,14 @@ Item {
 
     Row {
       id: tools
-      spacing: Theme.em * 0.8
+      spacing: play.compact ? Theme.em * 0.5 : Theme.em * 0.8
       anchors.right: parent.right
       anchors.top: parent.top
-      RoundButton { icon: "undo"; label: qsTr("Undo"); enabled: !!play.view && play.view.moves > 0; onActivated: play.undo() }
-      RoundButton { icon: "restart"; label: play.confirmRestart ? qsTr("Press R") : qsTr("Hold: restart"); hold: 700; lit: play.confirmRestart; onActivated: play.restart() }
-      RoundButton { icon: "hint"; label: qsTr("Hint"); onActivated: play.askHint() }
-      RoundButton { icon: "help"; label: qsTr("Keys"); onActivated: play.game.showHelp() }
+      RoundButton { icon: "undo"; size: play.toolSize; label: play.compact ? "" : (qsTr("Undo")); enabled: !!play.view && play.view.moves > 0; onActivated: play.undo() }
+      RoundButton { icon: "redo"; size: play.toolSize; label: play.compact ? "" : (qsTr("Redo")); enabled: !!play.session && S.canRedo(play.session) && !play.won; onActivated: play.redo() }
+      RoundButton { icon: "restart"; size: play.toolSize; label: play.compact ? "" : (play.confirmRestart ? qsTr("Press R") : qsTr("Hold: restart")); hold: 700; lit: play.confirmRestart; onActivated: play.restart() }
+      RoundButton { icon: "hint"; size: play.toolSize; label: play.compact ? "" : (qsTr("Hint")); onActivated: play.askHint() }
+      RoundButton { icon: "help"; size: play.toolSize; label: play.compact ? "" : (qsTr("Keys")); onActivated: play.game.showHelp() }
     }
   }
 

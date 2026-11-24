@@ -234,6 +234,20 @@ Item {
           }
         }
       }
+      // without Qt Multimedia there is no sound: say so, plainly
+      Text {
+        objectName: "soundMissing"
+        visible: root.game.sound.missing
+        width: list.width
+        leftPadding: Theme.em
+        rightPadding: Theme.em
+        topPadding: Theme.em * 0.4
+        wrapMode: Text.WordWrap
+        text: qsTr("Sound is off because Qt Multimedia is not installed. Install the qt6-multimedia package to hear the game.")
+        color: Theme.gold
+        font.family: Theme.font
+        font.pixelSize: Theme.em * 0.95
+      }
     }
     }
   }

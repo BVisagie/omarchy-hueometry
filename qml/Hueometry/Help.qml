@@ -14,6 +14,7 @@ Item {
     [qsTr("Space or Enter"), qsTr("lift an orb, or put it down")],
     [qsTr("Esc"), qsTr("put the orb back, or go back")],
     [qsTr("U or Ctrl+Z"), qsTr("undo a move")],
+    [qsTr("Ctrl+Shift+Z"), qsTr("redo it")],
     [qsTr("R, then R"), qsTr("start the puzzle again")],
     [qsTr("H"), qsTr("a hint")],
     [qsTr("?"), qsTr("these keys")],

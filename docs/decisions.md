@@ -206,3 +206,21 @@ All defaults in plan.md section 10 were accepted, except:
   sound bank plays nothing until the game's settings reach it.
 - The build-id check's throwaway repositories ignore the global and system
   git settings (signing, hooks) as well as git's environment.
+
+## Omarchy conventions (0.2)
+
+- Hueometry keeps its own jungle palette and rounded style rather than
+  following the Omarchy theme accent and Hyprland's window rounding: a
+  puzzle's colours are chosen and checked for colour blindness, and should
+  not change with the desktop theme. The bar orb, drawn by the shell's own
+  WidgetButton, does follow the theme.
+- Without Qt Multimedia the game is silent and says so in Settings, naming
+  the package rather than a command (shown only once loading has failed).
+- The bar orb opens the game through the shell's plugin API (bar.shell,
+  limited to the plugin's own id), and falls back to `omarchy-shell shell
+  summon` on a shell without it.
+- Redo (Ctrl+Shift+Z, or the Redo button) plays back a taken-back move
+  through the engine; a new move or a restart forgets what was taken back.
+  It keeps no state in the engine and nothing in the save.
+- `tools/check/plugin-guard.sh` keeps the plugin clear of what the
+  marketplace's security baseline reports for review.

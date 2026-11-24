@@ -12,10 +12,16 @@ Item {
   property bool inPlay: false
   property bool playing: false
   readonly property bool available: bank.status === Loader.Ready
+  // Qt Multimedia is not installed: the game plays silently and says so
+  // (not while the player is still loading)
+  readonly property bool missing: bank.status === Loader.Error
+
+  // the player; a test points this at a file that cannot load
+  property url bankSource: "SoundBank.qml"
 
   Loader {
     id: bank
-    source: "SoundBank.qml"
+    source: root.bankSource
     asynchronous: true
   }
 

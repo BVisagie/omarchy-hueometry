@@ -83,6 +83,7 @@ shares its pillar with only its own colour and one pillar is empty.
 | Space or Enter | lift an orb, or put it down |
 | Esc | put the orb back, or go back |
 | U or Ctrl+Z | undo a move |
+| Ctrl+Shift+Z | redo it |
 | R, then R (or hold the button) | start the puzzle again |
 | H | a hint |
 | ? | all keys |
