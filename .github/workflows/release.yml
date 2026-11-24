@@ -28,8 +28,6 @@ jobs:
   package:
     runs-on: ubuntu-latest
     container: archlinux:latest
-    permissions:
-      contents: write   # the GitHub release
     steps:
       - name: Install system packages
         run: |
@@ -52,15 +50,6 @@ jobs:
           su builder -c "cd '$GITHUB_WORKSPACE/pkgbuild' && makepkg -f --noconfirm"
       - name: Assemble the shell plugin
         run: su builder -c "cd '$GITHUB_WORKSPACE' && bin/plugin"
-      - name: Attach both to the release
-        if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          tar -C dist -czf "hueometry-plugin-${GITHUB_REF_NAME}.tar.gz" plugin
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md
-          gh release upload "$GITHUB_REF_NAME" pkgbuild/hueometry-*.pkg.tar.zst hueometry-plugin-*.tar.gz --clobber
       - uses: actions/upload-artifact@v7
         with:
           name: plugin
@@ -69,6 +58,31 @@ jobs:
         with:
           name: package
           path: pkgbuild/hueometry-*.pkg.tar.zst
+
+  # only a tag makes a release, and only this job may write to the repository
+  release:
+    needs: package
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: plugin
+          path: dist/plugin
+      - uses: actions/download-artifact@v8
+        with:
+          name: package
+          path: package
+      - name: Attach both to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -C dist -czf "hueometry-plugin-${GITHUB_REF_NAME}.tar.gz" plugin
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md
+          gh release upload "$GITHUB_REF_NAME" package/hueometry-*.pkg.tar.zst "hueometry-plugin-${GITHUB_REF_NAME}.tar.gz" --clobber
 
   publish-plugin:
     needs: package
