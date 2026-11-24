@@ -230,8 +230,10 @@ Item {
     height: width
     x: root.w / 2 - width / 2
     // past the capital on the circle, clear of the outermost orb
-    // on the line, from the plinth's top edge down, clear of the bottom orb
-    y: root.bloomAtEnd ? root.w * 0.1 - height : Math.max(root.h - root.w * 0.17 - height / 2, root.h - root.w * 0.36)
+    // on the line, low enough that the top petal (0.52 of the height above
+    // the centre, up to 1.1x while it pops open) stays below the plinth's
+    // top edge, clear of the bottom orb
+    y: root.bloomAtEnd ? root.w * 0.1 - height : Math.max(root.h - root.w * 0.17 - height / 2, root.h - root.w * 0.34 + height * 0.08)
     visible: scale > 0 && !!root.bloomTone
     scale: root.complete && root.tone ? 1 : 0
     Behavior on scale { NumberAnimation { duration: Theme.ms(420); easing.type: Easing.OutBack } }
