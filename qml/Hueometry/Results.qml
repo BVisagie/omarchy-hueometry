@@ -53,19 +53,13 @@ Item {
     // as tall as its words, or the window, scrolling inside when taller
     height: Math.min(column.implicitHeight + Theme.em * 3, root.height - Theme.em * 2)
     // its words do not fit: the view gives up a strip at its foot to the cue
-    readonly property bool overflows: column.implicitHeight + Theme.em * 3 > root.height - Theme.em * 2 + 1
+    readonly property bool overflows: column.implicitHeight + Theme.em * 3 > root.height - Theme.em * 2
     scale: root.visible ? 1 : 0.85
     Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
 
     // the wheel anywhere on the card (its padding and the cue strips too)
     // scrolls its words
-    MouseArea {
-      anchors.fill: parent
-      acceptedButtons: Qt.NoButton
-      onWheel: function(wheel) {
-        cardScroll.contentY = Math.max(0, Math.min(cardScroll.contentHeight - cardScroll.height, cardScroll.contentY - wheel.angleDelta.y / 120 * Theme.em * 2))
-      }
-    }
+    WheelScroll { anchors.fill: parent; view: cardScroll }
 
     Flickable {
       id: cardScroll

@@ -9,7 +9,7 @@ Item {
   id: root
   default property alias content: inner.data
   // taller than the space: the view gives up its head and foot to the cues
-  readonly property bool overflows: inner.childrenRect.height > height + 1
+  readonly property bool overflows: inner.childrenRect.height > height
 
   // the very top, title and all (for the first item of a screen)
   function toTop() { f.contentY = 0 }
@@ -42,15 +42,12 @@ Item {
   // the strips are not part of the view, but the wheel over them scrolls it
   Repeater {
     model: root.overflows ? 2 : 0
-    MouseArea {
+    WheelScroll {
       required property int index
+      view: f
       width: root.width
       height: Theme.em * 1.9
       y: index === 0 ? 0 : root.height - height
-      acceptedButtons: Qt.NoButton
-      onWheel: function(wheel) {
-        f.contentY = Math.max(0, Math.min(f.contentHeight - f.height, f.contentY - wheel.angleDelta.y / 120 * Theme.em * 2))
-      }
     }
   }
 
