@@ -63,10 +63,15 @@ function solveLevel(d, columns) {
 function sample(name, count, from = 1) {
   const d = DIFFICULTY[name];
   const out = [];
+  // two seeds can make the same board: keep the first
+  const seen = new Set();
   for (let seed = from; out.length < count && seed < from + 5000; seed++) {
     const tag = `${name}:${seed}`;
     const p = R.generate(d.colours, d.cap, seed);
     if (!p) continue;
+    const board = JSON.stringify(p.columns);
+    if (seen.has(board)) continue;
+    seen.add(board);
     const s = solveLevel(d, p.columns);
     if (!s || s.moves.length < d.minPar) continue;
     out.push({ seed, par: s.moves.length, optimal: s.optimal, lower: lowerBound(p.columns), solution: s.moves.map((m) => [m.from, m.to]) });

@@ -12,7 +12,7 @@ Item {
   // 0: map, 1: play again, 2: next
   property int cursor: hasNext ? 2 : 1
   // a new result (or a change to what comes next) starts on the main action
-  onResultChanged: cursor = hasNext ? 2 : 1
+  onResultChanged: { cursor = hasNext ? 2 : 1; Qt.callLater(reveal) }
   onHasNextChanged: cursor = hasNext ? 2 : 1
   signal replay()
   signal next()
@@ -41,14 +41,24 @@ Item {
     id: card
     anchors.centerIn: parent
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 30)
-    height: column.implicitHeight + Theme.em * 3
+    // as tall as its words, or the window, scrolling inside when taller
+    height: Math.min(column.implicitHeight + Theme.em * 3, root.height - Theme.em * 2)
     scale: root.visible ? 1 : 0.85
     Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
 
+    Flickable {
+      id: cardScroll
+      anchors.fill: parent
+      anchors.margins: Theme.em * 1.5
+      contentWidth: width
+      contentHeight: column.implicitHeight
+      clip: true
+      interactive: contentHeight > height
+      boundsBehavior: Flickable.StopAtBounds
+
     Column {
       id: column
-      anchors.centerIn: parent
-      width: parent.width - Theme.em * 3
+      width: cardScroll.width
       spacing: Theme.em * 0.8
 
       Text {
@@ -132,5 +142,17 @@ Item {
         TextButton { id: nextButton; text: qsTr("Next"); icon: "play"; wide: Theme.em * 8; primary: true; visible: root.hasNext; focused: root.cursor === 2; onActivated: root.next() }
       }
     }
+    }
   }
+
+  // keep the chosen action in view when the card scrolls
+  function reveal() {
+    const b = [backButton, againButton, nextButton][cursor]
+    if (!b || cardScroll.contentHeight <= cardScroll.height) return
+    const y = b.mapToItem(column, 0, 0).y
+    if (y < cardScroll.contentY) cardScroll.contentY = y
+    else if (y + b.height > cardScroll.contentY + cardScroll.height) cardScroll.contentY = y + b.height - cardScroll.height
+  }
+  onCursorChanged: reveal()
+  onHeightChanged: Qt.callLater(reveal)
 }

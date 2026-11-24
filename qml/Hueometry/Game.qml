@@ -168,15 +168,18 @@ Item {
     screens.item.open(ref, null)
   }
 
-  function startFree(difficulty) {
+  // a random board of this size, never the one just played (`avoid`)
+  function startFree(difficulty, avoid) {
     const count = S.puzzleCount(difficulty)
-    start({ kind: "free", difficulty, index: Math.floor(Math.random() * count) })
+    let index = Math.floor(Math.random() * (avoid >= 0 && count > 1 ? count - 1 : count))
+    if (avoid >= 0 && count > 1 && index >= avoid) index++
+    start({ kind: "free", difficulty, index })
   }
 
   function playNext(ref) {
     const n = nextRef(ref)
     if (!n) { goBack(); return }
-    if (n.kind === "free") startFree(n.difficulty)
+    if (n.kind === "free") startFree(n.difficulty, ref.index)
     else start(n)
   }
 

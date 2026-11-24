@@ -175,6 +175,15 @@ Item {
       game.show("menu")
     }
 
+    function test_9bc_free_play_next_is_another_board() {
+      for (let i = 0; i < 40; i++) {
+        game.playNext({ kind: "free", difficulty: "beginner", index: 5 })
+        verify(game.current.ref.index !== 5)
+      }
+      tryVerify(() => game.current.session !== null, 5000)
+      game.show("menu")
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3 })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })
