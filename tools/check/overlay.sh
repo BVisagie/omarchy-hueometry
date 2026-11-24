@@ -13,6 +13,10 @@ trap 'rm -rf "$work"' EXIT
 cp -r "$ROOT/tests/shell/." "$work/"
 mkdir -p "$work/plugin"
 cp -r "$ROOT/dist/plugin/." "$work/plugin/"
+# the version the shell would pass from the manifest
+version=$(sed -n 's/^ *"version": "\([^"]*\)".*/\1/p' "$ROOT/dist/plugin/manifest.json")
+[[ -n "$version" ]] || { echo "dist/plugin/manifest.json has no version" >&2; exit 1; }
+sed -i "s|@MANIFEST_VERSION@|$version|g" "$work/shell.qml"
 # the stand-in OverlayWindow is an item, not a layer-shell window
 sed -i '/WlrLayershell.namespace/d' "$work/plugin/Overlay.qml"
 mkdir -p "$work/config/hueometry"

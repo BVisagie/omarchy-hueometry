@@ -7,7 +7,9 @@ import "plugin" as P
 // saves into XDG_DATA_HOME, and that the bar widget loads. Run by
 // tools/check/overlay.sh.
 ShellRoot {
-  P.Overlay { id: overlay; manifest: ({ id: "io.github.bvisagie.hueometry" }) }
+  // overlay.sh writes in the assembled manifest's version, as the shell
+  // passes the whole manifest
+  P.Overlay { id: overlay; manifest: ({ id: "io.github.bvisagie.hueometry", version: "@MANIFEST_VERSION@" }) }
   P.BarWidget { id: orb }
   Timer { interval: 300; running: true; onTriggered: { overlay.open("{}"); later.start() } }
   Timer {
@@ -18,6 +20,7 @@ ShellRoot {
       const game = window.children[0].item
       const ok = !!game && !!game.host && game.host.kind === "plugin" && game.screen === "menu" && game.settings.muted === true
         && orb.moduleName === "io.github.bvisagie.hueometry"
+        && game.host.version.indexOf("@MANIFEST_VERSION@") === 0
       if (!ok) { console.log("OVERLAY broken"); Qt.quit(); return }
       game.start({ kind: "tutorial", index: 0 })
       started.game = game

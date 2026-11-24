@@ -17,6 +17,10 @@ Item {
   property bool opened: false
 
   readonly property string pluginId: (manifest && manifest.id) || "io.github.bvisagie.hueometry"
+  // which commit this plugin was assembled from: bin/plugin writes it in
+  // place of the marker (it stays empty for the release itself)
+  readonly property string build: "@HUEOMETRY_BUILD@"
+  readonly property string buildId: build.indexOf("@") === 0 ? "" : build
   readonly property string home: Quickshell.env("HOME")
   // as the app (and the XDG spec) does: a relative or empty path is ignored
   function xdg(name, fallback) {
@@ -50,6 +54,9 @@ Item {
     id: gameHost
     readonly property string kind: "plugin"
     readonly property bool canFullscreen: false
+    // "0.1.0", or "0.1.0 · 9323709" for a build that is not the release
+    readonly property string version: root.manifest && root.manifest.version
+      ? root.manifest.version + (root.buildId ? " · " + root.buildId : "") : ""
     function file(name) {
       return ({ "progress-plugin.json": pluginProgress, "progress-app.json": appProgress, "progress.json": oldProgress, "settings.json": settingsFile })[name] || null
     }
