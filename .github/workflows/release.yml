@@ -26,7 +26,7 @@ jobs:
       - name: Install system packages
         run: |
           pacman -Syu --noconfirm --needed git base-devel qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland github-cli
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check the tag matches every version
         run: |
           v="${GITHUB_REF_NAME#v}"
@@ -49,7 +49,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md
           gh release upload "$GITHUB_REF_NAME" pkgbuild/hueometry-*.pkg.tar.zst hueometry-plugin-*.tar.gz --clobber
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: plugin
           path: dist/plugin
@@ -59,7 +59,7 @@ jobs:
     if: vars.PLUGIN_PUBLISH == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: plugin
           path: plugin

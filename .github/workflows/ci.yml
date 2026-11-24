@@ -16,13 +16,13 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed git curl diffutils clang gcc make python python-numpy nodejs npm shellcheck \
             qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Cache Bend, Lean and the BendTT kernel
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.local/share/bend-*
