@@ -86,6 +86,8 @@ export function touch(s, column) {
   const cols = R.view(s.game).columns;
   if (!R.isIndex(column) || column >= cols.length || R.solved(s.game)) return { state: s, effect: { kind: "none" } };
   if (s.selected < 0) {
+    // choosing only: nothing is lifted from an empty column, the same case
+    // the engine refuses as EmptySource; no move is decided here
     if (cols[column].length === 0) return { state: s, effect: { kind: "empty", column } };
     return { state: Object.assign({}, s, { selected: column }), effect: { kind: "lift", column } };
   }

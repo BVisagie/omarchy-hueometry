@@ -134,6 +134,17 @@ Item {
     return { beginner: 1, easy: 2, medium: 3, hard: 4, expert: 6 }[ref.difficulty] || 1
   }
 
+  // the title in two parts, so a long name can shorten without losing its place
+  function nameOf(ref) {
+    if (ref.kind === "free") return qsTr("Free play")
+    return areas[areaIndex(ref)].name
+  }
+  function placeOf(ref) {
+    if (ref.kind === "tutorial") return qsTr("%1 of 3").arg(ref.index + 1)
+    if (ref.kind === "level") return qsTr("%1 of 8").arg(ref.index + 1)
+    return freeNames[ref.difficulty] || ""
+  }
+
   function titleOf(ref) {
     if (ref.kind === "tutorial") return qsTr("%1 · %2 of 3").arg(areas[0].name).arg(ref.index + 1)
     if (ref.kind === "level") return qsTr("%1 · %2 of 8").arg(areas[areaIndex(ref)].name).arg(ref.index + 1)
@@ -230,6 +241,8 @@ Item {
     // confirm quitting, restarting, lifting or choosing
     const moving = [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down, Qt.Key_Tab].indexOf(event.key) >= 0
     if (event.isAutoRepeat && !moving) { event.accepted = true; return }
+    // a modifier alone (Shift for ?) neither closes nor opens anything
+    if ([Qt.Key_Shift, Qt.Key_Control, Qt.Key_Alt, Qt.Key_Meta, Qt.Key_Super_L, Qt.Key_Super_R, Qt.Key_AltGr].indexOf(event.key) >= 0) return
     if (helpShown) { helpShown = false; event.accepted = true; return }
     if (event.key === Qt.Key_Question || (event.key === Qt.Key_Slash && (event.modifiers & Qt.ShiftModifier))) { helpShown = true; event.accepted = true; return }
     if (event.key === Qt.Key_F11 && host && host.canFullscreen) { host.toggleFullscreen(); event.accepted = true; return }

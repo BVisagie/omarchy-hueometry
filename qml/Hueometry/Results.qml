@@ -22,9 +22,10 @@ Item {
 
   function handleKey(event) {
     switch (event.key) {
-    case Qt.Key_Left:
+    // up and down too, for when the buttons are stacked
+    case Qt.Key_Left: case Qt.Key_Up:
       cursor = Math.max(0, cursor - 1); return true
-    case Qt.Key_Right: case Qt.Key_Tab:
+    case Qt.Key_Right: case Qt.Key_Down: case Qt.Key_Tab:
       cursor = Math.min(hasNext ? 2 : 1, cursor + 1); return true
     case Qt.Key_Space: case Qt.Key_Return: case Qt.Key_Enter:
       if (cursor === 0) leave(); else if (cursor === 2 && hasNext) next(); else replay()

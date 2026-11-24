@@ -238,16 +238,30 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -Theme.em * 0.6
         spacing: Theme.em * 0.1
-        Text {
+        // the name shortens if it must; the place ("3 of 8") always shows
+        Row {
           width: parent.width
-          elide: Text.ElideRight
-          text: play.ref ? play.game.titleOf(play.ref) : ""
-          color: Theme.ink
-          font.family: Theme.font
-          font.pixelSize: Theme.em * 1.35
-          font.bold: true
-          style: Text.Raised
-          styleColor: "#90000000"
+          Text {
+            width: Math.min(implicitWidth, parent.width - placeText.implicitWidth)
+            elide: Text.ElideRight
+            text: play.ref ? play.game.nameOf(play.ref) : ""
+            color: Theme.ink
+            font.family: Theme.font
+            font.pixelSize: Theme.em * 1.35
+            font.bold: true
+            style: Text.Raised
+            styleColor: "#90000000"
+          }
+          Text {
+            id: placeText
+            text: play.ref ? " · " + play.game.placeOf(play.ref) : ""
+            color: Theme.ink
+            font.family: Theme.font
+            font.pixelSize: Theme.em * 1.35
+            font.bold: true
+            style: Text.Raised
+            styleColor: "#90000000"
+          }
         }
         Text {
           width: parent.width

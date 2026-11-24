@@ -8,7 +8,13 @@ Item {
   id: map
   required property var game
   // the first steps until they are done, then the area last visited
-  property int area: game.progress.tutorial ? game.lastArea : 0
+  property int area: game.progress.tutorial ? openAtOrBefore(game.lastArea) : 0
+  // free play can leave lastArea on an area not open yet
+  function openAtOrBefore(i) {
+    let a = Math.max(0, Math.min(i, S.AREAS.length))
+    while (a > 0 && !isOpen(a)) a--
+    return a
+  }
   property int level: 0
   // 0: choosing an area, 1: choosing a level in it
   property int depth: 0

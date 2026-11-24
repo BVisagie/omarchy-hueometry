@@ -27,6 +27,12 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed git base-devel qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland github-cli
       - uses: actions/checkout@v4
+      - name: Check the tag matches every version
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          grep -qx "VERSION = $v" hueometry.pro || { echo "hueometry.pro is not $v"; exit 1; }
+          grep -qx "pkgver=$v" pkgbuild/PKGBUILD || { echo "pkgbuild/PKGBUILD is not $v"; exit 1; }
+          grep -q "\"version\": \"$v\"" plugin/manifest.json || { echo "plugin/manifest.json is not $v"; exit 1; }
       - name: Build the package (makepkg refuses root)
         run: |
           useradd -m builder
