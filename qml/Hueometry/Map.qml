@@ -77,7 +77,7 @@ Item {
   Grid {
     anchors.horizontalCenter: parent.horizontalCenter
     // as many columns as fit, from two to four
-    columns: Math.max(2, Math.min(4, Math.floor((map.width - Theme.em * 4) / (Theme.em * 14.2))))
+    columns: Math.max(1, Math.min(4, Math.floor((map.width - Theme.em * 4) / (Theme.em * 14.2))))
     horizontalItemAlignment: Grid.AlignHCenter
     spacing: Theme.em * 1.2
     Repeater {
@@ -139,7 +139,8 @@ Item {
     anchors.bottomMargin: Theme.em
   Grid {
     anchors.horizontalCenter: parent.horizontalCenter
-    columns: 4
+    // as many stones as fit in a row, up to four (the keys move in order)
+    columns: Math.max(1, Math.min(4, Math.floor((map.width - Theme.em * 2 + spacing) / (Theme.em * 7 + spacing))))
     spacing: Theme.em * 1.2
     Repeater {
       id: stones

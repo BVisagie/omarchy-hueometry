@@ -161,6 +161,8 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   assert.equal(cur.note, "x");
   assert.equal(cur.ref.seed, 7);
   assert.deepEqual(cur.moves, [[2, 3]]);
+  // an entry under done that is not a record stays
+  assert.deepEqual(JSON.parse(St.progressText(JSON.stringify({ done: { summary: { n: 1 } } }), St.progress(""))).done.summary, { n: 1 });
   // a better score from the other host keeps this file's own extra fields
   const theirs = St.progress(JSON.stringify({ done: { [k("clearing/0")]: { best: 7, stars: 2 } } }));
   const kept = JSON.parse(St.progressText(saved, St.merge(theirs, St.progress(saved)))).done[k("clearing/0")];

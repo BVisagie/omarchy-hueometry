@@ -119,12 +119,17 @@ Item {
           font.bold: true
         }
       }
-      Row {
+      // in a row, or stacked when the card is too narrow for one
+      Grid {
+        id: actions
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.em
-        TextButton { text: root.backLabel; icon: "back"; wide: Theme.em * 8; focused: root.cursor === 0; onActivated: root.leave() }
-        TextButton { text: qsTr("Play again"); icon: "restart"; wide: Theme.em * 10; focused: root.cursor === 1; onActivated: root.replay() }
-        TextButton { text: qsTr("Next"); icon: "play"; wide: Theme.em * 8; primary: true; visible: root.hasNext; focused: root.cursor === 2; onActivated: root.next() }
+        horizontalItemAlignment: Grid.AlignHCenter
+        readonly property real rowWidth: backButton.width + againButton.width + spacing + (nextButton.visible ? nextButton.width + spacing : 0)
+        columns: rowWidth <= column.width ? 3 : 1
+        TextButton { id: backButton; text: root.backLabel; icon: "back"; wide: Theme.em * 8; focused: root.cursor === 0; onActivated: root.leave() }
+        TextButton { id: againButton; text: qsTr("Play again"); icon: "restart"; wide: Theme.em * 10; focused: root.cursor === 1; onActivated: root.replay() }
+        TextButton { id: nextButton; text: qsTr("Next"); icon: "play"; wide: Theme.em * 8; primary: true; visible: root.hasNext; focused: root.cursor === 2; onActivated: root.next() }
       }
     }
   }

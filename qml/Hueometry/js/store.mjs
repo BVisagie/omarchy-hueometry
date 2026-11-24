@@ -26,7 +26,8 @@ export function progressText(diskRaw, p) {
   const disk = parse(diskRaw);
   // inside records and the unfinished puzzle too
   const diskDone = disk.done && typeof disk.done === "object" ? disk.done : {};
-  const done = {};
+  // entries this version does not read as records stay as they were
+  const done = Object.assign({}, diskDone);
   for (const [k, v] of Object.entries(p.done)) {
     const old = diskDone[k];
     // the winning record gives the score; this file's own fields win over
