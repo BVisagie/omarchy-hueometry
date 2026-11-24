@@ -6,6 +6,16 @@ plugin, attaches both to a GitHub release, and publishes the plugin to the
 `main` branch of BVisagie/omarchy-hueometry-plugin, which the plugin
 marketplace lists and `omarchy plugin add` clones.
 
+## The plugin repository
+
+BVisagie/omarchy-hueometry-plugin must exist with `main` as its default
+branch and at least one commit on it before publishing is turned on (the
+workflow refuses otherwise, so a first push can never make another branch
+the default). It needs a write deploy key whose private half is the
+`PLUGIN_DEPLOY_KEY` secret of this repository, and the `PLUGIN_PUBLISH`
+variable set to `true`. Never edit it by hand: it is replaced at each
+release.
+
 ## Cut a release
 
 1. In one reviewed pull request: set the new version in `hueometry.pro`,
