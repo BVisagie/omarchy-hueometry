@@ -57,16 +57,29 @@ Item {
     stack = cols
   }
 
-  onViewChanged: if (!busy) sync()
+  // the engine's completed pillars now and before the latest change: with
+  // no room to draw the board, a move's chime is decided from these
+  property var shownComplete: []
+  property var priorComplete: []
+  onViewChanged: {
+    priorComplete = shownComplete
+    shownComplete = view && view.complete ? view.complete : []
+    if (!busy) sync()
+  }
   onGeomChanged: if (!busy) sync()
 
   function topOf(cols, c) { return cols[c].length - 1 }
 
   // Plays what session.touch answered.
   function effect(e) {
-    if (!view || !geom.columns.length) return
+    if (!view) return
     // an orb still in the air lands first (Play calls land() earlier still)
     flyer.settle()
+    if (!geom.columns.length) {
+      // nothing to animate, but a filled pillar still rings
+      if (e.kind === "move" && shownComplete[e.to] && !priorComplete[e.to]) opened(e.to, e.bead)
+      return
+    }
     switch (e.kind) {
     case "lift": {
       const cols = copy(view.columns)
@@ -137,10 +150,10 @@ Item {
   // the landed orb gives a little squash, and dust puffs from the stone
   function landed(column) {
     const k = stack[column].length - 1
-    for (let i = 0; i < resting.count; i++) {
-      const orb = resting.itemAt(i)
-      if (orb && orb.modelData.c === column && orb.modelData.k === k) { orb.land(); break }
-    }
+    // the column's top orb is the first of its row
+    const row = restingColumns.itemAt(column)
+    const orb = row ? row.orbs.itemAt(0) : null
+    if (orb) orb.land()
     const g = geom.columns[column]
     const at = Layout.beadAt(g, k, unit)
     const a = g.angle * Math.PI / 180
@@ -212,26 +225,34 @@ Item {
     }
   }
 
-  // the orbs at rest
+  // the orbs at rest, a row per pillar: a row is rebuilt only when its own
+  // orbs change (its content is compared as text), so a landing orb keeps
+  // its squash while another pillar changes
   Repeater {
-    id: resting
-    model: {
-      const out = []
-      for (let c = 0; c < board.stack.length && c < board.geom.columns.length; c++) {
-        const col = board.stack[c]
-        for (let i = 0; i < col.length; i++) out.push({ c, k: col.length - 1 - i, colour: col[i] })
+    id: restingColumns
+    model: Math.min(board.stack.length, board.geom.columns.length)
+    Item {
+      id: row
+      required property int index
+      readonly property string content: JSON.stringify(board.stack[index] || [])
+      readonly property var list: JSON.parse(content)
+      readonly property alias orbs: orbs
+      Repeater {
+        id: orbs
+        model: row.list
+        Orb {
+          required property int index
+          required property int modelData
+          readonly property int k: row.list.length - 1 - index
+          readonly property var at: Layout.beadAt(board.geom.columns[row.index], k, board.unit)
+          colour: modelData
+          size: board.orbSize
+          cx: at.x
+          cy: at.y
+          axis: board.geom.columns[row.index].angle
+          glowing: board.celebrating
+        }
       }
-      return out
-    }
-    Orb {
-      required property var modelData
-      readonly property var at: Layout.beadAt(board.geom.columns[modelData.c], modelData.k, board.unit)
-      colour: modelData.colour
-      size: board.orbSize
-      cx: at.x
-      cy: at.y
-      axis: board.geom.columns[modelData.c].angle
-      glowing: board.celebrating
     }
   }
 

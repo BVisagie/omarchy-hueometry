@@ -674,7 +674,12 @@ def main():
     """Makes every sound, or only the kinds named: effects, critters,
     ambience, music (numpy's rounding differs a little between machines, so
     remaking a kind you did not change only churns its files)."""
-    kinds = sys.argv[1:] or ["effects", "critters", "ambience", "music"]
+    known = ["effects", "critters", "ambience", "music"]
+    kinds = sys.argv[1:] or known
+    unknown = [k for k in kinds if k not in known]
+    if unknown:
+        print(f"synth: unknown kind {', '.join(unknown)} (one of {', '.join(known)})", file=sys.stderr)
+        return 2
     os.makedirs(OUT, exist_ok=True)
     made = []
     shorts = {}

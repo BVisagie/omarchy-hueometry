@@ -309,6 +309,23 @@ Item {
       game.show("menu")
     }
 
+    function test_9bi_a_landing_keeps_its_squash_when_another_pillar_changes() {
+      if (Theme.reducedMotion) skip("no squash with less movement")
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      game.current.touch(0); game.current.touch(2)
+      tryVerify(() => !board.busy, 2000)       // landed: its squash runs
+      const row = board.children.find(c => c.content !== undefined && c.index === 2)
+      const orb = row.orbs.itemAt(0)
+      game.current.touch(1)                   // lift from another pillar
+      verify(row.orbs.itemAt(0) === orb, "the landed orb was not rebuilt")
+      verify(orb.squish > 0, "and still squashes")
+      game.current.touch(1)
+      tryVerify(() => !board.busy, 2000)
+      game.show("menu")
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3, muted: true })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })
