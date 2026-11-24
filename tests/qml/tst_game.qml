@@ -158,6 +158,7 @@ Item {
       game.continueOrMap()
       compare(game.settings.layout, "line", "resume")
       set("circle")
+      tryVerify(() => game.current.session !== null, 5000)
       game.current.restart()
       compare(game.settings.layout, "circle", "restart")
       set("line")
