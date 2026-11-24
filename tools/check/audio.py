@@ -5,6 +5,7 @@ mixed as tools/audio/synth.py intends: each effect at its loudness target
 with a click-free start, loops at theirs, nothing over -1 dBTP.
 (numpy and ffmpeg output can differ between machines, so this checks the
 files rather than regenerating and comparing them.)"""
+import shutil
 import subprocess
 import sys
 import wave
@@ -68,8 +69,9 @@ def mix(bad):
 
 
 def main():
-    if subprocess.run(["which", "ffmpeg"], capture_output=True).returncode != 0:
-        print("sounds: ffmpeg is needed to decode the Ogg loops", file=sys.stderr)
+    missing = [tool for tool in ("ffmpeg", "ffprobe") if shutil.which(tool) is None]
+    if missing:
+        print(f"sounds: {' and '.join(missing)} needed to read the Ogg loops", file=sys.stderr)
         return 1
     bad = []
     credits = (ROOT / "ASSETS.md").read_text()

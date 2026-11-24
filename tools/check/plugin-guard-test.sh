@@ -38,6 +38,7 @@ expect pass "a negated sudo" README.md "No sudo or pkexec is required."
 expect fail "sudo in a sentence" README.md "Run it with sudo."
 expect fail "sudo after an invalid byte" notes.txt $'x\xff sudo rm'
 expect fail "curl after an invalid byte" notes.txt $'x\xff curl x'
+expect fail "sudo right after a non-ASCII letter" README.md "需要使用sudo命令"
 
 expect fail "an array across lines" Widget.qml $'Quickshell.execDetached([\n  "cargo",\n  "install", "x"])'
 expect pass "an ordinary array" Widget.qml 'Quickshell.execDetached(["omarchy-shell", "shell", "summon", "x", "{}"])'

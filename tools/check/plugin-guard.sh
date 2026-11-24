@@ -60,11 +60,14 @@ done
 
 # sudo and pkexec unless explicitly negated, by the scanner's own rule
 set +e
-priv=$(tr '\n' '\0' <<<"$files" | xargs -0 -r python3 "$ROOT/tools/check/privilege.py")
+priv=$(find "$dir" -path "$dir/.git" -prune -o -type f -print0 | xargs -0 -r python3 "$ROOT/tools/check/privilege.py")
 rc=$?
 set -e
-# xargs: 0 none, 123 some hits (privilege.py exited 1), anything else an error
-if (( rc != 0 && rc != 123 )); then echo "plugin guard: could not scan $dir for sudo" >&2; exit 2; fi
+# xargs: 0 none, 123 hits (privilege.py exited 1); a 123 that printed
+# nothing was a crash, and anything else an error: never a pass
+if (( rc != 0 && rc != 123 )) || { (( rc == 123 )) && [[ -z "$priv" ]]; }; then
+  echo "plugin guard: could not scan $dir for sudo" >&2; exit 2
+fi
 while IFS= read -r hit; do
   [[ -n "$hit" ]] && say "privilege the marketplace would review: ${hit#"$dir"/}"
 done <<<"$priv"

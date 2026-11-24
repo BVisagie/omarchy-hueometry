@@ -8,6 +8,9 @@ Prints path:line:text for each hit; exits 1 if any."""
 import re
 import sys
 
+# re.ASCII: the scanner's JavaScript \b is ASCII-only, so a letter like 用
+# right before "sudo" is still a word boundary there, and here
+
 NAMES = r"(?:sudo|pkexec)"
 LIST = rf"{NAMES}(?:\s*(?:,|/|\bor\b|\band\b)\s*{NAMES})*"
 EXPLICIT_NEGATIVE_LIST = rf"{NAMES}(?:\s*(?:/|\bor\b|\band\b)\s*(?:no\s+)?{NAMES})*"
@@ -25,8 +28,8 @@ STRIPS = [
 
 def privileged(text):
     for pattern in STRIPS:
-        text = re.sub(pattern, "", text, flags=re.IGNORECASE)
-    return re.search(rf"\b{NAMES}\b", text, re.IGNORECASE) is not None
+        text = re.sub(pattern, "", text, flags=re.IGNORECASE | re.ASCII)
+    return re.search(rf"\b{NAMES}\b", text, re.IGNORECASE | re.ASCII) is not None
 
 
 def main(paths):
