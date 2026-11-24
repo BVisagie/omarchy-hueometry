@@ -21,7 +21,7 @@ Window {
     id: gameHost
     readonly property string kind: "app"
     readonly property bool canFullscreen: true
-    // "0.2.0", or "0.2.0 · 9323709" for a build that is not the release
+    // "0.2.1", or "0.2.1 · 9323709" for a build that is not the release
     readonly property string version: Qt.application.version + (appBuild ? " · " + appBuild : "")
     function readText(name) { return appHost.readText(name) }
     function writeText(name, text) { return appHost.writeText(name, text) }
