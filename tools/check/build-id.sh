@@ -7,6 +7,8 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # repositories must not write into the real one
 # shellcheck disable=SC2046  # one variable name per word, on purpose
 unset $(git rev-parse --local-env-vars)
+# and no global or system settings either (signing, hooks)
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 g() { git -c user.email=check@localhost -c user.name=check "$@"; }
