@@ -198,6 +198,7 @@ const $$core_apply = $core_apply;
 const $$core_lifted = $core_lifted;
 const $$core_why = $core_why;
 const $$core_legal_move = $core_legal_move;
+const $$core_complete_go = $core_complete_go;
 const $$gen_column_of = $gen_column_of;
 const $$gen_solved_go = $gen_solved_go;
 const $$gen_moves_from = $gen_moves_from;
@@ -716,6 +717,22 @@ function $core_solved(_g_0) {
   const _cap_0 = _g_0["cap"];
   const _b_0 = _g_0["board"];
   return $core_is_solved(_cap_0, _b_0);
+}
+
+function $core_complete_go(_cap_0, _b_0) {
+  if (_b_0.$ === "Nil") {
+    return {$: "Nil"};
+  } else {
+    const _col_0 = _b_0["head"];
+    const _r_0 = _b_0["tail"];
+    return {$: "Con", "head": $$Bool_and($$Bool_and($$Bool_not($$___SPEC_is_empty(_col_0)), $$___SPEC_uniform(_col_0)), $$Nat_is_eq($$___SPEC_size(_col_0), _cap_0)), "tail": $$core_complete_go(_cap_0, _r_0)};
+  }
+}
+
+function $core_complete(_g_0) {
+  const _cap_0 = _g_0["cap"];
+  const _b_0 = _g_0["board"];
+  return $core_complete_go(_cap_0, _b_0);
 }
 
 function $core_targets_go($0, $1, $2, $3, $4) {
@@ -1505,6 +1522,10 @@ function $moves(_g_0) {
   return $core_moves(_g_0);
 }
 
+function $complete(_g_0) {
+  return $core_complete(_g_0);
+}
+
 function $targets(_g_0, _i_0) {
   return $core_targets(_g_0, _i_0);
 }
@@ -1664,6 +1685,8 @@ const BEND = {
   "core:replay": run_lib((a0,a1) => run_loop($core_replay(a0,a1)), 2),
   "core:is_solved": run_lib((a0,a1) => run_loop($core_is_solved(nat_in(a0),a1)), 2),
   "core:solved": run_lib((a0) => run_loop($core_solved(a0)), 1),
+  "core:complete.go": run_lib((a0,a1) => run_loop($core_complete_go(nat_in(a0),a1)), 2),
+  "core:complete": run_lib((a0) => run_loop($core_complete(a0)), 1),
   "core:targets.go": run_lib((a0,a1,a2,a3,a4) => run_loop($core_targets_go(nat_in(a0),a1,nat_in(a2),nat_in(a3),a4)), 5),
   "core:targets": run_lib((a0,a1) => run_loop($core_targets(a0,nat_in(a1))), 2),
   "gen:rng.next": run_lib((a0) => run_loop($gen_rng_next(a0)), 1),
@@ -1738,6 +1761,7 @@ const BEND = {
   "replay": run_lib((a0,a1) => run_loop($replay(a0,a1)), 2),
   "solved": run_lib((a0) => run_loop($solved(a0)), 1),
   "moves": run_lib((a0) => run_loop($moves(a0)), 1),
+  "complete": run_lib((a0) => run_loop($complete(a0)), 1),
   "targets": run_lib((a0,a1) => run_loop($targets(a0,nat_in(a1))), 2),
   "valid": run_lib((a0,a1,a2) => run_loop($valid(nat_in(a0),nat_in(a1),a2)), 3),
   "generate": run_lib((a0,a1,a2) => run_loop($generate(nat_in(a0),nat_in(a1),a2)), 3),
@@ -1752,6 +1776,7 @@ export const restart = BEND["restart"];
 export const replay = BEND["replay"];
 export const solved = BEND["solved"];
 export const moves = BEND["moves"];
+export const complete = BEND["complete"];
 export const targets = BEND["targets"];
 export const valid = BEND["valid"];
 export const generate = BEND["generate"];

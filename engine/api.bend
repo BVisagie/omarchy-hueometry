@@ -32,6 +32,10 @@ def solved(g: Core.Game) -> Bool:
 def moves(g: Core.Game) -> Nat:
   Core.moves(g)
 
+# For each column: one colour and full?
+def complete(g: Core.Game) -> List<&2, Bool>:
+  Core.complete(g)
+
 # The columns the top bead of column i may move to.
 def targets(g: Core.Game, +i: Nat) -> List<&2, Nat>:
   Core.targets(g, i)
