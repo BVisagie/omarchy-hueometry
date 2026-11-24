@@ -24,7 +24,8 @@ Item {
     return false
   }
 
-  onCursorChanged: scroller.show(buttons.itemAt(cursor))
+  // the first button brings the title back into view too
+  onCursorChanged: cursor === 0 ? scroller.toTop() : scroller.show(buttons.itemAt(cursor))
 
   // sized so the title and all five buttons fit 34em, the height of any
   // wide screen at 100% (docs/decisions.md)

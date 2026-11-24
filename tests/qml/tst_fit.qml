@@ -147,6 +147,30 @@ Item {
       game.helpShown = false
     }
 
+    // where a screen still scrolls (a larger interface in a small window),
+    // its cues show, the wheel over a cue's strip scrolls it, and the first
+    // button brings the title back
+    function test_where_a_screen_scrolls_it_can_be_reached() {
+      root.width = 1280; root.height = 720
+      game.setSetting("scale", 1.25)
+      leaveOneUnfinished()
+      game.show("menu")
+      wait(0)
+      const view = scrollers(game.current, [], [])[0]
+      verify(view.contentHeight > view.height + 1, "the menu scrolls at 125%")
+      const cues = () => found(game.current, c => c.objectName === "more", [], [])
+      compare(cues().map(c => c.up).join(), "false", "a cue below, none above, at the top")
+      const strip = game.height - Theme.em
+      mouseWheel(game, game.width / 2, strip, 0, -120)
+      verify(view.contentY > 0, "the wheel over the strip scrolls the menu")
+      compare(cues().map(c => c.up).sort().join(), "false,true", "cues above and below, midway")
+      game.current.cursor = 4
+      game.current.cursor = 0
+      compare(view.contentY, 0, "the first button brings the title back")
+      game.setSetting("scale", 1)
+      game.show("menu")
+    }
+
     function test_a_puzzle_and_its_results_fit_data() { return data() }
     function test_a_puzzle_and_its_results_fit(d) {
       root.width = d.w; root.height = d.h

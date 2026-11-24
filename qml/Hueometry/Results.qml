@@ -31,6 +31,12 @@ Item {
       if (cursor === 0) leave(); else if (cursor === 2 && hasNext) next(); else replay()
       return true
     case Qt.Key_Escape: leave(); return true
+    // the words above the buttons, when the card scrolls
+    case Qt.Key_PageUp: case Qt.Key_PageDown: {
+      const step = (event.key === Qt.Key_PageUp ? -1 : 1) * cardScroll.height * 0.8
+      cardScroll.contentY = Math.max(0, Math.min(cardScroll.contentHeight - cardScroll.height, cardScroll.contentY + step))
+      return true
+    }
     }
     return false
   }
