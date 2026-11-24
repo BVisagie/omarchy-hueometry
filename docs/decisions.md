@@ -244,3 +244,19 @@ All defaults in plan.md section 10 were accepted, except:
   menu, in stereo, A A' B A, ringing out on the tonic; the ambience beds
   carry no birds or drips, which the sound bank scatters at random as
   separate short sounds so the soundscape never repeats.
+
+## Screens fit by default (0.2.1)
+
+- Every screen fits 52x34em at 100% interface size. Theme.em is
+  min(width/52, height/34), so a 16:9, 16:10 or 21:9 window is exactly
+  34em tall and a 4:3 one taller, whatever the resolution: a screen that
+  fits 52x34em fits without scrolling on all of them.
+  `tests/qml/tst_fit.qml` checks every screen at ten sizes, from 720x540
+  to 3840x2160.
+- The em formula is unchanged: changing it would shrink the board and every
+  screen. The menu fits by trimming its gaps (the title keeps its size, so
+  it does not change size when Continue appears or goes) and Settings by
+  starting its card under the title with 2.6em rows.
+- Screens still scroll above 100%, below the designed size, and in Settings
+  when the note that Qt Multimedia is missing is shown; a "more" cue then
+  marks that there is more below.

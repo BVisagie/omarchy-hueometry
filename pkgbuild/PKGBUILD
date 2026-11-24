@@ -2,7 +2,7 @@
 # it). The QML, the compiled Bend engine and the sounds are inside the
 # binary, so the package needs no Bend, Node or Python.
 pkgname=hueometry
-pkgver=0.2.0
+pkgver=0.2.1
 pkgrel=1
 pkgdesc='A colour-sorting puzzle for children and families, with a formally verified rules engine'
 arch=('x86_64' 'aarch64')
