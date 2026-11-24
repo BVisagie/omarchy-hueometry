@@ -15,6 +15,9 @@ shellcheck -x -P SCRIPTDIR -P . bin/* tools/check/*.sh tools/version/*.sh
 step "the version agrees in hueometry.pro, the PKGBUILD and the plugin manifest"
 tools/check/version.sh
 
+step "a build is named by its commit unless it is a clean build of the release tag"
+tools/check/build-id.sh
+
 step "laws are changed only with a Laws-Change trailer"
 tools/check/laws-trailer.sh "$base" "$head"
 
