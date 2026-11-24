@@ -21,8 +21,14 @@ Item {
 
     // every test runs silent (MemoryHost starts muted; tests that replace
     // the settings keep it)
-    function init() { verify(game.settings.muted, "the game is muted") }
-    function cleanup() { verify(game.settings.muted, "the game is still muted") }
+    // and the sound bank obeys it: no music or ambience is playing
+    function playingPlayers() {
+      const loader = game.sound.children.find(c => c.status !== undefined && c.item !== undefined)
+      if (!loader || !loader.item) return 0
+      return loader.item.data.filter(d => d.playbackState === 1).length   // MediaPlayer.PlayingState
+    }
+    function init() { verify(game.settings.muted, "the game is muted"); compare(playingPlayers(), 0, "no music plays") }
+    function cleanup() { verify(game.settings.muted, "the game is still muted"); compare(playingPlayers(), 0, "no music plays") }
 
     function keys(list) { for (const k of list) { keyClick(k); wait(0) } }
 
