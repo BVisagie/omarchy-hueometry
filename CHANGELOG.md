@@ -5,8 +5,9 @@
 - Every screen fits without scrolling at the default size on any 16:9,
   16:10, 21:9 or 4:3 screen: the main menu shows all five buttons (Quit
   was below the fold) and Settings shows every row.
-- Where a screen still scrolls, at a larger interface size or in a small
-  window, a "more" cue says so.
+- Where a screen still scrolls, at a larger interface size, in a small
+  window, or in Settings while it notes that sound needs Qt Multimedia, a
+  "more" cue at the foot of the view says so, without covering anything.
 
 ## 0.2.0 (2026-11-24)
 

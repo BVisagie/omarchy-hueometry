@@ -29,6 +29,8 @@ Item {
       tryVerify(() => Theme.regular.status === FontLoader.Ready && Theme.bold.status === FontLoader.Ready, 3000)
       game.setSetting("scale", 1)
       compare(game.settings.scale, 1)
+      // a build's version, as long as the menu ever shows one
+      memory.version = "0.2.1 · abc1234"
     }
 
     // an unfinished puzzle, so the menu shows Continue as well
@@ -42,32 +44,56 @@ Item {
     }
 
     function cleanupTestCase() {
+      memory.version = ""
       root.width = 1280; root.height = 720
       game.show("menu")
     }
 
-    // every visible Flickable under `o` whose content is taller than its view
-    function overflowing(o, out, seen) {
-      if (!o || seen.indexOf(o) >= 0) return out
+    // every visible Flickable under `o`, the scrolling views of a screen
+    function scrollers(o, out, seen) {
+      if (!o || seen.indexOf(o) >= 0 || o.visible === false) return out
       seen.push(o)
-      if (o.visible === false) return out
-      if (o.flickableDirection !== undefined && o.height > 0 && o.contentHeight > o.height + 1)
-        out.push((o.objectName || "a scroller") + " by " + ((o.contentHeight - o.height) / Theme.em).toFixed(1) + "em")
-      for (const c of (o.children || [])) overflowing(c, out, seen)
+      if (o.flickableDirection !== undefined && o.height > 0) out.push(o)
+      for (const c of (o.children || [])) scrollers(c, out, seen)
       return out
     }
 
-    function inside(item, what) {
-      const p = item.mapToItem(game, 0, 0)
-      verify(p.x >= -1 && p.y >= -1 && p.x + item.width <= game.width + 1 && p.y + item.height <= game.height + 1,
-             what + " lies inside the window (" + Math.round(p.x) + "," + Math.round(p.y) + " "
-             + Math.round(item.width) + "x" + Math.round(item.height) + " in " + game.width + "x" + game.height + ")")
+    // every visible item under `o` for which `test` is true
+    function found(o, test, out, seen) {
+      if (!o || seen.indexOf(o) >= 0 || o.visible === false) return out
+      seen.push(o)
+      if (test(o)) out.push(o)
+      for (const c of (o.children || [])) found(c, test, out, seen)
+      return out
     }
 
+    function rect(item) {
+      const p = item.mapToItem(game, 0, 0)
+      return { x: p.x, y: p.y, w: item.width, h: item.height }
+    }
+
+    function inside(item, what) {
+      const r = rect(item)
+      verify(r.x >= -1 && r.y >= -1 && r.x + r.w <= game.width + 1 && r.y + r.h <= game.height + 1,
+             what + " lies inside the window (" + Math.round(r.x) + "," + Math.round(r.y) + " "
+             + Math.round(r.w) + "x" + Math.round(r.h) + " in " + game.width + "x" + game.height + ")")
+    }
+
+    function apart(a, b, what) {
+      const r = rect(a), q = rect(b)
+      verify(r.x + r.w <= q.x || q.x + q.w <= r.x || r.y + r.h <= q.y || q.y + q.h <= r.y, what)
+    }
+
+    // the screen shows at least one view with something in it, and nothing
+    // in any view needs scrolling
     function fits(what) {
       wait(0)
-      const over = overflowing(game, [], [])
+      const views = scrollers(game, [], [])
+      verify(views.some(v => v.contentHeight > 0 && v.contentItem.childrenRect.height > 0), what + " shows its content")
+      const over = views.filter(v => v.contentHeight > v.height + 1)
+        .map(v => (v.objectName || "a view") + " by " + ((v.contentHeight - v.height) / Theme.em).toFixed(1) + "em")
       compare(over.join(", "), "", what + " fits without scrolling")
+      compare(found(game, c => c.objectName === "more", [], []).length, 0, what + " shows no more cue")
     }
 
     function data() { return sizes.map(s => ({ tag: s[0] + "x" + s[1], w: s[0], h: s[1] })) }
@@ -79,26 +105,35 @@ Item {
 
       leaveOneUnfinished()
       game.show("menu")
-      compare(game.current.items.length, 5, "the menu shows all five buttons")
       fits("the menu" + where)
-      // its last button (Quit) lies inside the window
-      const buttons = game.current.children[0].contentItem.children[0].children[0]
-      const last = buttons.children.filter(c => c.text !== undefined && c.primary !== undefined).pop()
-      inside(last, "the last menu button" + where)
+      // all five buttons are drawn, through Quit, inside the window and clear
+      // of the version in the corner
+      const buttons = found(game.current, c => c.primary !== undefined && c.focused !== undefined && c.wide !== undefined, [], [])
+      compare(buttons.map(b => b.text).join(", "), "Continue, Free play, Adventure map, Settings, Quit", "the menu's buttons" + where)
+      for (const b of buttons) inside(b, b.text + where)
+      const version = found(game.current, c => c.objectName === "version", [], [])[0]
+      verify(!!version && version.text !== "", "the version shows" + where)
+      for (const b of buttons) apart(b, version, b.text + " clears the version" + where)
 
       game.show("free")
       fits("free play" + where)
 
       game.show("map")
       fits("the map" + where)
+      compare(found(game.current, c => c.open !== undefined && c.done !== undefined, [], []).length, 7, "all seven areas" + where)
+      // a full area: eight puzzles
+      game.current.area = 1
       game.current.depth = 1
       fits("an area's puzzles" + where)
+      const stones = found(game.current, c => ("rec" in c) && c.index !== undefined, [], [])
+      compare(stones.length, 8, "all eight puzzles" + where)
+      for (const s of stones) inside(s, "puzzle " + (stones.indexOf(s) + 1) + where)
 
       game.show("settings")
       fits("Settings" + where)
       // its title clears the card
       const title = game.current.children.find(c => c.text === "Settings")
-      const card = game.current.children.find(c => c.radius !== undefined && c.border !== undefined && c.children.some(k => k.objectName === "scroller"))
+      const card = game.current.children.find(c => c.overflows !== undefined && c.radius !== undefined)
       verify(title.mapToItem(game, 0, title.height).y <= card.mapToItem(game, 0, 0).y, "the Settings title clears its card" + where)
 
       game.show("menu")
@@ -116,17 +151,20 @@ Item {
       const page = game.current
       const board = page.children.find(c => c.geom !== undefined && c.bloomed !== undefined)
       verify(board.geom.columns.length > 0, "the board has room" + where)
-      for (const p of board.children.filter(c => c.seed !== undefined && c.px !== undefined)) inside(p, "pillar " + p.seed + where)
+      const pillars = found(board, c => c.seed !== undefined && c.px !== undefined, [], [])
+      compare(pillars.length, board.geom.columns.length, "a pillar drawn for every column" + where)
+      for (const p of pillars) inside(p, "pillar " + p.seed + where)
       // the results card, after solving a tutorial puzzle
       game.start({ kind: "tutorial", index: 0 })
       tryVerify(() => game.current.session !== null, 5000)
       for (const m of game.current.session.puzzle.solution) { game.current.touch(m.from); game.current.touch(m.to) }
       tryVerify(() => !!game.current.result, 5000)
       const results = game.current.children.find(c => c.result !== undefined && c.cheers !== undefined)
-      wait(0)
-      const r = results.childrenRect
-      verify(r.x >= -1 && r.y >= -1 && r.x + r.width <= results.width + 1 && r.y + r.height <= results.height + 1,
-             "the results card lies inside the window" + where)
+      verify(results.visible, "the results show" + where)
+      const card = results.children.find(c => c.overflows !== undefined)
+      tryVerify(() => card.scale === 1, 2000)
+      inside(card, "the results card" + where)
+      fits("the results card" + where)
       game.show("menu")
     }
   }

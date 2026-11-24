@@ -89,14 +89,15 @@ Item {
     // scrolls when the interface is made large on a small screen, or when
     // the sound note is shown
     height: Math.min(list.implicitHeight + Theme.em * 2.4, root.height - Theme.em * 5.6)
+    // the rows do not fit: the list gives up a strip at its foot to the cue
+    readonly property bool overflows: list.implicitHeight + Theme.em * 2.4 > root.height - Theme.em * 5.6 + 1
 
     // there is more below: say so
     MoreCue {
-      z: 1
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.bottom: parent.bottom
-      anchors.bottomMargin: Theme.em * 0.3
-      visible: scroller.contentHeight > scroller.height + 1 && !scroller.atYEnd
+      anchors.bottomMargin: Theme.em * 0.35
+      visible: card.overflows && !scroller.atYEnd
     }
 
     Flickable {
@@ -104,6 +105,7 @@ Item {
       objectName: "scroller"
       anchors.fill: parent
       anchors.margins: Theme.em * 1.2
+      anchors.bottomMargin: card.overflows ? Theme.em * 2.0 : Theme.em * 1.2
       clip: true
       contentHeight: list.implicitHeight
       boundsBehavior: Flickable.StopAtBounds

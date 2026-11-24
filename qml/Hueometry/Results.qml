@@ -46,6 +46,8 @@ Item {
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 32)
     // as tall as its words, or the window, scrolling inside when taller
     height: Math.min(column.implicitHeight + Theme.em * 3, root.height - Theme.em * 2)
+    // its words do not fit: the view gives up a strip at its foot to the cue
+    readonly property bool overflows: column.implicitHeight + Theme.em * 3 > root.height - Theme.em * 2 + 1
     scale: root.visible ? 1 : 0.85
     Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
 
@@ -53,6 +55,7 @@ Item {
       id: cardScroll
       anchors.fill: parent
       anchors.margins: Theme.em * 1.5
+      anchors.bottomMargin: card.overflows ? Theme.em * 2.1 : Theme.em * 1.5
       contentWidth: width
       contentHeight: column.implicitHeight
       clip: true
@@ -145,6 +148,13 @@ Item {
         TextButton { id: nextButton; text: qsTr("Next"); icon: "play"; wide: Theme.em * 8; primary: true; visible: root.hasNext; focused: root.cursor === 2; onActivated: root.next() }
       }
     }
+    }
+    // there is more below: say so
+    MoreCue {
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: Theme.em * 0.4
+      visible: card.overflows && !cardScroll.atYEnd
     }
   }
 

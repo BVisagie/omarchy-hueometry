@@ -86,15 +86,11 @@ Item {
     }
     }
     // there is more below: say so
-    Text {
+    MoreCue {
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.bottom: parent.bottom
-      anchors.bottomMargin: Theme.em * 0.4
+      anchors.bottomMargin: Theme.em * 0.25
       visible: rows.interactive && !rows.atYEnd
-      text: qsTr("▾ more")
-      color: Theme.gold
-      font.family: Theme.font
-      font.pixelSize: Theme.em * 0.85
     }
   }
 }
