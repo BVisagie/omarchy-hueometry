@@ -143,6 +143,7 @@ test("the engine agrees with the model on every move", () => {
       assert.deepEqual(R.view(g).columns, cols);
       assert.equal(R.moves(g), count);
       assert.equal(R.solved(g), M.solved(colours, cap, cols));
+      assert.deepEqual(R.view(g).complete, cols.map((c) => M.complete(cap, c)));
       assert.deepEqual(M.counts(cols), M.counts(solvedBoard(colours, cap)));
       assert.ok(cols.every((c) => c.length <= cap));
     }

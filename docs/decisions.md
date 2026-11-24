@@ -163,3 +163,19 @@ All defaults in plan.md section 10 were accepted, except:
   at 150% interface size, and the app window will not shrink below it. The
   plugin always fills a monitor. Screens that do not fit scroll; layouts
   below that size are not designed for.
+
+## Moss and bloom
+
+- The flat moss blobs became moss cushions on each shoulder of the plinth
+  and a fern on some pillars, shaped by the pillar's position so each
+  pillar differs but never changes.
+- A pillar that is full of one colour opens a flower in that colour on its
+  plinth, or on its outer end on the circle layout, where the spokes have
+  room (its heart shows the colour's symbol in symbols mode). The engine
+  decides which pillars are done (`complete` in engine/core.bend, built
+  from SPEC.bend's own tests); the board opens a flower only once that
+  pillar's last orb has landed, and closes it while an orb is lifted from
+  it. No law covers `complete`; a property test checks it against the
+  independent model.
+- No chime for a finished pillar: it would need a new sound and would land
+  on top of the solved fanfare.

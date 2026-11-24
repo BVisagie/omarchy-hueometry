@@ -215,6 +215,21 @@ def solved(g: Game) -> Bool:
     case Game{colours, cap, start, b, h}:
       is_solved(cap, b)
 
+# For each column, in order: is it done, holding beads of one colour only and
+# full? This is the per-column test of Spec.occupied_full_uniform, without
+# its empty case. The interface draws a flower on a done column.
+def complete.go(+cap: Nat, b: List<&2, List<&2, Nat>>) -> List<&2, Bool>:
+  match b:
+    case Nil{}:
+      Nil{}
+    case +col <> r:
+      (Bool.not(Spec.is_empty(col)) && Spec.uniform(col) && Nat.is_eq(Spec.size(col), cap)) <> complete.go(cap, r)
+
+def complete(g: Game) -> List<&2, Bool>:
+  match g:
+    case Game{colours, +cap, start, +b, h}:
+      complete.go(cap, b)
+
 # The columns a bead lifted from column i may land on, in column order.
 def targets.go(+cap: Nat, +b: List<&2, List<&2, Nat>>, +i: Nat, +k: Nat, +acc: List<&2, Nat>) -> List<&2, Nat>:
   match k:

@@ -16,6 +16,11 @@ export function move(cols, from, to) {
   return next;
 }
 
+// A column that holds beads of one colour only and is full.
+export function complete(cap, col) {
+  return col.length === cap && col.every((b) => b === col[0]);
+}
+
 export function solved(colours, cap, cols) {
   const empty = cols.filter((c) => c.length === 0).length;
   if (empty !== 1) return false;

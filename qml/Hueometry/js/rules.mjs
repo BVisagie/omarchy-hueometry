@@ -159,5 +159,7 @@ export function view(game) {
     start: fromBoard(game.start),
     moves: moves(game),
     solved: solved(game),
+    // for each column: one colour and full (the engine decides)
+    complete: array(E.complete(game)),
   };
 }
