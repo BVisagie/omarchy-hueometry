@@ -50,10 +50,11 @@ All defaults in plan.md section 10 were accepted, except:
   reloads a plugin on any write inside it).
 - The plugin has no launcher entry; the README documents a keybinding for
   `omarchy-shell shell summon io.github.bvisagie.hueometry '{}'`.
-- Both channels share one save folder. Instead of a lock file (the plugin
-  cannot check whether the app's process is alive), progress only grows and
-  every save merges what is on disk first, so neither copy loses the other's
-  progress (`qml/Hueometry/js/store.mjs`, added with the interface).
+- Both channels share one save folder, but each writes only its own
+  progress file (`progress-app.json`, `progress-plugin.json`) and reads all
+  of them, merging (progress only grows: `qml/Hueometry/js/store.mjs`). Two
+  hosts saving at once therefore never overwrite each other, with no lock
+  (the plugin cannot check whether the app's process is alive).
 
 ## Verified before the build (gate zero, 2026-11-23)
 
@@ -136,3 +137,17 @@ All defaults in plan.md section 10 were accepted, except:
 - The release workflow assembles the plugin and attaches it to the release.
   Publishing it to `BVisagie/omarchy-hueometry-plugin` stays off until that
   repository, its deploy key secret and the `PLUGIN_PUBLISH` variable exist.
+
+## After review of checkpoints 3-5
+
+- A win is recorded the moment the engine accepts the winning move; the
+  animation only decides when the results card appears.
+- Using a hint is saved with the unfinished puzzle, so resuming keeps it;
+  restarting clears it.
+- Boards are regenerated on a WorkerScript thread (Expert takes about half a
+  second in Qt), so the shell's interface never waits. Hints stay on the main
+  thread: along a stored solution they take a few milliseconds.
+- Number keys only choose a pillar; Space or Enter lifts and places. Held R
+  and Q repeat but never confirm.
+- The plugin is linted against the installed shell's own modules, and
+  warnings fail `bin/check`.

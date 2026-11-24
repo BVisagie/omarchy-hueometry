@@ -89,3 +89,23 @@ test("layouts place every column inside the board and walk them in order", () =>
   assert.equal(L.step([0, 1, 2], 2, 1), 0);
   assert.equal(L.step([0, 1, 2], 0, -1), 2);
 });
+
+test("the tutorial counts as done only when all three puzzles are", () => {
+  let p = St.progress("");
+  p = St.solved(p, { kind: "tutorial", index: 2 }, 4, false).progress;
+  assert.equal(p.tutorial, false);
+  p = St.solved(p, { kind: "tutorial", index: 0 }, 3, false).progress;
+  assert.equal(p.tutorial, false);
+  p = St.solved(p, { kind: "tutorial", index: 1 }, 6, false).progress;
+  assert.equal(p.tutorial, true);
+  assert.equal(St.doneIn(p, "tutorial", 3), 3);
+});
+
+test("known() checks a reference without generating", () => {
+  assert.equal(S.known({ kind: "level", area: "heart", index: 7 }), true);
+  assert.equal(S.known({ kind: "level", area: "heart", index: 8 }), false);
+  assert.equal(S.known({ kind: "free", difficulty: "expert", index: 0 }), true);
+  assert.equal(S.known({ kind: "tutorial", index: -1 }), false);
+  assert.equal(S.known(null), false);
+  assert.deepEqual(St.progress(JSON.stringify({ current: { ref: { kind: "tutorial", index: 0 }, moves: [null, [0, 2]], assisted: true } })).current.assisted, true);
+});

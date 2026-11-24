@@ -44,6 +44,21 @@ export function puzzle(ref) {
   return { ref, colours, cap, columns: p.columns, solution: moves(entry.solution), par: entry.par, optimal: entry.optimal };
 }
 
+// Does a reference name a puzzle that exists? (Cheap: generates nothing.)
+export function known(ref) {
+  if (!ref || typeof ref !== "object" || !R.isIndex(ref.index)) return false;
+  if (ref.kind === "tutorial") return ref.index < levels.tutorial.length;
+  if (ref.kind === "level") {
+    const area = levels.areas.find((a) => a.id === ref.area);
+    return !!area && ref.index < area.levels.length;
+  }
+  if (ref.kind === "free") {
+    const set = free.puzzles[ref.difficulty];
+    return !!set && ref.index < set.puzzles.length;
+  }
+  return false;
+}
+
 export function start(p) {
   return { puzzle: p, game: R.newGame(p.colours, p.cap, p.columns), selected: -1 };
 }

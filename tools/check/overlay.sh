@@ -15,8 +15,10 @@ mkdir -p "$work/plugin"
 cp -r "$ROOT/dist/plugin/." "$work/plugin/"
 # the stand-in OverlayWindow is an item, not a layer-shell window
 sed -i '/WlrLayershell.namespace/d' "$work/plugin/Overlay.qml"
+mkdir -p "$work/config/hueometry"
+echo '{"muted":true}' > "$work/config/hueometry/settings.json"
 out=$(XDG_DATA_HOME="$work/data" XDG_CONFIG_HOME="$work/config" timeout 20 quickshell -p "$work/shell.qml" 2>&1 || true)
-if ! grep -q "OVERLAY ok" <<<"$out" || ! [[ -s "$work/data/hueometry/progress.json" ]]; then
+if ! grep -q "OVERLAY ok" <<<"$out" || ! [[ -s "$work/data/hueometry/progress-plugin.json" ]]; then
   echo "$out" | grep -v usedbeforedeclared | tail -20 >&2
   echo "the plugin overlay did not start the game with its host" >&2
   exit 1

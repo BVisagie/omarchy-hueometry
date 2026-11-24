@@ -15,25 +15,56 @@ Item {
   property string message: ""
   property int focusColumn: 0
   property bool confirmRestart: false
+  // set when the winning move is accepted; shown once the orb has landed
+  property var won: null
   property var result: null
+  property bool loading: false
+  property int token: 0
+  property var pending: null
 
   readonly property var view: session ? S.view(session) : null
   readonly property bool showPar: !!session && !!ref && ref.kind !== "tutorial"
     && !(ref.kind === "level" && (ref.area === "clearing" || ref.area === "river"))
     && !(ref.kind === "free" && (ref.difficulty === "beginner" || ref.difficulty === "easy"))
 
-  function open(r, savedMoves) {
-    const p = S.puzzle(r)
-    if (!p) { game.goBack(); return }
+  // Opens a puzzle, or resumes a saved one ({ moves, assisted }). The board
+  // is regenerated on a worker thread; play starts when it arrives.
+  function open(r, saved) {
     ref = r
-    session = savedMoves ? S.resume(p, savedMoves) : S.start(p)
-    assisted = false
-    hint = null
+    session = null
+    won = null
     result = null
-    message = r.kind === "tutorial" ? play.tutorialText(r.index) : ""
+    hint = null
+    board.celebrating = false
+    loading = true
+    token += 1
+    pending = { token, ref: r, saved: saved || null }
+    message = ""
+    if (preparer.ready) preparer.sendMessage({ token, ref: r })
+  }
+
+  function begin(p, saved) {
+    loading = false
+    if (!p) { game.goBack(); return }
+    session = saved ? S.resume(p, saved.moves) : S.start(p)
+    assisted = !!(saved && saved.assisted)
     focusColumn = 0
     confirmRestart = false
-    game.saveCurrent(ref, S.history(session))
+    message = ref.kind === "tutorial" ? tutorialText(ref.index) : ""
+    if (S.view(session).solved) { win(); showResult() }
+    else game.saveCurrent(ref, S.history(session), assisted)
+  }
+
+  WorkerScript {
+    id: preparer
+    source: "js/prepare.mjs"
+    onReadyChanged: if (ready && play.pending) sendMessage({ token: play.pending.token, ref: play.pending.ref })
+    onMessage: function(m) {
+      if (!play.pending || m.token !== play.pending.token) return
+      const saved = play.pending.saved
+      play.pending = null
+      play.begin(m.puzzle, saved)
+    }
   }
 
   function tutorialText(i) {
@@ -45,18 +76,37 @@ Item {
   }
 
   function touch(column) {
-    if (!session || result) return
+    if (!session || won) return
     const out = S.touch(session, column)
     session = out.state
     focusColumn = column
-    hint = null
+    // a hint stays lit while its orb is lifted, until it lands or goes back
+    if (!(out.effect.kind === "lift" && hint && hint.from === column)) hint = null
     if (out.effect.kind === "move") message = ""
     board.effect(out.effect)
     game.sound.effect(out.effect)
     if (out.effect.kind === "move") {
-      game.saveCurrent(ref, S.history(session))
-      if (S.view(session).solved) board.celebrating = true
+      if (S.view(session).solved) {
+        board.celebrating = true
+        win()
+        if (Theme.reducedMotion) showResult()
+      } else {
+        game.saveCurrent(ref, S.history(session), assisted)
+      }
     }
+  }
+
+  // records the win at once, so leaving during the last animation keeps it
+  function win() {
+    if (won) return
+    won = game.recordSolved(ref, S.view(session).moves, assisted)
+  }
+
+  function showResult() {
+    if (!won || result) return
+    result = won
+    game.sound.cue("solved")
+    sparkles.burst()
   }
 
   function cancel() {
@@ -64,29 +114,32 @@ Item {
   }
 
   function undo() {
-    if (!session || result || S.view(session).moves === 0) return
+    if (!session || won || S.view(session).moves === 0) return
     session = S.undo(session)
     hint = null
     game.sound.cue("undo")
-    game.saveCurrent(ref, S.history(session))
+    game.saveCurrent(ref, S.history(session), assisted)
   }
 
   function restart() {
     if (!session) return
     session = S.restart(session)
     hint = null
+    won = null
     result = null
+    assisted = false
     confirmRestart = false
     board.celebrating = false
     game.sound.cue("restart")
-    game.saveCurrent(ref, S.history(session))
+    game.saveCurrent(ref, S.history(session), assisted)
   }
 
   function askHint() {
-    if (!session || result) return
+    if (!session || won) return
     session = S.cancel(session)
     const h = S.hint(session)
     assisted = true
+    game.saveCurrent(ref, S.history(session), assisted)
     game.sound.cue("hint")
     if (h.kind === "play") {
       hint = h
@@ -103,15 +156,12 @@ Item {
   }
 
   function finished() {
-    if (!session || !S.view(session).solved || result) return
-    const r = game.recordSolved(ref, S.view(session).moves, assisted)
-    result = r
-    game.sound.cue("solved")
-    sparkles.burst()
+    if (won) showResult()
   }
 
   function handleKey(event) {
     if (result) return results.handleKey(event)
+    if (!session) return event.key === Qt.Key_Escape ? (game.goBack(), true) : false
     const order = board.geom.order
     const ctrl = event.modifiers & Qt.ControlModifier
     switch (event.key) {
@@ -122,7 +172,7 @@ Item {
     case Qt.Key_Space: case Qt.Key_Return: case Qt.Key_Enter:
       touch(focusColumn); return true
     case Qt.Key_Escape:
-      if (session && session.selected >= 0) cancel()
+      if (session.selected >= 0) cancel()
       else if (confirmRestart) confirmRestart = false
       else game.goBack()
       return true
@@ -130,13 +180,16 @@ Item {
     case Qt.Key_Z: if (ctrl) { undo(); return true } return false
     case Qt.Key_H: askHint(); return true
     case Qt.Key_R:
+      // a held key repeats; only a second press confirms
+      if (event.isAutoRepeat) return true
       if (confirmRestart) restart()
       else { confirmRestart = true; restartTimer.restart() }
       return true
     }
     if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
+      // a number chooses a pillar; Space or Enter then lifts or places
       const c = event.key - Qt.Key_1
-      if (view && c < view.columns.length) { focusColumn = c; touch(c) }
+      if (view && c < view.columns.length) focusColumn = c
       return true
     }
     return false
@@ -192,6 +245,17 @@ Item {
       RoundButton { icon: "hint"; label: qsTr("Hint"); onActivated: play.askHint() }
       RoundButton { icon: "help"; label: qsTr("Keys"); onActivated: play.game.showHelp() }
     }
+  }
+
+  Text {
+    anchors.centerIn: parent
+    visible: play.loading
+    text: qsTr("Waking the temple…")
+    color: Theme.inkSoft
+    font.family: Theme.font
+    font.pixelSize: Theme.em * 1.4
+    style: Text.Raised
+    styleColor: "#90000000"
   }
 
   Board {

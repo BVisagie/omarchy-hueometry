@@ -42,7 +42,8 @@ function parse(raw) {
 // progress: { tutorial: bool, done: { key: { best, assisted } }, current }
 // key: "area/index", "tutorial/index" or "free/difficulty/index".
 // `assisted` is true when the best was reached with a hint.
-// `current` is the puzzle left unfinished: { ref, moves: [[from, to]] }.
+// `current` is the puzzle left unfinished: { ref, moves: [[from, to]],
+// assisted } (assisted: a hint was used in it).
 export function progress(raw) {
   const p = parse(raw);
   const done = {};
@@ -51,7 +52,8 @@ export function progress(raw) {
       if (v && Number.isInteger(v.best) && v.best > 0) done[k] = { best: v.best, assisted: v.assisted === true };
     }
   }
-  const current = p.current && p.current.ref && Array.isArray(p.current.moves) ? p.current : null;
+  const current = p.current && p.current.ref && Array.isArray(p.current.moves)
+    ? { ref: p.current.ref, moves: p.current.moves, assisted: p.current.assisted === true } : null;
   return { tutorial: p.tutorial === true, done, current };
 }
 
@@ -84,7 +86,8 @@ export function solved(p, ref, moveCount, assisted) {
   const kept = better(before, now);
   let record = "first";
   if (before) record = kept === now && (now.best < before.best || (before.assisted && !now.assisted)) ? "better" : now.best === before.best ? "same" : "worse";
-  const tutorial = p.tutorial || (ref.kind === "tutorial" && ref.index === 2);
+  // the tutorial is done when all three of its puzzles are
+  const tutorial = p.tutorial || [0, 1, 2].every((i) => (i === ref.index && ref.kind === "tutorial") || !!p.done[`tutorial/${i}`]);
   const done = Object.assign({}, p.done);
   done[k] = kept;
   return { progress: Object.assign({}, p, { tutorial, done, current: null }), record, previous: before || null };

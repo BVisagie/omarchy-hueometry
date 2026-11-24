@@ -27,6 +27,15 @@ Item {
     else if (r.kind === "size") game.setSetting(r.key, Math.max(0.75, Math.min(1.5, Math.round((s.scale + dir * 0.125) * 8) / 8)))
   }
 
+  // keep the chosen row in view
+  onCursorChanged: {
+    // (the Repeater is a child of the column too, so find the row by index)
+    const row = list.children.find(c => c.index === cursor && c.r !== undefined)
+    if (!row) return
+    if (row.y < scroller.contentY) scroller.contentY = row.y
+    else if (row.y + row.height > scroller.contentY + scroller.height) scroller.contentY = row.y + row.height - scroller.height
+  }
+
   function handleKey(event) {
     switch (event.key) {
     case Qt.Key_Up: cursor = (cursor + rows.length - 1) % rows.length; return true
@@ -62,15 +71,24 @@ Item {
   }
 
   Card {
-    anchors.centerIn: parent
-    anchors.verticalCenterOffset: Theme.em * 1.5
+    id: card
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    anchors.topMargin: Theme.em * 6
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 36)
-    height: list.implicitHeight + Theme.em * 2.4
+    // scrolls when the interface is made large on a small screen
+    height: Math.min(list.implicitHeight + Theme.em * 2.4, root.height - Theme.em * 7)
 
+    Flickable {
+      id: scroller
+      anchors.fill: parent
+      anchors.margins: Theme.em * 1.2
+      clip: true
+      contentHeight: list.implicitHeight
+      boundsBehavior: Flickable.StopAtBounds
     Column {
       id: list
-      anchors.centerIn: parent
-      width: parent.width - Theme.em * 2.4
+      width: scroller.width
       spacing: Theme.em * 0.5
 
       Repeater {
@@ -196,6 +214,7 @@ Item {
           }
         }
       }
+    }
     }
   }
 }

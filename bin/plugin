@@ -24,8 +24,15 @@ if [[ "${1:-}" == "--check" ]]; then
   else
     echo "omarchy is not installed here; skipped omarchy plugin validate"
   fi
-  if [[ -n "${OMARCHY_PATH:-}" && -d "$OMARCHY_PATH/shell" ]]; then
-    /usr/lib/qt6/bin/qmllint -I "$OMARCHY_PATH/shell" "$OUT/Overlay.qml" "$OUT/BarWidget.qml"
-    echo "qmllint (plugin): ok"
+  shell_dir="${OMARCHY_PATH:-/usr/share/omarchy}/shell"
+  if [[ -d "$shell_dir/Ui" ]]; then
+    # the shell's modules are named qs.*: give qmllint a qs folder to find
+    qs="$(mktemp -d)"
+    trap 'rm -rf "$qs"' EXIT
+    ln -s "$shell_dir" "$qs/qs"
+    /usr/lib/qt6/bin/qmllint -W 0 -I "$qs" "$OUT/Overlay.qml" "$OUT/BarWidget.qml"
+    echo "qmllint (plugin): no warnings"
+  else
+    echo "the Omarchy shell is not installed here; skipped linting the plugin"
   fi
 fi

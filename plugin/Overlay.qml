@@ -32,7 +32,11 @@ Item {
     else root.open("{}")
   }
 
-  FileView { id: progressFile; path: root.dataDir + "/progress.json"; blockLoading: true; atomicWrites: true; printErrors: false }
+  // the plugin writes progress-plugin.json; it reads the app's file and the
+  // old shared file too (Game.qml merges them)
+  FileView { id: pluginProgress; path: root.dataDir + "/progress-plugin.json"; blockLoading: true; atomicWrites: true; printErrors: false }
+  FileView { id: appProgress; path: root.dataDir + "/progress-app.json"; blockLoading: true; printErrors: false }
+  FileView { id: oldProgress; path: root.dataDir + "/progress.json"; blockLoading: true; printErrors: false }
   FileView { id: settingsFile; path: root.configDir + "/settings.json"; blockLoading: true; atomicWrites: true; printErrors: false }
 
   // what Game.qml needs from its host (not named `host`: inside Game that
@@ -41,7 +45,9 @@ Item {
     id: gameHost
     readonly property string kind: "plugin"
     readonly property bool canFullscreen: false
-    function file(name) { return name === "progress.json" ? progressFile : name === "settings.json" ? settingsFile : null }
+    function file(name) {
+      return ({ "progress-plugin.json": pluginProgress, "progress-app.json": appProgress, "progress.json": oldProgress, "settings.json": settingsFile })[name] || null
+    }
     function readText(name) {
       const f = file(name)
       if (!f) return ""
@@ -49,7 +55,8 @@ Item {
       return f.text() || ""
     }
     function writeText(name, text) {
-      const f = file(name)
+      // only its own progress and the settings
+      const f = name === "progress-plugin.json" || name === "settings.json" ? file(name) : null
       if (!f) return false
       f.setText(text)
       return true
@@ -67,8 +74,14 @@ Item {
       id: game
       anchors.fill: parent
       active: root.opened
-      sourceComponent: Game { host: gameHost }
-      onLoaded: item.forceActiveFocus()
+      sourceComponent: Game {}
+      // the host is set here rather than in the component, whose scope
+      // cannot see this file's ids
+      onLoaded: {
+        const g = item as Game
+        g.host = gameHost
+        g.forceActiveFocus()
+      }
     }
   }
 }

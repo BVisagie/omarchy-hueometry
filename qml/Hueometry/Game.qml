@@ -41,18 +41,33 @@ Item {
   // Saving
   // ------
 
+  // Each host writes only its own progress file and reads all of them, so
+  // the app and the plugin can never overwrite each other's progress.
+  readonly property var progressFiles: ["progress-app.json", "progress-plugin.json", "progress.json"]
+  function ownProgressFile() { return host && host.kind === "plugin" ? "progress-plugin.json" : "progress-app.json" }
+
+  function readProgress() {
+    const all = progressFiles.map(name => Store.progress(host.readText(name)))
+    const merged = all.reduce((acc, p) => Store.merge(acc, p), Store.progress(""))
+    // the unfinished puzzle comes from this host's own file first
+    const own = all[progressFiles.indexOf(ownProgressFile())]
+    const current = own.current || (all.find(p => p.current) || {}).current || null
+    return Object.assign({}, merged, { current })
+  }
+
   function load() {
     if (!host) return
     settings = Store.settings(host.readText("settings.json"))
-    progress = Store.progress(host.readText("progress.json"))
+    progress = readProgress()
   }
   onHostChanged: load()
   Component.onCompleted: load()
 
   function saveProgress() {
     if (!host) return
-    progress = Store.merge(Store.progress(host.readText("progress.json")), progress)
-    host.writeText("progress.json", JSON.stringify(progress))
+    // merge keeps this copy's unfinished puzzle
+    progress = Store.merge(readProgress(), progress)
+    host.writeText(ownProgressFile(), JSON.stringify(progress))
   }
 
   function setSetting(key, value) {
@@ -62,8 +77,8 @@ Item {
     if (host) host.writeText("settings.json", JSON.stringify(settings))
   }
 
-  function saveCurrent(ref, moves) {
-    progress = Object.assign({}, progress, { current: { ref, moves: moves.map(m => [m.from, m.to]) } })
+  function saveCurrent(ref, moves, assisted) {
+    progress = Object.assign({}, progress, { current: { ref, moves: moves.map(m => [m.from, m.to]), assisted: assisted === true } })
     saveProgress()
   }
 
@@ -127,10 +142,11 @@ Item {
 
   function continueOrMap() {
     const c = progress.current
-    if (c && S.puzzle(c.ref)) {
+    if (c && S.known(c.ref)) {
       lastArea = areaIndex(c.ref)
       screen = "play"
-      screens.item.open(c.ref, c.moves.map(m => ({ from: m[0], to: m[1] })))
+      // the adapter reads [from, to] pairs and drops anything malformed
+      screens.item.open(c.ref, { moves: Array.isArray(c.moves) ? c.moves : [], assisted: c.assisted === true })
     } else if (!progress.tutorial && !progress.done["tutorial/0"]) {
       // a first visit starts with the first steps
       start({ kind: "tutorial", index: 0 })
@@ -166,7 +182,12 @@ Item {
     if (helpShown) { helpShown = false; event.accepted = true; return }
     if (event.key === Qt.Key_Question || (event.key === Qt.Key_Slash && (event.modifiers & Qt.ShiftModifier))) { helpShown = true; event.accepted = true; return }
     if (event.key === Qt.Key_F11 && host && host.canFullscreen) { host.toggleFullscreen(); event.accepted = true; return }
-    if (event.key === Qt.Key_Q && !(event.modifiers & Qt.ControlModifier)) { quit(); event.accepted = true; return }
+    if (event.key === Qt.Key_Q && !(event.modifiers & Qt.ControlModifier)) {
+      // a held key repeats; only a second press confirms
+      if (!event.isAutoRepeat) quit()
+      event.accepted = true
+      return
+    }
     if (screens.item && screens.item.handleKey(event)) event.accepted = true
   }
 
@@ -224,6 +245,7 @@ Item {
     effects: root.settings.effects
     muted: root.settings.muted
     area: root.screen === "play" ? root.areaIndex(screens.item ? screens.item.ref : null) : 0
+    inPlay: root.screen === "play"
     playing: true
   }
 }

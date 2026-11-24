@@ -10,7 +10,7 @@ Item {
   property real effects: 0.8
   property int area: 0
   property bool playing: true
-  property bool inPlay: area > 0
+  property bool inPlay: false
   property real duck: 1.0
 
   readonly property var ambienceFor: ["forest", "forest", "river", "temple", "river", "temple", "forest"]

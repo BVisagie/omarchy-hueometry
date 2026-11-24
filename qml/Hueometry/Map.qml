@@ -79,7 +79,7 @@ Item {
         id: tile
         required property int index
         readonly property bool open: map.isOpen(index)
-        readonly property int done: index === 0 ? (map.game.progress.tutorial ? 3 : 0) : Store.doneIn(map.game.progress, S.AREAS[index - 1], map.perArea)
+        readonly property int done: index === 0 ? Store.doneIn(map.game.progress, "tutorial", 3) : Store.doneIn(map.game.progress, S.AREAS[index - 1], map.perArea)
         width: Theme.em * 13
         height: Theme.em * 7.6
         Card {

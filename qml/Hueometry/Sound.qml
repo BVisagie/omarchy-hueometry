@@ -9,6 +9,7 @@ Item {
   property real effects: 0.8
   property bool muted: false
   property int area: 0
+  property bool inPlay: false
   property bool playing: false
   readonly property bool available: bank.status === Loader.Ready
 
@@ -21,6 +22,7 @@ Item {
   Binding { target: bank.item; property: "music"; value: root.muted ? 0 : root.music; when: root.available }
   Binding { target: bank.item; property: "effects"; value: root.muted ? 0 : root.effects; when: root.available }
   Binding { target: bank.item; property: "area"; value: root.area; when: root.available }
+  Binding { target: bank.item; property: "inPlay"; value: root.inPlay; when: root.available }
   Binding { target: bank.item; property: "playing"; value: root.playing; when: root.available }
 
   // what session.touch answered: lift, drop, move, refuse, empty
