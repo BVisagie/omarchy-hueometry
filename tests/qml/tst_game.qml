@@ -157,6 +157,10 @@ Item {
       set("line")
       game.continueOrMap()
       compare(game.settings.layout, "line", "resume")
+      set("circle")
+      game.current.restart()
+      compare(game.settings.layout, "circle", "restart")
+      set("line")
       tryVerify(() => game.current.session !== null, 5000)
       game.show("menu")
     }

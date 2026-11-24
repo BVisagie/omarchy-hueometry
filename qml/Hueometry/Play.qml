@@ -140,6 +140,8 @@ Item {
   function restart() {
     if (!session) return
     session = S.restart(session)
+    // a new attempt uses the latest layout and motion settings
+    game.refreshSettings()
     board.stop()
     hint = null
     won = null
