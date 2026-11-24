@@ -85,11 +85,15 @@ jobs:
           # a draft first, published only once both files are on it, so the
           # latest release never lacks its package; a rerun finishes a draft
           # and never touches a release that is already published
-          draft=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft 2>/dev/null || echo none)
+          # every release (drafts too) for this tag; a failed lookup fails the
+          # job (bash -e), so an API error can never pass for "none yet"
+          draft=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\") | .draft")
           case "$draft" in
-            none) gh release create "$GITHUB_REF_NAME" "${files[@]}" --draft --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md ;;
+            "") gh release create "$GITHUB_REF_NAME" "${files[@]}" --draft --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md ;;
             true) gh release upload "$GITHUB_REF_NAME" "${files[@]}" --clobber ;;
-            *) echo "release $GITHUB_REF_NAME is already published; leaving it as it is"; exit 0 ;;
+            false) echo "release $GITHUB_REF_NAME is already published; leaving it as it is"; exit 0 ;;
+            *) echo "more than one release for $GITHUB_REF_NAME; fix that by hand first" >&2; exit 1 ;;
           esac
           gh release edit "$GITHUB_REF_NAME" --draft=false
 
