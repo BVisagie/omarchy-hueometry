@@ -159,3 +159,7 @@ All defaults in plan.md section 10 were accepted, except:
   stays in memory until a later save succeeds.
 - v0.1 uses the system font (no bundled font) and English source strings
   marked for translation, with no translation catalogue yet.
+- The smallest supported window is 720×540: every screen is checked there
+  at 150% interface size, and the app window will not shrink below it. The
+  plugin always fills a monitor. Screens that do not fit scroll; layouts
+  below that size are not designed for.
