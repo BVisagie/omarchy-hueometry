@@ -189,7 +189,8 @@ All defaults in plan.md section 10 were accepted, except:
 - The version stays written where each tool reads it (hueometry.pro, the
   PKGBUILD, the plugin manifest), with no separate VERSION file;
   `tools/check/version.sh` fails on every check run unless they agree.
-- The app takes the build id from a header qmake writes (buildinfo.h), not
-  a compiler define, since the incremental build would not recompile for a
-  changed define. The PKGBUILD has no pkgver(): makepkg would rewrite it and
+- The app takes the build id from a source file qmake writes into the
+  build folder (buildinfo.cpp): a compiler define would not recompile when
+  it changes, and a header could be shadowed by a stale copy left in the
+  source folder. The PKGBUILD has no pkgver(): makepkg would rewrite it and
   every build would then count as having uncommitted changes.

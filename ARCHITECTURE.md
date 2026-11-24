@@ -81,11 +81,12 @@ in `plugin/Overlay.qml`; tests use `tests/qml/MemoryHost.qml`.
 ### Version
 
 The version is written in `hueometry.pro`, `pkgbuild/PKGBUILD` and
-`plugin/manifest.json`; `tools/check/version.sh` fails unless they agree
-(and, at a release, unless the tag matches). `tools/version/build-id.sh`
-names the build: nothing for a clean build of the commit that carries the
-release tag, else the short commit (with `+` for uncommitted changes). qmake writes both into `buildinfo.h`; `bin/plugin` stamps the
-build into its copy of the overlay.
+`plugin/manifest.json`; `tools/check/version.sh` fails unless they agree (and,
+at a release, unless the tag matches). `tools/version/build-id.sh` names the
+build: nothing for a clean build of the commit that carries the release tag,
+else the short commit (with `+` for uncommitted changes). qmake writes both
+into `buildinfo.cpp` in the build folder; `bin/plugin` stamps the build into
+its copy of the overlay.
 
 ## Content
 

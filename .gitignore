@@ -7,7 +7,7 @@ qrc_*
 Makefile
 .qmake.stash
 /hueometry
-buildinfo.h
+buildinfo.cpp
 /tools/shot/shot
 /tools/shot/Makefile
 

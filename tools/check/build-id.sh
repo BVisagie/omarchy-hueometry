@@ -3,6 +3,10 @@
 # shows after the version for each kind of build.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# a hook or `git rebase -x` exports GIT_DIR and friends: the throwaway
+# repositories must not write into the real one
+# shellcheck disable=SC2046  # one variable name per word, on purpose
+unset $(git rev-parse --local-env-vars)
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 g() { git -c user.email=check@localhost -c user.name=check "$@"; }
