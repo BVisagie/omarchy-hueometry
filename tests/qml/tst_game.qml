@@ -14,6 +14,7 @@ Item {
   Component { id: hostMaker; MemoryHost {} }
   Component { id: gameMaker; Game { width: 1280; height: 720 } }
   Game { id: game; anchors.fill: parent; host: memory }
+  SignalSpy { id: opened; signalName: "opened" }
 
   TestCase {
     name: "Game"
@@ -45,6 +46,10 @@ Item {
 
     function test_2_solve_with_keys() {
       const sol = game.current.session.puzzle.solution
+      // the board says when a move fills a pillar (Play rings its chime,
+      // except on the winning move)
+      opened.target = game.current.children.find(c => c.geom !== undefined && c.opened !== undefined)
+      opened.clear()
       for (const m of sol) {
         keyClick(Qt.Key_1 + m.from)             // choose the pillar,
         keyClick(Qt.Key_Space)                  // lift,
@@ -55,6 +60,7 @@ Item {
       }
       tryVerify(() => !!game.current.result, 3000)
       compare(game.current.view.moves, sol.length)
+      verify(opened.count >= 1, "filling a pillar opened its flower")
       const saved = JSON.parse(memory.files["progress-app.json"])
       compare(saved.done[Store.key({ kind: "tutorial", index: 0 })].best, sol.length)
       compare(saved.current, null)

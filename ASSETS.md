@@ -26,6 +26,12 @@ with fixed random seeds: no samples or recordings.
 | `qml/Hueometry/sounds/ambience-forest.ogg` | ambience loop |
 | `qml/Hueometry/sounds/ambience-river.ogg` | ambience loop |
 | `qml/Hueometry/sounds/ambience-temple.ogg` | ambience loop |
+| `qml/Hueometry/sounds/complete-0.wav` | effect |
+| `qml/Hueometry/sounds/complete-1.wav` | effect |
+| `qml/Hueometry/sounds/complete-2.wav` | effect |
+| `qml/Hueometry/sounds/complete-3.wav` | effect |
+| `qml/Hueometry/sounds/complete-4.wav` | effect |
+| `qml/Hueometry/sounds/complete-5.wav` | effect |
 | `qml/Hueometry/sounds/critter-bird-1.wav` | critter |
 | `qml/Hueometry/sounds/critter-bird-2.wav` | critter |
 | `qml/Hueometry/sounds/critter-bird-3.wav` | critter |

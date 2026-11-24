@@ -40,8 +40,8 @@ Item {
     else if (e.kind === "refuse" || e.kind === "empty") bank.item.cue("refuse", 0)
   }
 
-  // undo, restart, hint, solved, select, open
-  function cue(name) {
-    if (available) bank.item.cue(name, 0)
+  // undo, restart, hint, solved, select, open; complete with its colour
+  function cue(name, arg) {
+    if (available) bank.item.cue(name, arg ?? 0)
   }
 }

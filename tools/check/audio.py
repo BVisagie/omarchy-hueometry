@@ -20,7 +20,8 @@ from synth import CRITTER_LUFS, CRITTERS, EFFECT_LUFS, LOOP_LUFS, TRUE_PEAK_MAX 
 SOUNDS = ROOT / "qml/Hueometry/sounds"
 EFFECTS = {**{f"lift-{i}": (0.2, 1.5) for i in (1, 2, 3)}, **{f"place-{i}": (0.4, 2.5) for i in range(6)},
            "drop": (0.2, 1.5), "refuse": (0.2, 1.5), "undo": (0.2, 1.5), "restart": (0.4, 2.5),
-           "hint": (0.6, 3.0), "select": (0.1, 1.0), "solved": (2.0, 7.0)}
+           "hint": (0.6, 3.0), "select": (0.1, 1.0), "solved": (2.0, 7.0),
+           **{f"complete-{i}": (0.6, 3.0) for i in range(6)}}
 # the critters play like effects, at random, at the music's volume
 EFFECTS.update({name: (0.2, 3.5) for name in CRITTERS})
 LEVELS = {**EFFECT_LUFS, **{name: CRITTER_LUFS for name in CRITTERS}}

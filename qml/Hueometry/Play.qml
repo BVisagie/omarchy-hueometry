@@ -354,6 +354,9 @@ Item {
     onTouched: function(c) { play.touch(c) }
     onCancelled: play.cancel()
     onSettled: play.finished()
+    // a pillar filled by a move rings its colour's note, unless it is the
+    // winning move: the fanfare has that moment
+    onOpened: function(column, colour) { if (play.session && !S.view(play.session).solved) play.game.sound.cue("complete", colour) }
   }
 
   // a gentle line of guidance under the board

@@ -21,6 +21,8 @@ Item {
   signal touched(int column)
   signal cancelled()
   signal settled()
+  // a move just filled this pillar with one colour: its flower opened
+  signal opened(int column, int colour)
 
   readonly property int count: view ? view.columns.length : 0
   readonly property int cap: view ? view.cap : 1
@@ -80,7 +82,7 @@ Item {
       bloomExcept(e.column)
       flyer.fly(Layout.liftedAt(geom.columns[e.column], cap, unit),
                 Layout.beadAt(geom.columns[e.column], cols[e.column].length - 1, unit), 0, Theme.ms(150),
-                function() { board.finish() })
+                function() { board.finish(e.column, false) })
       break
     }
     case "move": {
@@ -91,7 +93,7 @@ Item {
       flyer.colour = e.bead
       const a = geom.columns[e.from], b = geom.columns[e.to]
       flyer.fly(Layout.liftedAt(a, cap, unit), Layout.liftedAt(b, cap, unit), unit * 1.6, Theme.ms(260), function() {
-        flyer.fly(Layout.liftedAt(b, cap, unit), Layout.beadAt(b, cols[e.to].length - 1, unit), 0, Theme.ms(130), function() { board.finish() })
+        flyer.fly(Layout.liftedAt(b, cap, unit), Layout.beadAt(b, cols[e.to].length - 1, unit), 0, Theme.ms(130), function() { board.finish(e.to, true) })
       })
       break
     }
@@ -112,10 +114,29 @@ Item {
     sync()
   }
 
-  function finish() {
+  // an orb has landed on `column`; a move (not a put-back) whose landing
+  // opens that pillar's flower says so
+  function finish(column, moved) {
+    const before = bloomed.slice()
     busy = false
     sync()
     settled()
+    if (column === undefined || column < 0 || !stack[column] || !stack[column].length) return
+    landed(column)
+    if (moved && bloomed[column] && !before[column]) opened(column, stack[column][0])
+  }
+
+  // the landed orb gives a little squash, and dust puffs from the stone
+  function landed(column) {
+    const k = stack[column].length - 1
+    for (let i = 0; i < resting.count; i++) {
+      const orb = resting.itemAt(i)
+      if (orb && orb.modelData.c === column && orb.modelData.k === k) { orb.land(); break }
+    }
+    const g = geom.columns[column]
+    const at = Layout.beadAt(g, k, unit)
+    const a = g.angle * Math.PI / 180
+    dust.burst(at.x - Math.sin(a) * orbSize * 0.45, at.y + Math.cos(a) * orbSize * 0.45, g.angle)
   }
 
   // the medallion the circle's spokes grow from
@@ -185,6 +206,7 @@ Item {
 
   // the orbs at rest
   Repeater {
+    id: resting
     model: {
       const out = []
       for (let c = 0; c < board.stack.length && c < board.geom.columns.length; c++) {
@@ -200,8 +222,45 @@ Item {
       size: board.orbSize
       cx: at.x
       cy: at.y
+      axis: board.geom.columns[modelData.c].angle
       glowing: board.celebrating
     }
+  }
+
+  // a soft puff of dust where an orb lands, spreading along the stone
+  Item {
+    id: dust
+    z: 9
+    property real ax: 0
+    property real ay: 0
+    property real angle: 0
+    property real t: 1
+    visible: t < 1
+    function burst(x, y, angle) {
+      if (Theme.reducedMotion) return
+      ax = x; ay = y; dust.angle = angle
+      puff.restart()
+    }
+    Repeater {
+      model: 6
+      Rectangle {
+        required property int index
+        readonly property real side: index % 2 ? 1 : -1
+        readonly property int ring: index >> 1
+        readonly property real a: dust.angle * Math.PI / 180
+        // across the pillar, and up it
+        readonly property real across: side * board.unit * (0.3 + ring * 0.22) * (0.35 + 0.65 * dust.t)
+        readonly property real up: board.unit * (0.04 + 0.22 * dust.t * (1 - 0.3 * ring))
+        width: board.unit * (0.14 + 0.16 * dust.t)
+        height: width
+        radius: width / 2
+        x: dust.ax + Math.cos(a) * across + Math.sin(a) * up - width / 2
+        y: dust.ay + Math.sin(a) * across - Math.cos(a) * up - height / 2
+        color: "#E8E2C8"
+        opacity: 0.42 * (1 - dust.t) * (1 - ring * 0.25)
+      }
+    }
+    NumberAnimation { id: puff; target: dust; property: "t"; from: 0; to: 1; duration: Theme.ms(480); easing.type: Easing.OutCubic }
   }
 
   // the orb in the air: lifted, flying, or settling

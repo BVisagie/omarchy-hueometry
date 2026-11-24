@@ -179,7 +179,7 @@ All defaults in plan.md section 10 were accepted, except:
   it. No law covers `complete`; a property test checks it against the
   independent model.
 - No chime for a finished pillar: it would need a new sound and would land
-  on top of the solved fanfare.
+  on top of the solved fanfare. (Reversed in 0.2: see Game feel.)
 
 ## Version on the menu
 
@@ -224,3 +224,23 @@ All defaults in plan.md section 10 were accepted, except:
   It keeps no state in the engine and nothing in the save.
 - `tools/check/plugin-guard.sh` keeps the plugin clear of what the
   marketplace's security baseline reports for review.
+
+## Game feel (0.2)
+
+- A pillar filled by a move now rings a soft bell on its colour's note
+  (`complete-<colour>.wav`), as its flower opens, reversing "no chime" above:
+  the sound is quiet (-21 LUFS against the move's -17.5), it comes when the
+  orb lands, after the move's own note, and it is skipped on the winning
+  move so the fanfare stays alone. Putting an orb back on its own pillar
+  never chimes.
+- A landing orb squashes a little along its pillar and a faint puff of dust
+  spreads from the stone; a hinted pillar's light breathes. All of it reads
+  its timing from `Theme.ms` and does not run with less movement.
+- Each area's landmark is drawn large and sunk in the area's haze, rising
+  into the band above the board, where it can be seen without competing
+  with the orbs; the map's area tiles are still pictures of the same scenes
+  (`Jungle { still: true }`, drawn once into a texture).
+- Music: a theme per area family (forest, river, temple) and one for the
+  menu, in stereo, A A' B A, ringing out on the tonic; the ambience beds
+  carry no birds or drips, which the sound bank scatters at random as
+  separate short sounds so the soundscape never repeats.

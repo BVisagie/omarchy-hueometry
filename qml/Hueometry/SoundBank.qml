@@ -43,6 +43,7 @@ Item {
   Pool { id: lift2; source: "sounds/lift-2.wav" }
   Pool { id: lift3; source: "sounds/lift-3.wav" }
   Repeater { id: places; model: 6; Pool { required property int index; source: "sounds/place-" + index + ".wav" } }
+  Repeater { id: completes; model: 6; Pool { required property int index; source: "sounds/complete-" + index + ".wav" } }
   Pool { id: drop; source: "sounds/drop.wav" }
   Pool { id: refuse; source: "sounds/refuse.wav" }
   Pool { id: undo; source: "sounds/undo.wav" }
@@ -59,6 +60,7 @@ Item {
     switch (name) {
     case "lift": [lift1, lift2, lift3][liftTurn++ % 3].play(1.0); break
     case "place": places.itemAt(Math.max(0, Math.min(5, arg % 6)))?.play(1.0); break
+    case "complete": completes.itemAt(Math.max(0, Math.min(5, arg % 6)))?.play(1.0); break
     case "drop": drop.play(1.0); break
     case "refuse": refuse.play(1.0); break
     case "undo": undo.play(1.0); break

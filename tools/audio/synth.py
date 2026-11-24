@@ -228,6 +228,7 @@ EFFECT_LUFS = {
     "solved": -14.5, "hint": -16.0, "restart": -16.5,
     **{f"place-{c}": -17.5 for c in range(6)}, **{f"lift-{i}": -17.5 for i in (1, 2, 3)},
     "drop": -18.0, "undo": -18.5, "refuse": -19.5, "select": -25.5,
+    **{f"complete-{c}": -21.0 for c in range(6)},
 }
 TRUE_PEAK_MAX = -1.0
 # the loops' integrated loudness (LUFS)
@@ -318,6 +319,15 @@ def effects():
     chord = pad([NOTE["C4"], NOTE["E4"], NOTE["G4"], NOTE["C5"]], dur, rng, attack=0.4, release=1.6) * 0.5
     fan += fit(chord, len(fan))
     out["solved"] = fade_tail(reverb(fan, 2.2, 0.32, rng), 200)
+    # complete: a pillar full of one colour rings that colour's note softly
+    # on a bell, the octave above following
+    for c, name in enumerate(ORB_NOTES):
+        ring = np.zeros(int(SR * 1.6))
+        for k, mult in enumerate((1, 2)):
+            b = bell(NOTE[name] * mult, 1.3, 1.4) * (0.7 if k == 0 else 0.4)
+            at = int(SR * 0.08 * k)
+            ring[at:at + len(b)] += b[: len(ring) - at]
+        out[f"complete-{c}"] = fade_tail(reverb(ring, 1.2, 0.3, rng), 120)
     for k in list(out):
         out[k] = to_level(fade_head(brighten(out[k])), EFFECT_LUFS[k])
     return out
