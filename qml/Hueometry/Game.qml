@@ -66,13 +66,17 @@ Item {
   property bool progressUnsaved: false
   // settings changed here but not yet written, by key: kept over rereads
   property var unsavedSettings: ({})
+  // the saves were written by a newer Hueometry, so this one leaves them be
+  property bool newerSaves: false
   readonly property bool saveFailed: progressUnsaved || Object.keys(unsavedSettings).length > 0
 
   function saveProgress() {
     if (!host) return
     // merge keeps this copy's unfinished puzzle (the newest)
     progress = Store.merge(readProgress(), progress)
-    progressUnsaved = !host.writeText(ownProgressFile(), JSON.stringify(progress))
+    const own = host.readText(ownProgressFile())
+    if (Store.newer(own)) { newerSaves = true; progressUnsaved = true; return }
+    progressUnsaved = !host.writeText(ownProgressFile(), Store.progressText(own, progress))
   }
 
   // what is on disk, merged with this copy: an unsaved change here (a failed
@@ -98,7 +102,9 @@ Item {
     pending[key] = value
     settings = settingsWith(pending)
     if (!host) return
-    unsavedSettings = host.writeText("settings.json", JSON.stringify(settings)) ? ({}) : pending
+    const disk = host.readText("settings.json")
+    if (Store.newer(disk)) { newerSaves = true; unsavedSettings = pending; return }
+    unsavedSettings = host.writeText("settings.json", Store.settingsText(disk, settings)) ? ({}) : pending
   }
 
   function saveCurrent(ref, moves, assisted) {
@@ -154,6 +160,8 @@ Item {
   }
 
   function start(ref) {
+    // the other host may have changed the layout or motion since
+    refreshSettings()
     lastArea = areaIndex(ref)
     screen = "play"
     screens.item.open(ref, null)
@@ -172,8 +180,10 @@ Item {
   }
 
   function continueOrMap() {
-    // the other host may have finished or changed the puzzle since
+    // the other host may have finished or changed the puzzle, or changed a
+    // setting, since
     refreshProgress()
+    refreshSettings()
     const c = progress.current
     if (c && S.known(c.ref)) {
       lastArea = areaIndex(c.ref)
@@ -271,7 +281,8 @@ Item {
     Text {
       id: saveText
       anchors.centerIn: parent
-      text: qsTr("Progress could not be saved. Check the disk has room.")
+      text: root.newerSaves ? qsTr("These saves are from a newer Hueometry. Update it to keep saving.")
+                            : qsTr("Progress could not be saved. Check the disk has room.")
       color: Theme.ink
       font.family: Theme.font
       font.pixelSize: Theme.em

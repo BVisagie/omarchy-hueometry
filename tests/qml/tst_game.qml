@@ -143,6 +143,32 @@ Item {
       compare(game.progress.current, null, "no stale Continue")
     }
 
+    function test_9b_starting_and_resuming_read_settings() {
+      game.show("menu")
+      const set = (layout) => {
+        const s = JSON.parse(memory.files["settings.json"]); s.layout = layout
+        memory.files = Object.assign({}, memory.files, { "settings.json": JSON.stringify(s) })
+      }
+      set("circle")
+      game.start({ kind: "tutorial", index: 1 })
+      compare(game.settings.layout, "circle", "start")
+      tryVerify(() => game.current.session !== null, 5000)
+      game.show("menu")
+      set("line")
+      game.continueOrMap()
+      compare(game.settings.layout, "line", "resume")
+      tryVerify(() => game.current.session !== null, 5000)
+      game.show("menu")
+    }
+
+    function test_9c_a_newer_save_is_never_overwritten() {
+      const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3 })
+      memory.files = Object.assign({}, memory.files, { "settings.json": newer })
+      game.setSetting("music", 0.9)
+      compare(memory.files["settings.json"], newer)
+      verify(game.newerSaves && game.saveFailed)
+    }
+
     function test_7_a_move_after_the_clock_went_back_is_kept() {
       // the plugin saved its puzzle with a clock far ahead of this one
       const other = { done: {}, current: { ref: { kind: "tutorial", index: 2 }, moves: [], assisted: false, pack: Store.PACK }, currentAt: Date.now() + 1e9 }

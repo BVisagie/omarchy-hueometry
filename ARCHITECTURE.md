@@ -57,7 +57,8 @@ reports what happened so the board can animate it; `layout.mjs` places
 pillars on a line or as spokes of a circle and fixes the keyboard order,
 knowing only how many pillars there are.
 
-Saves are versionless JSON in XDG folders. Progress only grows, and each save
+Saves are JSON in XDG folders, with a format version: a save from a newer
+Hueometry is read but never overwritten. Progress only grows, and each save
 first merges what is on disk, so the app and the plugin can share it.
 
 ## Content

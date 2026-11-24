@@ -41,7 +41,12 @@ int main(int argc, char **argv) {
   p.process(app);
   const QStringList pos = p.positionalArguments();
   if (pos.size() < 2) p.showHelp(2);  // more words are for the scene (Qt.application.arguments)
-  const int frames = p.value("frames").toInt(), every = p.value("every").toInt();
+  bool framesOk = false, everyOk = false;
+  const int frames = p.value("frames").toInt(&framesOk), every = p.value("every").toInt(&everyOk);
+  if (!framesOk || frames < 1 || !everyOk || every < 0) {
+    fprintf(stderr, "shot: --frames needs a whole number from 1, --every one from 0\n");
+    return 2;
+  }
 
   StepDriver driver;
   driver.install();

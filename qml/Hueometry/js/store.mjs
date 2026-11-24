@@ -6,6 +6,26 @@ import levels from "./levels.mjs";
 // so merging what is on disk with what is in memory before every write loses
 // nothing, whichever copy writes last.
 
+// Both save files carry this format version. A save without one is
+// version 1. A save from a newer Hueometry is read as far as this one
+// understands it, and never overwritten.
+export const VERSION = 1;
+
+export function newer(raw) {
+  const v = parse(raw).version;
+  return typeof v === "number" && v > VERSION;
+}
+
+// The text to write: this version's fields over whatever else the file on
+// disk holds, so nothing this version does not know about is lost.
+export function settingsText(diskRaw, s) {
+  return JSON.stringify(Object.assign({}, parse(diskRaw), s, { version: VERSION }));
+}
+
+export function progressText(diskRaw, p) {
+  return JSON.stringify(Object.assign({}, parse(diskRaw), p, { version: VERSION }));
+}
+
 export const SETTINGS = {
   music: 0.6,
   effects: 0.8,

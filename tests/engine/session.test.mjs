@@ -140,6 +140,12 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   assert.equal(St.nextAt({ currentAt: 500 }, 900), 900);
   const later = St.setCurrent(plugin, { ref, moves: [], assisted: false }, St.nextAt(plugin, 50));
   assert.deepEqual(St.merge(plugin, later).current.ref, ref);
+  // saves carry a version, keep fields they do not know, and a newer save
+  // is recognised
+  assert.equal(JSON.parse(St.settingsText('{"future":1}', St.settings(""))).future, 1);
+  assert.equal(JSON.parse(St.progressText("", St.progress(""))).version, St.VERSION);
+  assert.equal(St.newer(JSON.stringify({ version: St.VERSION + 1 })), true);
+  assert.equal(St.newer("{}"), false);
   // records name the pack by its contents
   assert.match(St.PACK, /^[0-9a-f]{12}$/);
   assert.equal(S.known({ kind: "free", difficulty: "constructor", index: 0 }), false);
