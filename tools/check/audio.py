@@ -66,11 +66,11 @@ def mix(bad):
         p = SOUNDS / f"{name}.ogg"
         if not p.exists():
             continue
-        level = loudness.integrated(samples(p))
+        level = loudness.integrated(channels(p))
         if abs(level - target) > 1.0:
             bad.append(f"{p.name}: {level:.1f} LUFS, expected {target:.1f}")
     for p in sorted(SOUNDS.iterdir()):
-        peak = max(loudness.true_peak(c) for c in channels(p))
+        peak = loudness.true_peak(channels(p))
         if peak > TRUE_PEAK_MAX:
             bad.append(f"{p.name}: true peak {peak:.1f} dBTP, over {TRUE_PEAK_MAX}")
 

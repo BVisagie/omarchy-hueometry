@@ -20,7 +20,9 @@ while IFS= read -r f; do
   base=$(basename "$f")
   if [[ "${base,,}" =~ install|installer|setup|uninstall ]]; then say "setup-like file name: ${f#"$dir"/}"; fi
   if [[ "${base,,}" =~ \.(service|timer|socket)$ ]]; then say "systemd unit file: ${f#"$dir"/}"; fi
-  if [[ "${base,,}" == sudoers* ]]; then say "sudoers file: ${f#"$dir"/}"; fi
+  rel="${f#"$dir"/}"
+  # the scanner's sudoers path rule: a sudoers or sudoers.d path part, or *.sudoers
+  if [[ "${rel,,}" =~ (^|/)(sudoers(\.d)?(/|$)|[^/]+\.sudoers$) ]]; then say "sudoers file: $rel"; fi
   if [[ -x "$f" ]] || [[ -n "$(find "$f" -perm /111)" ]]; then say "executable file: ${f#"$dir"/}"; fi
 done <<<"$files"
 
@@ -36,8 +38,9 @@ patterns=(
   "\\b(pip|pip3|pipx|npm|pnpm|yarn|bun|cargo|go|gem)[[:space:]]+(install|add)\\b"
   "$q(pip|pip3|pipx|npm|pnpm|yarn|bun|cargo|go|gem)$sep(install|add)$q"
   "\\bbrew[[:space:]]+(install|uninstall|upgrade)\\b"
-  "\\b(sudo|pkexec|visudo|systemctl|systemd-run|curl|wget)\\b"
+  "\\b(visudo|systemctl|systemd-run|curl|wget)\\b"
   "/etc/sudoers"
+  "\\bsudoers(_file)?[[:space:]]*="
   "\\bgit[[:space:]]+(clone|fetch|pull)\\b"
   "${q}git$sep(clone|fetch|pull)$q"
 )
@@ -52,6 +55,17 @@ for p in "${patterns[@]}"; do
     [[ -n "$hit" ]] && say "command the marketplace would review: ${hit#"$dir"/}"
   done <<<"$hits"
 done
+
+# sudo and pkexec unless explicitly negated, by the scanner's own rule
+set +e
+priv=$(tr '\n' '\0' <<<"$files" | xargs -0 -r python3 "$ROOT/tools/check/privilege.py")
+rc=$?
+set -e
+# xargs: 0 none, 123 some hits (privilege.py exited 1), anything else an error
+if (( rc != 0 && rc != 123 )); then echo "plugin guard: could not scan $dir for sudo" >&2; exit 2; fi
+while IFS= read -r hit; do
+  [[ -n "$hit" ]] && say "privilege the marketplace would review: ${hit#"$dir"/}"
+done <<<"$priv"
 
 # argument arrays can span lines: check them again with each text file
 # joined into one line (the scanner joins them too)

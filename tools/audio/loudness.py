@@ -44,22 +44,36 @@ def kweight(x, rate=44100):
     return np.fft.irfft(np.fft.rfft(x, size) * np.abs(h), size)[:n]
 
 
-def _block_loudness(y, rate, block, hop):
+def _channels(x):
+    """One array per channel: a mono array, or a list of channel arrays."""
+    if isinstance(x, (list, tuple)):
+        return [np.asarray(c, dtype=np.float64) for c in x]
+    return [np.asarray(x, dtype=np.float64)]
+
+
+def _block_loudness(chans, rate, block, hop):
+    # BS.1770: the K-weighted mean square of each channel, summed (front
+    # channels weigh 1), per block
     n = int(rate * block)
     h = int(rate * hop)
-    if len(y) < n:
-        y = np.concatenate([y, np.zeros(n - len(y))])
-    starts = range(0, len(y) - n + 1, h)
-    ms = np.array([np.mean(y[s:s + n] ** 2) for s in starts])
-    return -0.691 + 10 * np.log10(np.maximum(ms, 1e-12))
+    total = None
+    for y in chans:
+        if len(y) < n:
+            y = np.concatenate([y, np.zeros(n - len(y))])
+        starts = range(0, len(y) - n + 1, h)
+        ms = np.array([np.mean(y[s:s + n] ** 2) for s in starts])
+        total = ms if total is None else total[:len(ms)] + ms[:len(total)]
+    return -0.691 + 10 * np.log10(np.maximum(total, 1e-12))
 
 
 def momentary_max(x, rate=44100):
-    return float(np.max(_block_loudness(kweight(x, rate), rate, 0.4, 0.1)))
+    chans = [kweight(c, rate) for c in _channels(x)]
+    return float(np.max(_block_loudness(chans, rate, 0.4, 0.1)))
 
 
 def integrated(x, rate=44100):
-    blocks = _block_loudness(kweight(x, rate), rate, 0.4, 0.1)
+    chans = [kweight(c, rate) for c in _channels(x)]
+    blocks = _block_loudness(chans, rate, 0.4, 0.1)
     blocks = blocks[blocks > -70]
     if len(blocks) == 0:
         return -70.0
@@ -69,8 +83,14 @@ def integrated(x, rate=44100):
 
 
 def true_peak(x):
-    x = np.asarray(x, dtype=np.float64)
-    n = len(x)
-    spectrum = np.fft.rfft(x)
-    up = np.fft.irfft(spectrum, 4 * n) * 4
-    return float(20 * np.log10(max(np.max(np.abs(up)), 1e-12)))
+    """The highest peak of any channel after 4x oversampling, in dBTP."""
+    peak = 0.0
+    for c in _channels(x):
+        n = len(c)
+        spectrum = np.fft.rfft(c)
+        if n % 2 == 0:
+            # the Nyquist bin stands for two halves once the spectrum grows
+            spectrum[-1] *= 0.5
+        up = np.fft.irfft(spectrum, 4 * n) * 4
+        peak = max(peak, float(np.max(np.abs(up))))
+    return float(20 * np.log10(max(peak, 1e-12)))
