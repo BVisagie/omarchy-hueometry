@@ -24,8 +24,14 @@ Item {
     return false
   }
 
+  onCursorChanged: scroller.show(buttons.itemAt(cursor))
+
+  Scroller {
+    id: scroller
+    anchors.fill: parent
+    anchors.margins: Theme.em
   Column {
-    anchors.centerIn: parent
+    anchors.horizontalCenter: parent.horizontalCenter
     spacing: Theme.em * 1.2
     Title {
       anchors.horizontalCenter: parent.horizontalCenter
@@ -43,6 +49,7 @@ Item {
     }
     Item { width: 1; height: Theme.em }
     Repeater {
+      id: buttons
       model: menu.items.length
       TextButton {
         required property int index
@@ -54,5 +61,6 @@ Item {
         onActivated: menu.items[index].act()
       }
     }
+  }
   }
 }

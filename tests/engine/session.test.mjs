@@ -48,12 +48,12 @@ test("a saved game resumes through the engine", () => {
 
 test("progress merges keep the best of both copies", () => {
   const a = St.progress(JSON.stringify({ done: { "clearing/0": { best: 9 }, "clearing/1": { best: 7, assisted: true } } }));
-  const b = St.progress(JSON.stringify({ tutorial: true, done: { "clearing/0": { best: 11 }, "clearing/1": { best: 9 } } }));
+  const b = St.progress(JSON.stringify({ done: { "tutorial/0": { best: 3 }, "tutorial/1": { best: 6 }, "tutorial/2": { best: 4 }, "clearing/0": { best: 11 }, "clearing/1": { best: 9 } } }));
   const m = St.merge(a, b);
   assert.deepEqual(m.done["clearing/0"], { best: 9, assisted: false });
   assert.deepEqual(m.done["clearing/1"], { best: 9, assisted: false });
   assert.equal(m.tutorial, true);
-  assert.deepEqual(St.progress("not json"), { tutorial: false, done: {}, current: null });
+  assert.deepEqual(St.progress("not json"), { tutorial: false, done: {}, current: null, currentAt: 0 });
   const r1 = St.solved(St.progress(""), { kind: "level", area: "clearing", index: 0 }, 10, false);
   assert.equal(r1.record, "first");
   const r2 = St.solved(r1.progress, { kind: "level", area: "clearing", index: 0 }, 8, false);
@@ -108,4 +108,28 @@ test("known() checks a reference without generating", () => {
   assert.equal(S.known({ kind: "tutorial", index: -1 }), false);
   assert.equal(S.known(null), false);
   assert.deepEqual(St.progress(JSON.stringify({ current: { ref: { kind: "tutorial", index: 0 }, moves: [null, [0, 2]], assisted: true } })).current.assisted, true);
+});
+
+test("across two hosts, the newest unfinished puzzle wins and settings merge per key", () => {
+  const ref = { kind: "level", area: "clearing", index: 1 };
+  // started in the app at t=100, finished in the plugin at t=200
+  let app = St.setCurrent(St.progress(""), { ref, moves: [[0, 3]], assisted: false }, 100);
+  let plugin = St.solved(St.setCurrent(St.progress(""), { ref, moves: [[0, 3]], assisted: false }, 150), ref, 9, false, 200).progress;
+  assert.equal(St.merge(app, plugin).current, null);
+  assert.equal(St.merge(plugin, app).current, null, "order does not matter");
+  // the tutorial completes from records made in different hosts
+  const a = St.progress(JSON.stringify({ done: { "tutorial/0": { best: 3 }, "tutorial/1": { best: 6 } } }));
+  const b = St.progress(JSON.stringify({ done: { "tutorial/0": { best: 3 }, "tutorial/2": { best: 4 } } }));
+  assert.equal(St.merge(a, b).tutorial, true);
+  // a hinted solve keeps the earlier unhinted best and says so
+  const r = St.solved(St.progress(JSON.stringify({ done: { "clearing/1": { best: 12 } } })), ref, 10, true, 1);
+  assert.equal(r.assisted, true);
+  assert.deepEqual(r.best, { best: 12, assisted: false });
+  // one setting changes on top of what is on disk
+  const disk = JSON.stringify({ reducedMotion: true, music: 0.3 });
+  const next = St.withSetting(disk, "music", 0.8);
+  assert.equal(next.reducedMotion, true);
+  assert.equal(next.music, 0.8);
+  assert.equal(S.known({ kind: "free", difficulty: "constructor", index: 0 }), false);
+  assert.equal(S.puzzle({ kind: "free", difficulty: "constructor", index: 0 }), null);
 });

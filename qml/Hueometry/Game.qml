@@ -47,12 +47,9 @@ Item {
   function ownProgressFile() { return host && host.kind === "plugin" ? "progress-plugin.json" : "progress-app.json" }
 
   function readProgress() {
-    const all = progressFiles.map(name => Store.progress(host.readText(name)))
-    const merged = all.reduce((acc, p) => Store.merge(acc, p), Store.progress(""))
-    // the unfinished puzzle comes from this host's own file first
-    const own = all[progressFiles.indexOf(ownProgressFile())]
-    const current = own.current || (all.find(p => p.current) || {}).current || null
-    return Object.assign({}, merged, { current })
+    // merge keeps every record and the most recently changed unfinished puzzle
+    return progressFiles.map(name => Store.progress(host.readText(name)))
+      .reduce((acc, p) => Store.merge(acc, p), Store.progress(""))
   }
 
   function load() {
@@ -71,19 +68,19 @@ Item {
   }
 
   function setSetting(key, value) {
-    const next = Object.assign({}, settings)
-    next[key] = value
-    settings = Store.settings(JSON.stringify(next))
+    // apply the one change to what is on disk: the other host may have
+    // changed something else
+    settings = Store.withSetting(host ? host.readText("settings.json") : JSON.stringify(settings), key, value)
     if (host) host.writeText("settings.json", JSON.stringify(settings))
   }
 
   function saveCurrent(ref, moves, assisted) {
-    progress = Object.assign({}, progress, { current: { ref, moves: moves.map(m => [m.from, m.to]), assisted: assisted === true } })
+    progress = Store.setCurrent(progress, { ref, moves: moves.map(m => [m.from, m.to]), assisted: assisted === true }, Date.now())
     saveProgress()
   }
 
   function recordSolved(ref, moves, assisted) {
-    const out = Store.solved(progress, ref, moves, assisted)
+    const out = Store.solved(progress, ref, moves, assisted, Date.now())
     progress = out.progress
     saveProgress()
     return out
@@ -179,6 +176,10 @@ Item {
   Timer { id: quitTimer; interval: 3000; onTriggered: root.confirmQuit = false }
 
   Keys.onPressed: function(event) {
+    // a held key repeats: let only arrows and Tab repeat, so no held key can
+    // confirm quitting, restarting, lifting or choosing
+    const moving = [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down, Qt.Key_Tab].indexOf(event.key) >= 0
+    if (event.isAutoRepeat && !moving) { event.accepted = true; return }
     if (helpShown) { helpShown = false; event.accepted = true; return }
     if (event.key === Qt.Key_Question || (event.key === Qt.Key_Slash && (event.modifiers & Qt.ShiftModifier))) { helpShown = true; event.accepted = true; return }
     if (event.key === Qt.Key_F11 && host && host.canFullscreen) { host.toggleFullscreen(); event.accepted = true; return }

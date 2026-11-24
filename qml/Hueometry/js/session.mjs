@@ -32,7 +32,7 @@ export function puzzle(ref) {
     if (!entry) return null;
     ({ colours, cap } = area);
   } else if (ref.kind === "free") {
-    const set = free.puzzles[ref.difficulty];
+    const set = DIFFICULTIES.indexOf(ref.difficulty) >= 0 ? free.puzzles[ref.difficulty] : null;
     entry = set && set.puzzles[ref.index];
     if (!entry) return null;
     ({ colours, cap } = set);
@@ -53,8 +53,8 @@ export function known(ref) {
     return !!area && ref.index < area.levels.length;
   }
   if (ref.kind === "free") {
-    const set = free.puzzles[ref.difficulty];
-    return !!set && ref.index < set.puzzles.length;
+    // only the five sizes (a saved name like "constructor" is not one)
+    return DIFFICULTIES.indexOf(ref.difficulty) >= 0 && ref.index < free.puzzles[ref.difficulty].puzzles.length;
   }
   return false;
 }
@@ -120,6 +120,5 @@ export function history(s) {
 }
 
 export function puzzleCount(difficulty) {
-  const set = free.puzzles[difficulty];
-  return set ? set.puzzles.length : 0;
+  return DIFFICULTIES.indexOf(difficulty) >= 0 ? free.puzzles[difficulty].puzzles.length : 0;
 }

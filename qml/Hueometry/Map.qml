@@ -39,7 +39,8 @@ Item {
     return false
   }
 
-  onAreaChanged: game.lastArea = area
+  onAreaChanged: { game.lastArea = area; areaScroll.show(tiles.itemAt(area)) }
+  onLevelChanged: levelScroll.show(stones.itemAt(level))
 
   RoundButton {
     anchors.left: parent.left
@@ -65,15 +66,20 @@ Item {
   }
 
   // areas
-  Grid {
+  Scroller {
+    id: areaScroll
     visible: map.depth === 0
-    anchors.centerIn: parent
-    anchors.verticalCenterOffset: Theme.em * 1.5
+    anchors.fill: parent
+    anchors.topMargin: Theme.em * 5
+    anchors.bottomMargin: Theme.em
+  Grid {
+    anchors.horizontalCenter: parent.horizontalCenter
     // as many columns as fit, from two to four
     columns: Math.max(2, Math.min(4, Math.floor((map.width - Theme.em * 4) / (Theme.em * 14.2))))
     horizontalItemAlignment: Grid.AlignHCenter
     spacing: Theme.em * 1.2
     Repeater {
+      id: tiles
       model: map.areas.length
       Item {
         id: tile
@@ -120,13 +126,21 @@ Item {
     }
   }
 
+  }
+
   // the puzzles of one area: round stones
-  Grid {
+  Scroller {
+    id: levelScroll
     visible: map.depth === 1
-    anchors.centerIn: parent
+    anchors.fill: parent
+    anchors.topMargin: Theme.em * 5
+    anchors.bottomMargin: Theme.em
+  Grid {
+    anchors.horizontalCenter: parent.horizontalCenter
     columns: 4
     spacing: Theme.em * 1.2
     Repeater {
+      id: stones
       model: map.depth === 1 ? map.levelCount() : 0
       Item {
         id: stone
@@ -167,5 +181,6 @@ Item {
         MouseArea { anchors.fill: parent; onClicked: map.game.start(map.levelRef(stone.index)) }
       }
     }
+  }
   }
 }

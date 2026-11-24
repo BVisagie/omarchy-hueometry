@@ -2,6 +2,8 @@
 // by fixed frames, and saves PNG screenshots.
 #include <QAnimationDriver>
 #include <QCommandLineParser>
+#include <QElapsedTimer>
+#include <QThread>
 #include <QGuiApplication>
 #include <QImage>
 #include <QOffscreenSurface>
@@ -34,6 +36,7 @@ int main(int argc, char **argv) {
   p.addOption({"size", "WxH", "size", "1920x1080"});
   p.addOption({"frames", "frames to run before the shot", "n", "60"});
   p.addOption({"every", "also save every n frames", "n", "0"});
+  p.addOption({"settle", "real milliseconds to let worker threads finish before stepping", "ms", "1500"});
   p.addHelpOption();
   p.process(app);
   const QStringList pos = p.positionalArguments();
@@ -106,6 +109,14 @@ int main(int argc, char **argv) {
     printf("shot: %s\n", qPrintable(path));
     return true;
   };
+  // Worker threads (the game prepares boards on one) run in real time while
+  // frames are simulated: let them finish first, without advancing time.
+  QElapsedTimer settle;
+  settle.start();
+  while (settle.elapsed() < p.value("settle").toInt()) {
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+    QThread::msleep(5);
+  }
   for (int i = 1; i <= frames; ++i) {
     QCoreApplication::processEvents();
     driver.step(16);

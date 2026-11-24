@@ -5,6 +5,11 @@ name: Release
 # own repository (BVisagie/omarchy-hueometry-plugin) stays off until the
 # owner creates that repository, adds a deploy key as the
 # PLUGIN_DEPLOY_KEY secret, and sets the PLUGIN_PUBLISH variable to true.
+#
+# GitHub's runners have no Omarchy shell, so `bin/plugin --check` (omarchy
+# plugin validate, the lint against the shell's own modules, and the overlay
+# under Quickshell) cannot run here. Run `bin/check` on an Omarchy machine at
+# the tagged commit before setting PLUGIN_PUBLISH.
 
 on:
   push:

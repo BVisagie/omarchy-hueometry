@@ -22,7 +22,8 @@ if [[ "${1:-}" == "--check" ]]; then
     omarchy plugin validate "$OUT"
     echo "omarchy plugin validate: ok"
   else
-    echo "omarchy is not installed here; skipped omarchy plugin validate"
+    echo "SKIPPED: omarchy is not installed here, so the plugin was not validated."
+    echo "         Run bin/check on an Omarchy machine before publishing the plugin."
   fi
   shell_dir="${OMARCHY_PATH:-/usr/share/omarchy}/shell"
   if [[ -d "$shell_dir/Ui" ]]; then

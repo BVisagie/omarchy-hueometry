@@ -30,7 +30,8 @@ Shape {
 
   ShapePath {
     strokeColor: root.colour
-    strokeWidth: 9
+    // the path is scaled from a 100 box; the stroke is not, so size it here
+    strokeWidth: Math.max(1.2, root.size * 0.09)
     capStyle: ShapePath.RoundCap
     joinStyle: ShapePath.RoundJoin
     fillColor: root.kind === "play" ? root.colour : "transparent"

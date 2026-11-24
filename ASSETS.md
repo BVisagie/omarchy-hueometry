@@ -6,10 +6,15 @@ There are no third-party images, sounds or fonts.
 
 ## Pictures
 
-There are no image files. The jungle, the pillars, the orbs, the symbols and
-the icons are drawn by the QML in `qml/Hueometry/` (Jungle.qml, Leaf.qml,
-Pillar.qml, Orb.qml, Symbol.qml, Icon.qml) and are covered by the code's MIT
-licence as well.
+The game itself has no image files: the jungle, the pillars, the orbs, the
+symbols, the animal friends and the icons are drawn by the QML in
+`qml/Hueometry/` and are covered by the code's MIT licence as well. Two image
+files exist outside the game:
+
+| File | What |
+|---|---|
+| `pkgbuild/hueometry.svg` | the app icon, drawn by hand in SVG |
+| `plugin/preview.png` | the plugin's marketplace preview, a screenshot of the game made with `tools/shot` |
 
 ## Sounds
 

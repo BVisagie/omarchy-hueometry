@@ -29,6 +29,14 @@ export function settings(raw) {
   };
 }
 
+// One setting changed: apply it to the settings on disk, so a change in one
+// host never undoes a different change made in another.
+export function withSetting(raw, key, value) {
+  const next = settings(raw);
+  next[key] = value;
+  return settings(JSON.stringify(next));
+}
+
 function parse(raw) {
   if (typeof raw !== "string" || raw === "") return {};
   try {
@@ -39,7 +47,8 @@ function parse(raw) {
   }
 }
 
-// progress: { tutorial: bool, done: { key: { best, assisted } }, current }
+// progress: { tutorial: bool, done: { key: { best, assisted } }, current,
+//   currentAt }
 // key: "area/index", "tutorial/index" or "free/difficulty/index".
 // `assisted` is true when the best was reached with a hint.
 // `current` is the puzzle left unfinished: { ref, moves: [[from, to]],
@@ -54,7 +63,14 @@ export function progress(raw) {
   }
   const current = p.current && p.current.ref && Array.isArray(p.current.moves)
     ? { ref: p.current.ref, moves: p.current.moves, assisted: p.current.assisted === true } : null;
-  return { tutorial: p.tutorial === true, done, current };
+  // when `current` last changed (set or cleared), so the newest copy wins
+  const currentAt = Number.isFinite(p.currentAt) ? p.currentAt : 0;
+  return { tutorial: tutorialDone(done), done, current, currentAt };
+}
+
+// The tutorial is done when all three of its puzzles are.
+function tutorialDone(done) {
+  return [0, 1, 2].every((i) => !!done[`tutorial/${i}`]);
 }
 
 export function key(ref) {
@@ -71,26 +87,35 @@ function better(a, b) {
   return a.best <= b.best ? a : b;
 }
 
+// Records combine (the better of each); the unfinished puzzle is the one
+// changed most recently, which may be "none" if it was finished elsewhere.
 export function merge(disk, mine) {
   const done = Object.assign({}, disk.done);
   for (const [k, v] of Object.entries(mine.done)) done[k] = better(done[k], v);
-  return { tutorial: disk.tutorial || mine.tutorial, done, current: mine.current };
+  const newer = (mine.currentAt || 0) >= (disk.currentAt || 0) ? mine : disk;
+  return { tutorial: tutorialDone(done), done, current: newer.current, currentAt: newer.currentAt || 0 };
+}
+
+// The unfinished puzzle changed (at a time in milliseconds).
+export function setCurrent(p, current, at) {
+  return Object.assign({}, p, { current, currentAt: at });
 }
 
 // Records a solved puzzle. Answers { progress, record } where record says
 // whether this beat the previous best ("first", "better", "same", "worse").
-export function solved(p, ref, moveCount, assisted) {
+export function solved(p, ref, moveCount, assisted, at) {
   const k = key(ref);
   const before = p.done[k];
   const now = { best: moveCount, assisted: assisted === true };
   const kept = better(before, now);
   let record = "first";
   if (before) record = kept === now && (now.best < before.best || (before.assisted && !now.assisted)) ? "better" : now.best === before.best ? "same" : "worse";
-  // the tutorial is done when all three of its puzzles are
-  const tutorial = p.tutorial || [0, 1, 2].every((i) => (i === ref.index && ref.kind === "tutorial") || !!p.done[`tutorial/${i}`]);
   const done = Object.assign({}, p.done);
   done[k] = kept;
-  return { progress: Object.assign({}, p, { tutorial, done, current: null }), record, previous: before || null };
+  return {
+    progress: Object.assign({}, p, { tutorial: tutorialDone(done), done, current: null, currentAt: at || 0 }),
+    record, previous: before || null, assisted: now.assisted, best: kept,
+  };
 }
 
 // An area opens once five levels of the one before it are done.

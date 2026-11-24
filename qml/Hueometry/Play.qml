@@ -80,8 +80,10 @@ Item {
     const out = S.touch(session, column)
     session = out.state
     focusColumn = column
-    // a hint stays lit while its orb is lifted, until it lands or goes back
-    if (!(out.effect.kind === "lift" && hint && hint.from === column)) hint = null
+    // a hint stays lit while its orb is lifted, even through a refusal,
+    // until the orb lands or goes back
+    const keep = hint && ((out.effect.kind === "lift" && hint.from === column) || out.effect.kind === "refuse")
+    if (!keep) hint = null
     if (out.effect.kind === "move") message = ""
     board.effect(out.effect)
     game.sound.effect(out.effect)
@@ -117,6 +119,7 @@ Item {
     if (!session || won || S.view(session).moves === 0) return
     session = S.undo(session)
     hint = null
+    message = ref.kind === "tutorial" ? tutorialText(ref.index) : ""
     game.sound.cue("undo")
     game.saveCurrent(ref, S.history(session), assisted)
   }
@@ -130,6 +133,7 @@ Item {
     assisted = false
     confirmRestart = false
     board.celebrating = false
+    message = ref.kind === "tutorial" ? tutorialText(ref.index) : ""
     game.sound.cue("restart")
     game.saveCurrent(ref, S.history(session), assisted)
   }

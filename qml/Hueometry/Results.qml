@@ -74,6 +74,9 @@ Item {
         text: {
           if (!root.result) return ""
           const r = root.result
+          // a hinted solve never replaces a best made without hints
+          if (r.assisted && r.best && !r.best.assisted)
+            return qsTr("You used a hint this time. Your best without hints is %1.").arg(r.best.best)
           if (r.record === "first") return root.par > 0 ? qsTr("Par for this puzzle is %1.").arg(root.par) : ""
           if (r.record === "better") return qsTr("New personal best! Your last best was %1.").arg(r.previous.best)
           if (r.record === "same") return qsTr("You matched your best of %1.").arg(r.previous.best)
