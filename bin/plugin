@@ -19,7 +19,8 @@ if [[ "$(grep -o "$marker" "$OUT/Overlay.qml" | wc -l)" != 1 ]]; then
   echo "plugin/Overlay.qml must hold the marker $marker exactly once" >&2
   exit 1
 fi
-version=$(sed -n 's/^VERSION = //p' "$ROOT/hueometry.pro")
+# the version the menu will show: the assembled manifest's
+version=$(sed -n 's/^ *"version": "\([^"]*\)".*/\1/p' "$OUT/manifest.json")
 build=$("$ROOT/tools/version/build-id.sh" "$version")
 sed -i "s|$marker|$build|" "$OUT/Overlay.qml"
 if find "$OUT" -type l | grep -q .; then

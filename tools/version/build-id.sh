@@ -5,8 +5,11 @@
 # Usage: tools/version/build-id.sh <version>
 set -uo pipefail
 cd "$(dirname "$0")/../.." || exit 0
-git rev-parse --git-dir >/dev/null 2>&1 || exit 0
-if git tag --points-at HEAD 2>/dev/null | grep -qx "v$1"; then
+# only Hueometry's own checkout: a source archive unpacked inside another
+# repository must not take that repository's commit
+top=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[[ "$(cd "$top" && pwd -P)" == "$(pwd -P)" ]] || exit 0
+if git tag --points-at HEAD 2>/dev/null | grep -Fqx -- "v$1"; then
   exit 0
 fi
 id=$(git rev-parse --short=7 HEAD 2>/dev/null) || exit 0
