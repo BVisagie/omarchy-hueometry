@@ -55,6 +55,7 @@ Item {
       id: cardScroll
       anchors.fill: parent
       anchors.margins: Theme.em * 1.5
+      anchors.topMargin: card.overflows ? Theme.em * 2.1 : Theme.em * 1.5
       anchors.bottomMargin: card.overflows ? Theme.em * 2.1 : Theme.em * 1.5
       contentWidth: width
       contentHeight: column.implicitHeight
@@ -149,7 +150,14 @@ Item {
       }
     }
     }
-    // there is more below: say so
+    // there is more above (it opens on its buttons) or below: say so
+    MoreCue {
+      up: true
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      anchors.topMargin: Theme.em * 0.4
+      visible: card.overflows && !cardScroll.atYBeginning
+    }
     MoreCue {
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.bottom: parent.bottom

@@ -84,11 +84,11 @@ Item {
       verify(r.x + r.w <= q.x || q.x + q.w <= r.x || r.y + r.h <= q.y || q.y + q.h <= r.y, what)
     }
 
-    // the screen shows at least one view with something in it, and nothing
-    // in any view needs scrolling
-    function fits(what) {
+    // the screen (or `scope` on it) shows at least one view with something
+    // in it, and nothing in any view needs scrolling
+    function fits(what, scope) {
       wait(0)
-      const views = scrollers(game, [], [])
+      const views = scrollers(scope || game, [], [])
       verify(views.some(v => v.contentHeight > 0 && v.contentItem.childrenRect.height > 0), what + " shows its content")
       const over = views.filter(v => v.contentHeight > v.height + 1)
         .map(v => (v.objectName || "a view") + " by " + ((v.contentHeight - v.height) / Theme.em).toFixed(1) + "em")
@@ -138,7 +138,12 @@ Item {
 
       game.show("menu")
       game.showHelp()
-      fits("the keys" + where)
+      // the keys card itself, with every key's row
+      const help = found(game, c => c.keys !== undefined && c.quitsAtOnce !== undefined, [], [])[0]
+      verify(!!help, "the keys show" + where)
+      fits("the keys" + where, help)
+      const words = found(help, c => c.text !== undefined && c.font !== undefined, [], []).map(t => t.text)
+      for (const k of help.keys) verify(words.indexOf(k[0]) >= 0 && words.indexOf(k[1]) >= 0, "the keys list " + k[0] + where)
       game.helpShown = false
     }
 

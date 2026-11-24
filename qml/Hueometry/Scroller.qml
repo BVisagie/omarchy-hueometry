@@ -1,13 +1,14 @@
 import QtQuick
 
 // Holds a screen's content centred when it fits, and lets it scroll when the
-// interface is large on a small screen. Then it keeps a strip at its foot
-// for a "more" cue, so the cue never covers what scrolls; show(item) keeps
-// the focused item in view for keyboard players.
+// interface is large on a small screen. Then it keeps a strip at its head
+// and foot for "more" cues, so a cue never covers what scrolls; show(item)
+// keeps the focused item in view for keyboard players (and may open the
+// screen scrolled, so the head has a cue too).
 Item {
   id: root
   default property alias content: inner.data
-  // taller than the space: the view gives up its foot to the cue
+  // taller than the space: the view gives up its head and foot to the cues
   readonly property bool overflows: inner.childrenRect.height > height + 1
 
   function show(item) {
@@ -20,6 +21,7 @@ Item {
   Flickable {
     id: f
     anchors.fill: parent
+    anchors.topMargin: root.overflows ? Theme.em * 1.9 : 0
     anchors.bottomMargin: root.overflows ? Theme.em * 1.9 : 0
     clip: true
     contentWidth: width
@@ -34,6 +36,13 @@ Item {
     }
   }
 
+  MoreCue {
+    up: true
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    anchors.topMargin: Theme.em * 0.25
+    visible: root.overflows && !f.atYBeginning
+  }
   MoreCue {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
