@@ -252,7 +252,7 @@ def to_level(x, lufs):
     """Scales an effect to its loudest-moment target, never past the true
     peak limit (a quieter result then fails the check, loudly)."""
     x = x * 10 ** ((lufs - loudness.momentary_max(x)) / 20)
-    over = loudness.true_peak(x) - TRUE_PEAK_MAX
+    over = loudness.true_peak(x) - (TRUE_PEAK_MAX - 0.1)  # headroom for 16-bit and Vorbis
     return x * 10 ** (-over / 20) if over > 0 else x
 
 
@@ -260,7 +260,7 @@ def to_integrated(x, lufs):
     """Scales a loop to its integrated loudness, never past the true peak
     limit."""
     x = x * 10 ** ((lufs - loudness.integrated(x)) / 20)
-    over = loudness.true_peak(x) - TRUE_PEAK_MAX
+    over = loudness.true_peak(x) - (TRUE_PEAK_MAX - 0.1)  # headroom for 16-bit and Vorbis
     return x * 10 ** (-over / 20) if over > 0 else x
 
 

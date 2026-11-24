@@ -32,6 +32,22 @@ def samples(p):
     return np.frombuffer(raw, dtype=np.float32).astype(np.float64)
 
 
+def channels(p):
+    """Every channel at the file's own rate, for the true peak."""
+    if p.suffix == ".wav":
+        with wave.open(str(p)) as w:
+            c = w.getnchannels()
+            x = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float64) / 32768
+        return [x[i::c] for i in range(c)]
+    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=channels", "-of", "csv=p=0", str(p)],
+                           capture_output=True, check=True, text=True).stdout
+    c = int(probe.strip().splitlines()[0])
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(p), "-f", "f32le", "-"],
+                         capture_output=True, check=True).stdout
+    x = np.frombuffer(raw, dtype=np.float32).astype(np.float64)
+    return [x[i::c] for i in range(c)]
+
+
 def mix(bad):
     for name, target in EFFECT_LUFS.items():
         p = SOUNDS / f"{name}.wav"
@@ -54,8 +70,8 @@ def mix(bad):
         if abs(level - target) > 1.0:
             bad.append(f"{p.name}: {level:.1f} LUFS, expected {target:.1f}")
     for p in sorted(SOUNDS.iterdir()):
-        peak = loudness.true_peak(samples(p))
-        if peak > TRUE_PEAK_MAX + 0.1:
+        peak = max(loudness.true_peak(c) for c in channels(p))
+        if peak > TRUE_PEAK_MAX:
             bad.append(f"{p.name}: true peak {peak:.1f} dBTP, over {TRUE_PEAK_MAX}")
 
 

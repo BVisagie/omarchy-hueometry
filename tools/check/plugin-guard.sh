@@ -19,6 +19,8 @@ while IFS= read -r f; do
   [[ -z "$f" ]] && continue
   base=$(basename "$f")
   if [[ "${base,,}" =~ install|installer|setup|uninstall ]]; then say "setup-like file name: ${f#"$dir"/}"; fi
+  if [[ "${base,,}" =~ \.(service|timer|socket)$ ]]; then say "systemd unit file: ${f#"$dir"/}"; fi
+  if [[ "${base,,}" == sudoers* ]]; then say "sudoers file: ${f#"$dir"/}"; fi
   if [[ -x "$f" ]] || [[ -n "$(find "$f" -perm /111)" ]]; then say "executable file: ${f#"$dir"/}"; fi
 done <<<"$files"
 
@@ -34,7 +36,8 @@ patterns=(
   "\\b(pip|pip3|pipx|npm|pnpm|yarn|bun|cargo|go|gem)[[:space:]]+(install|add)\\b"
   "$q(pip|pip3|pipx|npm|pnpm|yarn|bun|cargo|go|gem)$sep(install|add)$q"
   "\\bbrew[[:space:]]+(install|uninstall|upgrade)\\b"
-  "\\b(sudo|pkexec|systemctl|systemd-run|curl|wget)\\b"
+  "\\b(sudo|pkexec|visudo|systemctl|systemd-run|curl|wget)\\b"
+  "/etc/sudoers"
   "\\bgit[[:space:]]+(clone|fetch|pull)\\b"
   "${q}git$sep(clone|fetch|pull)$q"
 )
@@ -49,6 +52,26 @@ for p in "${patterns[@]}"; do
     [[ -n "$hit" ]] && say "command the marketplace would review: ${hit#"$dir"/}"
   done <<<"$hits"
 done
+
+# argument arrays can span lines: check them again with each text file
+# joined into one line (the scanner joins them too)
+arrays=(
+  "${q}${pm}${sep}${pmverb}${q}"
+  "${q}omarchy${sep}pkg${sep}(add|drop|remove|update)${q}"
+  "${q}(pip|pip3|pipx|npm|pnpm|yarn|bun|cargo|go|gem)${sep}(install|add)${q}"
+  "${q}brew${sep}(install|uninstall|upgrade)${q}"
+  "${q}(sudo|pkexec|visudo|systemctl|systemd-run|curl|wget)${q}"
+  "${q}git${sep}(clone|fetch|pull)${q}"
+)
+while IFS= read -r f; do
+  [[ -z "$f" ]] && continue
+  grep -Iq . "$f" 2>/dev/null || continue   # text files only
+  joined=$(tr '\n\r\t' '   ' < "$f")
+  joined=${joined,,}
+  for p in "${arrays[@]}"; do
+    if [[ "$joined" =~ $p ]]; then say "command the marketplace would review (argument array): ${f#"$dir"/}: ${BASH_REMATCH[0]}"; fi
+  done
+done <<<"$files"
 
 [[ "$fails" == 0 ]] || exit 1
 echo "plugin guard: no setup files, executables or reviewed commands"

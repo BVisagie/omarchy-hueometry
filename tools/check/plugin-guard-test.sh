@@ -29,6 +29,11 @@ expect fail "an argument array" Widget.qml 'Quickshell.execDetached(["pacman", "
 expect fail "a quoted git clone" Widget.qml "Quickshell.execDetached(['git', 'clone', 'x'])"
 expect fail "curl" Widget.qml 'Quickshell.execDetached(["curl", "x"])'
 expect fail "a setup-named file" Setup.qml "import QtQuick"
+expect fail "a systemd unit" hueometry.service "[Unit]"
+expect fail "a sudoers file" sudoers.d "x"
+expect fail "visudo" README.md "visudo -c"
+expect fail "an array across lines" Widget.qml $'Quickshell.execDetached([\n  "cargo",\n  "install", "x"])'
+expect pass "an ordinary array" Widget.qml 'Quickshell.execDetached(["omarchy-shell", "shell", "summon", "x", "{}"])'
 d="$work/exec"; mkdir -p "$d"; echo 'import QtQuick' > "$d/Main.qml"; chmod g+x "$d/Main.qml"
 rc=0; "$guard" "$d" >/dev/null 2>&1 || rc=$?
 [[ "$rc" == 1 ]] || { echo "plugin guard test: a group-executable file passed (exit $rc)" >&2; exit 1; }
