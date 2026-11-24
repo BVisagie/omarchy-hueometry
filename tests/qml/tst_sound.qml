@@ -19,5 +19,22 @@ Item {
       // on a machine without Qt Multimedia the real player is missing too
       compare(normal.missing, !normal.available)
     }
+    // each area family has its own play theme; the menu has its own
+    function test_theme_follows_the_area() {
+      tryVerify(() => normal.available || normal.missing, 3000)
+      if (!normal.available) skip("Qt Multimedia is not installed")
+      const bank = normal.children.find(c => c.item !== undefined).item
+      compare(String(bank.themeSource).split("/").pop(), "music-menu.ogg")
+      normal.inPlay = true
+      normal.area = 2
+      compare(String(bank.themeSource).split("/").pop(), "music-river.ogg")
+      normal.area = 3
+      compare(String(bank.themeSource).split("/").pop(), "music-temple.ogg")
+      normal.area = 0
+      compare(String(bank.themeSource).split("/").pop(), "music-forest.ogg")
+      // muted: no critters either
+      verify(!bank.crittersOn)
+      normal.inPlay = false
+    }
   }
 }

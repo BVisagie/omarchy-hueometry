@@ -3,7 +3,7 @@ import QtMultimedia
 
 // The sounds themselves (made by tools/audio/synth.py). Loaded by Sound.qml
 // only where Qt Multimedia is installed. Effects follow the sounds slider;
-// music and the area's ambience follow the music slider.
+// music, the area's ambience and its critters follow the music slider.
 Item {
   id: bank
   // silent until Sound.qml passes on the game's settings, in whatever order
@@ -16,6 +16,9 @@ Item {
   property real duck: 1.0
 
   readonly property var ambienceFor: ["forest", "forest", "river", "temple", "river", "temple", "forest"]
+  // the area's family: its ambience, its play theme and its critters
+  readonly property string family: ambienceFor[area] ?? "forest"
+  readonly property url themeSource: inPlay ? "sounds/music-" + family + ".ogg" : "sounds/music-menu.ogg"
 
   // a few players per sound, so quick moves do not cut each other off
   component Pool: Item {
@@ -77,7 +80,7 @@ Item {
 
   MediaPlayer {
     id: tune
-    source: bank.inPlay ? "sounds/music-play.ogg" : "sounds/music-menu.ogg"
+    source: bank.themeSource
     loops: MediaPlayer.Infinite
     audioOutput: AudioOutput { volume: bank.music * bank.duck * 0.7 }
     onSourceChanged: if (bank.musicOn) play()
@@ -85,7 +88,7 @@ Item {
 
   MediaPlayer {
     id: air
-    source: bank.inPlay ? "sounds/ambience-" + bank.ambienceFor[bank.area] + ".ogg" : ""
+    source: bank.inPlay ? "sounds/ambience-" + bank.family + ".ogg" : ""
     loops: MediaPlayer.Infinite
     audioOutput: AudioOutput { volume: bank.music * 0.9 }
     onSourceChanged: if (bank.musicOn && source != "") play()
@@ -98,4 +101,44 @@ Item {
     if (musicOn) { tune.play(); if (air.source != "") air.play() }
     else { tune.pause(); air.pause() }
   }
+
+  // critters: a bird, a frog, a drip now and then, at random, so the
+  // ambience never sounds like a loop. Only while a puzzle is open and the
+  // music is on.
+  readonly property var crittersFor: ({
+    forest: ["bird-1", "bird-2", "bird-3", "bird-1"],
+    river: ["bird-2", "frog", "plop", "plop"],
+    temple: ["drip-1", "drip-2", "drip-1"],
+  })
+  readonly property bool crittersOn: critterClock.running
+  Timer {
+    id: critterClock
+    running: bank.musicOn && bank.inPlay
+    interval: 6000
+    onTriggered: {
+      const names = bank.crittersFor[bank.family] ?? []
+      const name = names[Math.floor(Math.random() * names.length)]
+      const voice = critterVoices.find(v => v.name === name)
+      if (voice) {
+        // near or far
+        voice.level = 0.45 + Math.random() * 0.55
+        voice.play()
+      }
+      interval = 4000 + Math.random() * 9000
+    }
+  }
+  readonly property var critterVoices: [bird1, bird2, bird3, frog, plop, drip1, drip2]
+  component Critter: SoundEffect {
+    property string name
+    property real level: 1
+    source: "sounds/critter-" + name + ".wav"
+    volume: bank.music * 0.9 * level
+  }
+  Critter { id: bird1; name: "bird-1" }
+  Critter { id: bird2; name: "bird-2" }
+  Critter { id: bird3; name: "bird-3" }
+  Critter { id: frog; name: "frog" }
+  Critter { id: plop; name: "plop" }
+  Critter { id: drip1; name: "drip-1" }
+  Critter { id: drip2; name: "drip-2" }
 }

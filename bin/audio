@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Regenerates every sound in qml/Hueometry/sounds (needs python3, numpy and
-# ffmpeg). Commit the result; tools/check/audio.py checks it.
+# ffmpeg), or only the kinds named: effects, critters, ambience, music.
+# Commit the result; tools/check/audio.py checks it.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-python3 "$ROOT/tools/audio/synth.py"
+python3 "$ROOT/tools/audio/synth.py" "$@"

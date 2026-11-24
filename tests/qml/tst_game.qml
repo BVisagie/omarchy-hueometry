@@ -25,7 +25,8 @@ Item {
     function playingPlayers() {
       const loader = game.sound.children.find(c => c.status !== undefined && c.item !== undefined)
       if (!loader || !loader.item) return 0
-      return loader.item.data.filter(d => d.playbackState === 1).length   // MediaPlayer.PlayingState
+      // MediaPlayer.PlayingState, and the critters' clock counts as playing
+      return loader.item.data.filter(d => d.playbackState === 1).length + (loader.item.crittersOn ? 1 : 0)
     }
     function init() { verify(game.settings.muted, "the game is muted"); compare(playingPlayers(), 0, "no music plays") }
     function cleanup() { verify(game.settings.muted, "the game is still muted"); compare(playingPlayers(), 0, "no music plays") }

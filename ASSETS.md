@@ -26,13 +26,22 @@ with fixed random seeds: no samples or recordings.
 | `qml/Hueometry/sounds/ambience-forest.ogg` | ambience loop |
 | `qml/Hueometry/sounds/ambience-river.ogg` | ambience loop |
 | `qml/Hueometry/sounds/ambience-temple.ogg` | ambience loop |
+| `qml/Hueometry/sounds/critter-bird-1.wav` | critter |
+| `qml/Hueometry/sounds/critter-bird-2.wav` | critter |
+| `qml/Hueometry/sounds/critter-bird-3.wav` | critter |
+| `qml/Hueometry/sounds/critter-drip-1.wav` | critter |
+| `qml/Hueometry/sounds/critter-drip-2.wav` | critter |
+| `qml/Hueometry/sounds/critter-frog.wav` | critter |
+| `qml/Hueometry/sounds/critter-plop.wav` | critter |
 | `qml/Hueometry/sounds/drop.wav` | effect |
 | `qml/Hueometry/sounds/hint.wav` | effect |
 | `qml/Hueometry/sounds/lift-1.wav` | effect |
 | `qml/Hueometry/sounds/lift-2.wav` | effect |
 | `qml/Hueometry/sounds/lift-3.wav` | effect |
 | `qml/Hueometry/sounds/music-menu.ogg` | music loop |
-| `qml/Hueometry/sounds/music-play.ogg` | music loop |
+| `qml/Hueometry/sounds/music-forest.ogg` | music loop |
+| `qml/Hueometry/sounds/music-river.ogg` | music loop |
+| `qml/Hueometry/sounds/music-temple.ogg` | music loop |
 | `qml/Hueometry/sounds/place-0.wav` | effect |
 | `qml/Hueometry/sounds/place-1.wav` | effect |
 | `qml/Hueometry/sounds/place-2.wav` | effect |

@@ -16,12 +16,15 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/audio"))
 import loudness  # noqa: E402
-from synth import EFFECT_LUFS, LOOP_LUFS, TRUE_PEAK_MAX  # noqa: E402
+from synth import CRITTER_LUFS, CRITTERS, EFFECT_LUFS, LOOP_LUFS, TRUE_PEAK_MAX  # noqa: E402
 SOUNDS = ROOT / "qml/Hueometry/sounds"
 EFFECTS = {**{f"lift-{i}": (0.2, 1.5) for i in (1, 2, 3)}, **{f"place-{i}": (0.4, 2.5) for i in range(6)},
            "drop": (0.2, 1.5), "refuse": (0.2, 1.5), "undo": (0.2, 1.5), "restart": (0.4, 2.5),
            "hint": (0.6, 3.0), "select": (0.1, 1.0), "solved": (2.0, 7.0)}
-LOOPS = ["ambience-forest", "ambience-river", "ambience-temple", "music-menu", "music-play"]
+# the critters play like effects, at random, at the music's volume
+EFFECTS.update({name: (0.2, 3.5) for name in CRITTERS})
+LEVELS = {**EFFECT_LUFS, **{name: CRITTER_LUFS for name in CRITTERS}}
+LOOPS = list(LOOP_LUFS)
 
 
 def channels(p):
@@ -41,7 +44,7 @@ def channels(p):
 
 
 def mix(bad):
-    for name, target in EFFECT_LUFS.items():
+    for name, target in LEVELS.items():
         p = SOUNDS / f"{name}.wav"
         if not p.exists():
             continue
@@ -97,7 +100,7 @@ def main():
     for b in bad:
         print(b, file=sys.stderr)
     if not bad:
-        print(f"sounds: {len(EFFECTS)} effects and {len(LOOPS)} loops present, credited and at their levels")
+        print(f"sounds: {len(EFFECTS)} effects and critters and {len(LOOPS)} loops present, credited and at their levels")
     return 1 if bad else 0
 
 

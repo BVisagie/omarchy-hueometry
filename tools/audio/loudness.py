@@ -59,10 +59,12 @@ def kweight(x, rate=44100):
 
 
 def _channels(x):
-    """One array per channel: a mono array, or a list of channel arrays."""
+    """One array per channel: a mono array, a list of channel arrays, or a
+    (channels, samples) array."""
     if isinstance(x, (list, tuple)):
         return [np.asarray(c, dtype=np.float64) for c in x]
-    return [np.asarray(x, dtype=np.float64)]
+    x = np.asarray(x, dtype=np.float64)
+    return list(x) if x.ndim == 2 else [x]
 
 
 def _block_loudness(chans, rate, block, hop):
