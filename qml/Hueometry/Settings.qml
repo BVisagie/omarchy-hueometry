@@ -195,6 +195,8 @@ Item {
                 Board {
                   anchors.fill: parent
                   anchors.margins: Theme.em * 0.3
+                  // room for the label underneath
+                  anchors.bottomMargin: Theme.em * 1.3
                   enabled: false
                   pattern: choice.modelData
                   view: ({ columns: [[0, 1, 2], [1, 2, 0], [2, 0, 1], []], cap: 3, selected: -1, targets: [], solved: false })
@@ -202,6 +204,7 @@ Item {
                 Text {
                   anchors.bottom: parent.bottom
                   anchors.horizontalCenter: parent.horizontalCenter
+                  anchors.bottomMargin: Theme.em * 0.15
                   text: choice.modelData === "line" ? qsTr("Line") : qsTr("Circle")
                   color: Theme.ink
                   font.family: Theme.font

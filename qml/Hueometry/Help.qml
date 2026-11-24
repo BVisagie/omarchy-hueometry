@@ -21,7 +21,7 @@ Item {
     root.quitsAtOnce ? [qsTr("Q"), qsTr("close the game")] : [qsTr("Q, then Q"), qsTr("quit")],
   ]
 
-  Rectangle { anchors.fill: parent; color: "#80000000" }
+  Rectangle { anchors.fill: parent; color: "#B0000000" }
   MouseArea { anchors.fill: parent; onClicked: root.closed() }
 
   Card {

@@ -25,7 +25,8 @@ QtObject {
   readonly property color moss: "#6E9A3A"
   readonly property color gold: "#F2C14E"
   readonly property color glow: "#FFE7A0"
-  readonly property color card: "#D9142319"
+  // nearly opaque, so the screen behind never shows through a card's text
+  readonly property color card: "#F2142319"
   readonly property color cardEdge: "#5A7A4A"
   // Nunito (SIL Open Font License, LICENSE-OFL), bundled so the game looks
   // the same on every machine; the three styles register as one family, so
