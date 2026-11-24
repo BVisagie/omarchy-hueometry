@@ -81,8 +81,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tar -C dist -czf "hueometry-plugin-${GITHUB_REF_NAME}.tar.gz" plugin
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md
-          gh release upload "$GITHUB_REF_NAME" package/hueometry-*.pkg.tar.zst "hueometry-plugin-${GITHUB_REF_NAME}.tar.gz" --clobber
+          files=(package/hueometry-*.pkg.tar.zst "hueometry-plugin-${GITHUB_REF_NAME}.tar.gz")
+          # a draft first, published only once both files are on it, so the
+          # latest release never lacks its package (a rerun resumes a draft)
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "${files[@]}" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "${files[@]}" --draft --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md
+          fi
+          gh release edit "$GITHUB_REF_NAME" --draft=false
 
   publish-plugin:
     needs: package
