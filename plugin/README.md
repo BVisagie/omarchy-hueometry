@@ -5,8 +5,9 @@ orbs so every pillar holds one colour, using the empty pillar as space, in as
 few moves as you can. Its rules engine is written in Bend 2 and its gameplay
 laws are machine-checked proofs.
 
-This folder is generated from https://github.com/BVisagie/omarchy-hueometry
-by its release workflow. Report problems and find the source there.
+This repository is generated from
+https://github.com/BVisagie/omarchy-hueometry by its release workflow, at each
+release. Report problems and find the source there.
 
 ## Install
 

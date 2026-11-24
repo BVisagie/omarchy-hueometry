@@ -1,31 +1,9 @@
-# Hueometry build plan: one PR (addendum to PLAN.md and TECH.md)
+# Hueometry 0.1: how it was built
 
-User decisions: final art and audio deferred. Build the whole game now with
-our own means: the best QML visuals and self-made audio possible. One big PR
-with as many commits as needed. Review limits reset with each reviewed
-commit (range).
-
-## Facts
-- Repo BVisagie/omarchy-hueometry is PRIVATE and EMPTY (no default branch).
-  Local main has no commits; untracked: AGENTS.md, CLAUDE.md, .agents/,
-  .claude/ (shopfloor recipe files, not made by me).
-- Available, no sudo needed: Qt 6.12 (qml, qmllint, qmlformat,
-  qmltestrunner, svgtoqml), qmake6, clang, node 26, python3 + numpy 2.5.4,
-  ffmpeg with libopus/libvorbis/flac. Not available: docker, sox, elan/Lean,
-  bend. Bend v2.0.40 ships linux-x64 tarballs as GitHub release assets.
-- Review skill (repo): shopfloor-review, reviewers GPT-6.2 Astra (codex,
-  reasoningEffort ultra) then Fable 5.2 (effort high), max 12 rounds per
-  review. Advisor cap: 5 per task, 2 used in planning.
-
-## Setup before the branch
-- S1 Bootstrap main: commit README.md stub + LICENSE (MIT) on main, push to
-  origin. Prose-only, so exempt from review under the working agreement.
-  Gives the PR a base.
-- S2 User-level tools (no sudo): Bend 2.0.40 tarball verified against the
-  GitHub asset digest into ~/.local/share/bend, linked as ~/.local/bin/bend;
-  elan + Lean 4.34.0 in ~/.elan (needed by --verdict); npm dev deps inside
-  the repo (node_modules ignored).
-- Branch: feat/hueometry-v0.1 from origin/main.
+These notes record how the first version was built: the visual and audio
+approach, the order of the work, and how it was tested. Final, commissioned
+art and audio were deferred; everything in 0.1 is drawn in Qt Quick and its
+sounds are synthesised (see ASSETS.md).
 
 ## Visual approach (our own means)
 - Everything drawn in QML: QtQuick.Shapes (paths, linear/radial/conical
@@ -66,9 +44,8 @@ commit (range).
   pitch: use the variants instead).
 - ASSETS.md credits every file as our own work, CC BY-SA 4.0.
 
-## Commits and review checkpoints
-Each checkpoint runs shopfloor-review on the commits since the previous
-checkpoint, with a fresh 12-round limit. A final review reads the whole PR.
+## Order of work
+The work landed in checkpoints, each reviewed before the next began.
 
 A Foundation
  1 Add agent instruction files as they are (AGENTS.md, CLAUDE.md, .agents,
@@ -124,10 +101,9 @@ J Packaging and CI (M9)
    QML tests, makepkg, plugin validate, ASSETS check.
 29 README (both installs, removal, keys, overlay keybinding),
    ARCHITECTURE.md, final FEASIBILITY.md.
-Final: whole-PR review, open PR (never merge).
 
 ## Testing on this machine
-- All CI checks run locally before each checkpoint review.
+- All CI checks run locally before each checkpoint.
 - Standalone: build and run from build/; makepkg builds the package; the
   actual `pacman -U` install is left to the user (needs sudo).
 - Plugin: validate + qmllint; then a live test in the real shell under a dev
@@ -135,6 +111,6 @@ Final: whole-PR review, open PR (never merge).
   disable, remove.
 - Branch pushed to origin at checkpoints so GitHub CI runs.
 
-## Not in this PR
-Commissioned art/audio; creating the plugin repo and marketplace
-submission; AUR; playtests with children; Clockwork theme; extra layouts.
+## Not in 0.1
+Commissioned art and audio; an AUR package; playtests with children; a
+Clockwork theme; more board layouts.

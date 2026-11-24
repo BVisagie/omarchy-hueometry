@@ -244,11 +244,15 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -Theme.em * 0.6
         spacing: Theme.em * 0.1
-        // the name shortens if it must; the place ("3 of 8") always shows
+        // the area's name and its place ("· 3 of 8"): the name keeps at least half
+        // the row, and either part shortens if it must
         Row {
           width: parent.width
           Text {
-            width: Math.min(implicitWidth, parent.width - placeText.implicitWidth)
+            id: nameText
+            // up to half the row, so a long place ("· Temple Keeper")
+            // cannot squeeze the name to a letter
+            width: Math.min(implicitWidth, Math.max(parent.width * 0.5, parent.width - placeText.implicitWidth))
             elide: Text.ElideRight
             text: play.ref ? play.game.nameOf(play.ref) : ""
             color: Theme.ink
@@ -260,6 +264,8 @@ Item {
           }
           Text {
             id: placeText
+            width: Math.min(implicitWidth, parent.width - nameText.width)
+            elide: Text.ElideRight
             text: play.ref ? " · " + play.game.placeOf(play.ref) : ""
             color: Theme.ink
             font.family: Theme.font

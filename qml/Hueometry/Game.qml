@@ -135,7 +135,8 @@ Item {
     return { beginner: 1, easy: 2, medium: 3, hard: 4, expert: 6 }[ref.difficulty] || 1
   }
 
-  // the title in two parts, so a long name can shorten without losing its place
+  // the play screen's title, in two parts, so a long name can shorten
+  // without losing its place
   function nameOf(ref) {
     if (ref.kind === "free") return qsTr("Free play")
     return areas[areaIndex(ref)].name
@@ -146,11 +147,6 @@ Item {
     return freeNames[ref.difficulty] || ""
   }
 
-  function titleOf(ref) {
-    if (ref.kind === "tutorial") return qsTr("%1 · %2 of 3").arg(areas[0].name).arg(ref.index + 1)
-    if (ref.kind === "level") return qsTr("%1 · %2 of 8").arg(areas[areaIndex(ref)].name).arg(ref.index + 1)
-    return qsTr("Free play · %1").arg(freeNames[ref.difficulty] || "")
-  }
 
   function nextRef(ref) {
     if (!ref) return null

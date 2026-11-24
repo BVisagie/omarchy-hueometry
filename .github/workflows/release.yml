@@ -1,22 +1,28 @@
 name: Release
 
-# On a version tag (v0.1.0): build the Arch package and attach it to the
-# GitHub release, and assemble the shell plugin. Publishing the plugin to its
-# own repository (BVisagie/omarchy-hueometry-plugin) stays off until the
-# owner creates that repository, adds a deploy key as the
-# PLUGIN_DEPLOY_KEY secret, and sets the PLUGIN_PUBLISH variable to true.
+# On a version tag (v0.1.0): build the Arch package and the shell plugin,
+# attach both to the GitHub release, and publish the plugin to the `main`
+# branch of its own repository (BVisagie/omarchy-hueometry-plugin), which
+# the marketplace lists. Publishing needs the PLUGIN_DEPLOY_KEY secret (a
+# write deploy key on the plugin repository) and the PLUGIN_PUBLISH variable
+# set to true.
+#
+# Run by hand (workflow_dispatch) it is a dry run: it builds both and keeps
+# them as files on the run, makes no release, and publishes the plugin to the
+# plugin repository's `dry-run` branch instead of `main`.
 #
 # GitHub's runners have no Omarchy shell, so `bin/plugin --check` (omarchy
 # plugin validate, the lint against the shell's own modules, and the overlay
 # under Quickshell) cannot run here. Run `bin/check` on an Omarchy machine at
-# the tagged commit before setting PLUGIN_PUBLISH.
+# the commit to be tagged first (docs/releasing.md).
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   package:
@@ -25,9 +31,10 @@ jobs:
     steps:
       - name: Install system packages
         run: |
-          pacman -Syu --noconfirm --needed git base-devel qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland github-cli
+          pacman -Syu --noconfirm --needed git base-devel qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland
       - uses: actions/checkout@v7
       - name: Check the tag matches every version
+        if: github.event_name == 'push'
         run: |
           tools/check/version.sh "$GITHUB_REF_NAME"
           # the build shows no commit only when HEAD carries the release tag
@@ -42,25 +49,60 @@ jobs:
           chown -R builder "$GITHUB_WORKSPACE"
           su builder -c "cd '$GITHUB_WORKSPACE/pkgbuild' && makepkg -f --noconfirm"
       - name: Assemble the shell plugin
-        run: |
-          su builder -c "cd '$GITHUB_WORKSPACE' && bin/plugin"
-          tar -C dist -czf hueometry-plugin-${GITHUB_REF_NAME}.tar.gz plugin
-      - name: Attach both to the release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md
-          gh release upload "$GITHUB_REF_NAME" pkgbuild/hueometry-*.pkg.tar.zst hueometry-plugin-*.tar.gz --clobber
+        run: su builder -c "cd '$GITHUB_WORKSPACE' && bin/plugin"
       - uses: actions/upload-artifact@v7
         with:
           name: plugin
           path: dist/plugin
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package
+          path: pkgbuild/hueometry-*.pkg.tar.zst
+
+  # only a tag makes a release, and only this job may write to the repository
+  release:
+    needs: package
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: plugin
+          path: dist/plugin
+      - uses: actions/download-artifact@v8
+        with:
+          name: package
+          path: package
+      - name: Attach both to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -C dist -czf "hueometry-plugin-${GITHUB_REF_NAME}.tar.gz" plugin
+          files=(package/hueometry-*.pkg.tar.zst "hueometry-plugin-${GITHUB_REF_NAME}.tar.gz")
+          # a draft first, published only once both files are on it, so the
+          # latest release never lacks its package; a rerun finishes a draft
+          # and never touches a release that is already published
+          # every release (drafts too) for this tag; a failed lookup fails the
+          # job (bash -e), so an API error can never pass for "none yet"
+          draft=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\") | .draft")
+          case "$draft" in
+            "") gh release create "$GITHUB_REF_NAME" "${files[@]}" --draft --title "Hueometry $GITHUB_REF_NAME" --notes-file CHANGELOG.md ;;
+            true) gh release upload "$GITHUB_REF_NAME" "${files[@]}" --clobber ;;
+            false) echo "release $GITHUB_REF_NAME is already published; leaving it as it is"; exit 0 ;;
+            *) echo "more than one release for $GITHUB_REF_NAME; fix that by hand first" >&2; exit 1 ;;
+          esac
+          gh release edit "$GITHUB_REF_NAME" --draft=false
 
   publish-plugin:
     needs: package
     if: vars.PLUGIN_PUBLISH == 'true'
     runs-on: ubuntu-latest
+    # pushes with its own deploy key; needs nothing from GITHUB_TOKEN
+    permissions: {}
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -69,6 +111,9 @@ jobs:
       - name: Commit the plugin to its own repository
         env:
           DEPLOY_KEY: ${{ secrets.PLUGIN_DEPLOY_KEY }}
+          # a release goes to main (what the marketplace and `omarchy plugin
+          # add` clone); a dry run to its own branch
+          BRANCH: ${{ github.event_name == 'push' && 'main' || 'dry-run' }}
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
@@ -77,15 +122,32 @@ jobs:
           # fingerprints"), pinned rather than trusted on first use
           echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > ~/.ssh/known_hosts
           export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
-          git clone git@github.com:BVisagie/omarchy-hueometry-plugin.git target
+          # the plugin repository must already have `main` as its default
+          # branch (what `omarchy plugin add` and the marketplace clone);
+          # never let a first push create it, or make dry-run the default
+          # (two steps, so a failed ls-remote, such as a wrong deploy key,
+          # stops here with its own error)
+          remote=$(git ls-remote --symref git@github.com:BVisagie/omarchy-hueometry-plugin.git HEAD)
+          head=$(sed -n 's|^ref: refs/heads/\([^[:space:]]*\).*|\1|p' <<<"$remote")
+          if [[ "$head" != main ]]; then
+            echo "BVisagie/omarchy-hueometry-plugin must have main as its default branch (it has '${head:-nothing}')" >&2
+            exit 1
+          fi
+          git clone --branch main git@github.com:BVisagie/omarchy-hueometry-plugin.git target
           find target -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -r plugin/. target/
           cd target
           git config user.name "Hueometry release"
           git config user.email "noreply@github.com"
           git add -A
-          # nothing to publish when the plugin did not change; any other
-          # failure stops the job
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Hueometry ${GITHUB_REF_NAME}"
-          git push origin HEAD
+          if [[ "$BRANCH" == main ]]; then
+            # nothing to publish when the plugin did not change; any other
+            # failure stops the job
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "Hueometry ${GITHUB_REF_NAME}"
+            git push origin "HEAD:refs/heads/main"
+          else
+            # a dry run always pushes, so its branch shows this run's plugin
+            git diff --cached --quiet || git commit -m "Hueometry ${GITHUB_SHA::7} (dry run)"
+            git push --force origin "HEAD:refs/heads/$BRANCH"
+          fi
