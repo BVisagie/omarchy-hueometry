@@ -1,8 +1,8 @@
 import QtQuick
 
 // Holds a screen's content centred when it fits, and lets it scroll when the
-// interface is large on a small screen; show(item) keeps the focused item in
-// view for keyboard players.
+// interface is large on a small screen, with a cue that there is more;
+// show(item) keeps the focused item in view for keyboard players.
 Flickable {
   id: f
   default property alias content: inner.data
@@ -16,6 +16,14 @@ Flickable {
     width: f.width
     height: childrenRect.height
     y: Math.max(0, (f.height - childrenRect.height) / 2)
+  }
+
+  // there is more below: say so (it rides with the view, at its foot)
+  MoreCue {
+    anchors.horizontalCenter: parent.horizontalCenter
+    y: f.contentY + f.height - height - Theme.em * 0.2
+    z: 1
+    visible: f.contentHeight > f.height + 1 && !f.atYEnd
   }
 
   function show(item) {

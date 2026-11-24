@@ -82,10 +82,22 @@ Item {
     id: card
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    anchors.topMargin: Theme.em * 6
+    // just under the title, so every row fits 34em, the height of any wide
+    // screen at 100% (docs/decisions.md)
+    anchors.topMargin: Theme.em * 4.6
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 36)
-    // scrolls when the interface is made large on a small screen
-    height: Math.min(list.implicitHeight + Theme.em * 2.4, root.height - Theme.em * 7)
+    // scrolls when the interface is made large on a small screen, or when
+    // the sound note is shown
+    height: Math.min(list.implicitHeight + Theme.em * 2.4, root.height - Theme.em * 5.6)
+
+    // there is more below: say so
+    MoreCue {
+      z: 1
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: Theme.em * 0.3
+      visible: scroller.contentHeight > scroller.height + 1 && !scroller.atYEnd
+    }
 
     Flickable {
       id: scroller
@@ -122,7 +134,7 @@ Item {
           required property int index
           readonly property var r: root.rows[index]
           width: list.width
-          height: r.kind === "layout" ? Theme.em * 6.5 : Theme.em * 2.9
+          height: r.kind === "layout" ? Theme.em * 6.5 : Theme.em * 2.6
           radius: Theme.em * 0.6
           color: root.cursor === index ? Qt.alpha(Theme.gold, 0.16) : "transparent"
           border.color: root.cursor === index ? Theme.glow : "transparent"
