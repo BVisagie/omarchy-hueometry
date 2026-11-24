@@ -33,8 +33,13 @@ export function progressText(diskRaw, p) {
   }
   const same = p.current && disk.current && typeof disk.current === "object" && disk.current.ref
     && disk.current.pack === p.current.pack && sameRef(disk.current.ref, p.current.ref);
-  const current = same ? Object.assign({}, disk.current, p.current) : p.current;
+  const current = same ? sameCurrent(disk.current, p.current) : p.current;
   return JSON.stringify(Object.assign({}, disk, p, { done, current, version: VERSION }));
+}
+
+// the same puzzle saved again: the new fields over the old, in its ref too
+function sameCurrent(old, now) {
+  return Object.assign({}, old, now, { ref: Object.assign({}, old.ref, now.ref) });
 }
 
 function sameRef(a, b) {
@@ -152,8 +157,9 @@ export function nextAt(p, now) {
 // The unfinished puzzle changed (at a time from nextAt).
 export function setCurrent(p, current, at) {
   // the same puzzle keeps any fields a newer Hueometry stored with it
-  const base = current && p.current && p.current.ref && sameRef(p.current.ref, current.ref) ? p.current : {};
-  return Object.assign({}, p, { current: current ? Object.assign({}, base, { pack: PACK }, current) : null, currentAt: at });
+  const same = current && p.current && p.current.ref && sameRef(p.current.ref, current.ref);
+  const next = current ? Object.assign({ pack: PACK }, current) : null;
+  return Object.assign({}, p, { current: same ? sameCurrent(p.current, next) : next, currentAt: at });
 }
 
 // Records a solved puzzle. Answers { progress, record } where record says
