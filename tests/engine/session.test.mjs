@@ -160,6 +160,10 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   assert.equal(moved.current.ref.seed, 7, "inside the ref too");
   assert.equal(JSON.parse(St.progressText(saved, St.setCurrent(St.progress(""), { ref, moves: [], assisted: false }, 3))).current.ref.seed, 7);
   assert.equal(St.solved(St.progress(saved), { kind: "level", area: "clearing", index: 0 }, 5, false, 9).best.stars, 3);
+  // a field that does not name a tutorial puzzle does not make it another one
+  const tut = { kind: "tutorial", index: 1 };
+  const withExtra = St.setCurrent(St.progress(""), { ref: Object.assign({ area: "x", seed: 2 }, tut), moves: [], assisted: false }, 1);
+  assert.equal(St.setCurrent(withExtra, { ref: tut, moves: [[0, 2]], assisted: false }, 2).current.ref.seed, 2);
   // solving one puzzle leaves another unfinished puzzle alone
   const other = { kind: "level", area: "river", index: 0 };
   const left = St.setCurrent(St.progress(""), { ref: other, moves: [[0, 1]], assisted: false }, 40);

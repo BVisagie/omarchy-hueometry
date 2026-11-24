@@ -42,8 +42,9 @@ function sameCurrent(old, now) {
   return Object.assign({}, old, now, { ref: Object.assign({}, old.ref, now.ref) });
 }
 
+// the same puzzle: only the fields that name a puzzle of its kind count
 function sameRef(a, b) {
-  return a.kind === b.kind && a.index === b.index && a.area === b.area && a.difficulty === b.difficulty;
+  return a.kind === b.kind && key(a) === key(b);
 }
 
 export const SETTINGS = {
