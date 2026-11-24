@@ -146,6 +146,21 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   assert.equal(JSON.parse(St.progressText("", St.progress(""))).version, St.VERSION);
   assert.equal(St.newer(JSON.stringify({ version: St.VERSION + 1 })), true);
   assert.equal(St.newer("{}"), false);
+  // fields this version does not know survive inside records and the
+  // unfinished puzzle when the same puzzle is saved again
+  const saved = JSON.stringify({ done: { [k("clearing/0")]: { best: 9, stars: 3 } }, current: { ref, moves: [], pack: St.PACK, note: "x" } });
+  const mine = St.merge(St.progress(saved), St.setCurrent(St.progress(""), { ref, moves: [[0, 1]], assisted: false }, 5));
+  const out = JSON.parse(St.progressText(saved, mine));
+  assert.equal(out.done[k("clearing/0")].stars, 3);
+  assert.equal(out.current.note, "x");
+  assert.deepEqual(out.current.moves, [[0, 1]]);
+  // solving one puzzle leaves another unfinished puzzle alone
+  const other = { kind: "level", area: "river", index: 0 };
+  const left = St.setCurrent(St.progress(""), { ref: other, moves: [[0, 1]], assisted: false }, 40);
+  const s = St.solved(left, ref, 9, false, 50).progress;
+  assert.deepEqual(s.current.ref, other);
+  assert.equal(s.currentAt, 40);
+  assert.equal(St.solved(s, other, 9, false, 60).progress.current, null);
   // records name the pack by its contents
   assert.match(St.PACK, /^[0-9a-f]{12}$/);
   assert.equal(S.known({ kind: "free", difficulty: "constructor", index: 0 }), false);

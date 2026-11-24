@@ -87,22 +87,23 @@ Item {
 
   // what is on disk with this copy's unsaved changes on top: the other host
   // may have changed something else
-  function settingsWith(pending) {
-    let next = host ? host.readText("settings.json") : JSON.stringify(settings)
+  function settingsWith(pending, disk) {
+    let next = disk
     for (const k of Object.keys(pending)) next = JSON.stringify(Store.withSetting(next, k, pending[k]))
     return Store.settings(next)
   }
 
   function refreshSettings() {
-    if (host) settings = settingsWith(unsavedSettings)
+    if (host) settings = settingsWith(unsavedSettings, host.readText("settings.json"))
   }
 
   function setSetting(key, value) {
     const pending = Object.assign({}, unsavedSettings)
     pending[key] = value
-    settings = settingsWith(pending)
+    // one read of the disk for the merge, the version check and the write
+    const disk = host ? host.readText("settings.json") : JSON.stringify(settings)
+    settings = settingsWith(pending, disk)
     if (!host) return
-    const disk = host.readText("settings.json")
     if (Store.newer(disk)) { newerSaves = true; unsavedSettings = pending; return }
     unsavedSettings = host.writeText("settings.json", Store.settingsText(disk, settings)) ? ({}) : pending
   }

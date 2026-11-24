@@ -23,7 +23,22 @@ export function settingsText(diskRaw, s) {
 }
 
 export function progressText(diskRaw, p) {
-  return JSON.stringify(Object.assign({}, parse(diskRaw), p, { version: VERSION }));
+  const disk = parse(diskRaw);
+  // inside records and the unfinished puzzle too
+  const diskDone = disk.done && typeof disk.done === "object" ? disk.done : {};
+  const done = {};
+  for (const [k, v] of Object.entries(p.done)) {
+    const old = diskDone[k];
+    done[k] = old && typeof old === "object" ? Object.assign({}, old, v) : v;
+  }
+  const same = p.current && disk.current && typeof disk.current === "object" && disk.current.ref
+    && disk.current.pack === p.current.pack && sameRef(disk.current.ref, p.current.ref);
+  const current = same ? Object.assign({}, disk.current, p.current) : p.current;
+  return JSON.stringify(Object.assign({}, disk, p, { done, current, version: VERSION }));
+}
+
+function sameRef(a, b) {
+  return a.kind === b.kind && a.index === b.index && a.area === b.area && a.difficulty === b.difficulty;
 }
 
 export const SETTINGS = {
@@ -149,8 +164,12 @@ export function solved(p, ref, moveCount, assisted, at) {
   if (before) record = kept === now && (now.best < before.best || (before.assisted && !now.assisted)) ? "better" : now.best === before.best ? "same" : "worse";
   const done = Object.assign({}, p.done);
   done[k] = kept;
+  // the unfinished puzzle is over only if it is this one: another puzzle
+  // left unfinished (in either host) stays, with its own time
+  const finished = !p.current || (p.current.ref && sameRef(p.current.ref, ref));
+  const after = finished ? { current: null, currentAt: at || 0 } : {};
   return {
-    progress: Object.assign({}, p, { tutorial: tutorialDone(done), done, current: null, currentAt: at || 0 }),
+    progress: Object.assign({}, p, { tutorial: tutorialDone(done), done }, after),
     record, previous: before || null, assisted: now.assisted, best: kept,
   };
 }
