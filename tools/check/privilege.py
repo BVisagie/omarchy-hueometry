@@ -32,11 +32,11 @@ def privileged(text):
 def main(paths):
     hits = 0
     for path in paths:
-        try:
-            with open(path, encoding="utf-8") as f:
-                lines = f.read().splitlines()
-        except UnicodeDecodeError:
-            continue  # not text
+        with open(path, "rb") as f:
+            data = f.read()
+        if b"\0" in data:
+            continue  # binary (fonts, sounds, images)
+        lines = data.decode("utf-8", errors="replace").splitlines()
         for n, line in enumerate(lines, 1):
             if privileged(line):
                 print(f"{path}:{n}:{line.strip()}")

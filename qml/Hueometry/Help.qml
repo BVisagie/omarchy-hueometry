@@ -9,6 +9,9 @@ Item {
 
   function handleKey(event) { closed(); return true }
 
+  // each time it opens, it starts at the top
+  onVisibleChanged: if (visible) rows.contentY = 0
+
   // the arrow and page keys scroll the rows when the card is too short for
   // them; true when they did
   function scroll(event) {
@@ -38,7 +41,7 @@ Item {
     anchors.centerIn: parent
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 32)
     // never taller than the window; the rows scroll inside when they must
-    height: Math.min(grid.implicitHeight + title.implicitHeight + Theme.em * 4, parent.height - Theme.em * 2)
+    height: Math.min(grid.implicitHeight + title.implicitHeight + Theme.em * 4.8, parent.height - Theme.em * 2)
     Text {
       id: title
       anchors.top: parent.top
@@ -55,7 +58,8 @@ Item {
       anchors.top: title.bottom
       anchors.topMargin: Theme.em
       anchors.bottom: parent.bottom
-      anchors.bottomMargin: Theme.em
+      // a strip below the rows for the "more" cue
+      anchors.bottomMargin: Theme.em * 1.8
       anchors.left: parent.left
       anchors.right: parent.right
       clip: true
@@ -80,6 +84,17 @@ Item {
         }
       }
     }
+    }
+    // there is more below: say so
+    Text {
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: Theme.em * 0.4
+      visible: rows.interactive && !rows.atYEnd
+      text: qsTr("▾ more")
+      color: Theme.gold
+      font.family: Theme.font
+      font.pixelSize: Theme.em * 0.85
     }
   }
 }

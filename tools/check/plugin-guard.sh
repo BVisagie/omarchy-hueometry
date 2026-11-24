@@ -7,6 +7,8 @@
 # mistake. Patterns follow the scanner's and, like it, ignore case.
 # Usage: tools/check/plugin-guard.sh [plugin-folder]
 set -euo pipefail
+# bytes, not UTF-8: one invalid byte must not make a text file "binary"
+export LC_ALL=C
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 dir="${1:-$ROOT/dist/plugin}"
 [[ -d "$dir" ]] || { echo "plugin guard: no plugin at $dir" >&2; exit 2; }

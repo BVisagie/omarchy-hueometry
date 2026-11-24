@@ -23,15 +23,6 @@ EFFECTS = {**{f"lift-{i}": (0.2, 1.5) for i in (1, 2, 3)}, **{f"place-{i}": (0.4
 LOOPS = ["ambience-forest", "ambience-river", "ambience-temple", "music-menu", "music-play"]
 
 
-def samples(p):
-    if p.suffix == ".wav":
-        with wave.open(str(p)) as w:
-            return np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float64) / 32768
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(p), "-f", "f32le", "-ac", "1", "-ar", "44100", "-"],
-                         capture_output=True, check=True).stdout
-    return np.frombuffer(raw, dtype=np.float32).astype(np.float64)
-
-
 def channels(p):
     """Every channel at the file's own rate, and that rate."""
     if p.suffix == ".wav":
@@ -53,7 +44,7 @@ def mix(bad):
         p = SOUNDS / f"{name}.wav"
         if not p.exists():
             continue
-        x = samples(p)
+        x = channels(p)[0][0]
         level = loudness.momentary_max(x)
         if abs(level - target) > 0.5:
             bad.append(f"{p.name}: {level:.1f} LUFS, expected {target:.1f}")
@@ -77,6 +68,9 @@ def mix(bad):
 
 
 def main():
+    if subprocess.run(["which", "ffmpeg"], capture_output=True).returncode != 0:
+        print("sounds: ffmpeg is needed to decode the Ogg loops", file=sys.stderr)
+        return 1
     bad = []
     credits = (ROOT / "ASSETS.md").read_text()
     for name, (lo, hi) in EFFECTS.items():

@@ -323,7 +323,7 @@ Item {
       anchors.top: parent.top
       RoundButton { icon: "undo"; size: play.toolSize; label: play.compact ? "" : (qsTr("Undo")); enabled: !!play.view && play.view.moves > 0; onActivated: play.undo() }
       RoundButton { icon: "redo"; size: play.toolSize; label: play.compact ? "" : (qsTr("Redo")); enabled: !!play.session && S.canRedo(play.session) && !play.won; onActivated: play.redo() }
-      RoundButton { icon: "restart"; size: play.toolSize; label: play.confirmRestart ? qsTr("Press R") : (play.compact ? qsTr("Hold") : qsTr("Hold: restart")); hold: 700; lit: play.confirmRestart; onActivated: play.restart() }
+      RoundButton { icon: "restart"; size: play.toolSize; label: play.confirmRestart ? qsTr("Press R") : qsTr("Hold"); hold: 700; lit: play.confirmRestart; onActivated: play.restart() }
       RoundButton { icon: "hint"; size: play.toolSize; label: play.compact ? "" : (qsTr("Hint")); onActivated: play.askHint() }
       RoundButton { icon: "help"; size: play.toolSize; label: play.compact ? "" : (qsTr("Keys")); onActivated: play.game.showHelp() }
     }
