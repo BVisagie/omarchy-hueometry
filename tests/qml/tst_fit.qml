@@ -179,6 +179,16 @@ Item {
       const below = list.mapToItem(game, 0, list.height)
       mouseWheel(game, game.width / 2, below.y + Theme.em * 0.6, 0, -120)
       verify(list.contentY > 0, "the wheel over Settings' cue strip scrolls its list")
+      // the card never covers the Back button, at any interface size
+      for (const [w, h, scale] of [[1280, 720, 1.25], [1920, 1080, 1.5], [1024, 768, 1.25], [720, 540, 1.5], [1920, 1080, 1]]) {
+        root.width = w; root.height = h
+        game.setSetting("scale", scale)
+        wait(0)
+        const back = found(game.current, c => c.label === "Back" && c.icon === "back", [], [])[0]
+        const card = game.current.children.find(c => c.overflows !== undefined && c.radius !== undefined)
+        apart(back, card, "the Settings card clears Back at " + w + "x" + h + " and " + scale * 100 + "%")
+      }
+      root.width = 1280; root.height = 720
       game.setSetting("scale", 1)
       game.show("menu")
     }

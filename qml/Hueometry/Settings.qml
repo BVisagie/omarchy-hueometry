@@ -83,14 +83,17 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
     // just under the title, so every row fits 34em, the height of any wide
-    // screen at 100% (docs/decisions.md)
-    anchors.topMargin: Theme.em * 4.6
+    // screen at 100% (docs/decisions.md); when the card is so wide (for the
+    // window) that it reaches the Back button's column, below its label
+    readonly property bool besideBack: (root.width - width) / 2 >= Theme.em * 4.6
+    readonly property real cardTop: besideBack ? Theme.em * 4.6 : Theme.em * 6
+    anchors.topMargin: cardTop
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 36)
     // scrolls when the interface is made large on a small screen, or when
     // the sound note is shown
-    height: Math.min(list.implicitHeight + Theme.em * 2.4, root.height - Theme.em * 5.6)
+    height: Math.min(list.implicitHeight + Theme.em * 2.4, root.height - cardTop - Theme.em)
     // the rows do not fit: the list gives up a strip at its foot to the cue
-    readonly property bool overflows: list.implicitHeight + Theme.em * 2.4 > root.height - Theme.em * 5.6
+    readonly property bool overflows: list.implicitHeight + Theme.em * 2.4 > root.height - cardTop - Theme.em
 
     // the wheel anywhere on the card (its padding and the cue strips too)
     // scrolls its list
