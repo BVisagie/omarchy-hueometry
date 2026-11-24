@@ -57,6 +57,16 @@ Item {
     scale: root.visible ? 1 : 0.85
     Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
 
+    // the wheel anywhere on the card (its padding and the cue strips too)
+    // scrolls its words
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.NoButton
+      onWheel: function(wheel) {
+        cardScroll.contentY = Math.max(0, Math.min(cardScroll.contentHeight - cardScroll.height, cardScroll.contentY - wheel.angleDelta.y / 120 * Theme.em * 2))
+      }
+    }
+
     Flickable {
       id: cardScroll
       anchors.fill: parent

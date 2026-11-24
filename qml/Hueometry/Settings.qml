@@ -92,6 +92,16 @@ Item {
     // the rows do not fit: the list gives up a strip at its foot to the cue
     readonly property bool overflows: list.implicitHeight + Theme.em * 2.4 > root.height - Theme.em * 5.6 + 1
 
+    // the wheel anywhere on the card (its padding and the cue strips too)
+    // scrolls its list
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.NoButton
+      onWheel: function(wheel) {
+        scroller.contentY = Math.max(0, Math.min(scroller.contentHeight - scroller.height, scroller.contentY - wheel.angleDelta.y / 120 * Theme.em * 2))
+      }
+    }
+
     // there is more below: say so
     MoreCue {
       anchors.horizontalCenter: parent.horizontalCenter

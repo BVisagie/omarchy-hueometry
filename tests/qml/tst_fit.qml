@@ -29,6 +29,10 @@ Item {
       tryVerify(() => Theme.regular.status === FontLoader.Ready && Theme.bold.status === FontLoader.Ready, 3000)
       game.setSetting("scale", 1)
       compare(game.settings.scale, 1)
+      // no sound player at all, on any machine: Settings then has no note
+      // that Qt Multimedia is missing (tested on its own below)
+      game.sound.bankSource = ""
+      verify(!game.sound.missing)
       // a build's version, as long as the menu ever shows one
       memory.version = "0.2.1 · abc1234"
     }
@@ -167,7 +171,31 @@ Item {
       game.current.cursor = 4
       game.current.cursor = 0
       compare(view.contentY, 0, "the first button brings the title back")
+      // Settings too: the wheel over its cue's strip scrolls its list
+      game.show("settings")
+      wait(0)
+      const list = scrollers(game.current, [], [])[0]
+      verify(list.contentHeight > list.height + 1, "Settings scrolls at 125%")
+      const below = list.mapToItem(game, 0, list.height)
+      mouseWheel(game, game.width / 2, below.y + Theme.em * 0.6, 0, -120)
+      verify(list.contentY > 0, "the wheel over Settings' cue strip scrolls its list")
       game.setSetting("scale", 1)
+      game.show("menu")
+    }
+
+    // with the note that sound needs Qt Multimedia, Settings may scroll, and
+    // then says so
+    function test_the_sound_note_scrolls_settings_with_a_cue() {
+      root.width = 1920; root.height = 1080
+      game.sound.bankSource = "NoSuchBank.qml"
+      tryVerify(() => game.sound.missing, 3000)
+      game.show("settings")
+      wait(0)
+      const view = scrollers(game.current, [], [])[0]
+      verify(view.contentHeight > view.height + 1, "the list scrolls with the note")
+      compare(found(game.current, c => c.objectName === "more", [], []).length, 1, "and shows its cue")
+      game.sound.bankSource = ""
+      tryVerify(() => !game.sound.missing, 3000)
       game.show("menu")
     }
 
