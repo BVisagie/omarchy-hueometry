@@ -47,13 +47,26 @@ function sameCurrent(old, now) {
     for (const n of names) if (n in o) out[n] = o[n];
     return out;
   };
-  const ref = Object.assign({}, now.ref, old.ref, pick(now.ref, ["kind", "index", "area", "difficulty"]));
+  const ref = Object.assign({}, now.ref, old.ref, pick(now.ref, NAMING[now.ref.kind] || []));
   return Object.assign({}, now, old, pick(now, ["moves", "assisted", "pack"]), { ref });
+}
+
+// The fields that name a puzzle, by kind.
+const NAMING = { tutorial: ["kind", "index"], level: ["kind", "area", "index"], free: ["kind", "difficulty", "index"] };
+
+// A puzzle's identity from its ref, or null when the ref is malformed.
+function refId(r) {
+  if (!r || typeof r !== "object" || !Number.isInteger(r.index)) return null;
+  if (r.kind === "tutorial") return `tutorial/${r.index}`;
+  if (r.kind === "level" && typeof r.area === "string") return `level/${r.area}/${r.index}`;
+  if (r.kind === "free" && typeof r.difficulty === "string") return `free/${r.difficulty}/${r.index}`;
+  return null;
 }
 
 // the same puzzle: only the fields that name a puzzle of its kind count
 function sameRef(a, b) {
-  return a.kind === b.kind && key(a) === key(b);
+  const id = refId(a);
+  return id !== null && id === refId(b);
 }
 
 export const SETTINGS = {
@@ -115,7 +128,7 @@ export function progress(raw) {
     }
   }
   // an unfinished puzzle from another pack names a different board: drop it
-  const current = p.current && p.current.ref && Array.isArray(p.current.moves) && p.current.pack === PACK
+  const current = p.current && refId(p.current.ref) !== null && Array.isArray(p.current.moves) && p.current.pack === PACK
     ? Object.assign({}, p.current, { ref: p.current.ref, moves: p.current.moves, assisted: p.current.assisted === true, pack: PACK }) : null;
   // when `current` last changed (set or cleared), so the newest copy wins
   const currentAt = Number.isFinite(p.currentAt) ? p.currentAt : 0;

@@ -176,6 +176,14 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   const tut = { kind: "tutorial", index: 1 };
   const withExtra = St.setCurrent(St.progress(""), { ref: Object.assign({ area: "x", seed: 2 }, tut), moves: [], assisted: false }, 1);
   assert.equal(St.setCurrent(withExtra, { ref: tut, moves: [[0, 2]], assisted: false }, 2).current.ref.seed, 2);
+  // a malformed saved ref is dropped, and never stops a save
+  const bad = JSON.stringify({ current: { ref: { kind: "tutorial", index: { toString: null } }, moves: [], pack: St.PACK } });
+  assert.equal(St.progress(bad).current, null);
+  assert.doesNotThrow(() => St.progressText(bad, St.setCurrent(St.progress(bad), { ref: tut, moves: [], assisted: false }, 3)));
+  // a tutorial's ref keeps the destination's area: it does not name a tutorial
+  const tutDisk = JSON.stringify({ current: { ref: { kind: "tutorial", index: 1, area: "mine" }, moves: [], pack: St.PACK } });
+  const tutThere = St.progress(JSON.stringify({ current: { ref: { kind: "tutorial", index: 1, area: "theirs" }, moves: [[0, 1]], pack: St.PACK }, currentAt: 9 }));
+  assert.equal(JSON.parse(St.progressText(tutDisk, St.merge(St.progress(tutDisk), tutThere))).current.ref.area, "mine");
   // solving one puzzle leaves another unfinished puzzle alone
   const other = { kind: "level", area: "river", index: 0 };
   const left = St.setCurrent(St.progress(""), { ref: other, moves: [[0, 1]], assisted: false }, 40);
