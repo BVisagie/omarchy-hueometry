@@ -7,7 +7,7 @@ pkgrel=1
 pkgdesc='A colour-sorting puzzle for children and families, with a formally verified rules engine'
 arch=('x86_64' 'aarch64')
 url='https://github.com/BVisagie/omarchy-hueometry'
-license=('MIT' 'CC-BY-SA-4.0')
+license=('MIT' 'CC-BY-SA-4.0' 'OFL-1.1')
 depends=('qt6-base' 'qt6-declarative' 'qt6-wayland' 'qt6-multimedia' 'qt6-svg')
 makedepends=('gcc' 'make')
 options=('!debug')
@@ -24,6 +24,7 @@ package() {
   install -Dm755 build/app/hueometry "$pkgdir/usr/bin/hueometry"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 LICENSE-ASSETS "$pkgdir/usr/share/licenses/$pkgname/LICENSE-ASSETS"
+  install -Dm644 LICENSE-OFL "$pkgdir/usr/share/licenses/$pkgname/LICENSE-OFL"
   install -Dm644 ASSETS.md "$pkgdir/usr/share/doc/$pkgname/ASSETS.md"
   install -Dm644 "$startdir/hueometry.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/hueometry.svg"
   install -Dm644 "$startdir/hueometry.desktop" "$pkgdir/usr/share/applications/hueometry.desktop"

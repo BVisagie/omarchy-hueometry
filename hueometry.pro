@@ -22,7 +22,8 @@ game.files = src/Main.qml \
   $$files(qml/Hueometry/qmldir) \
   $$files(qml/Hueometry/*.qml) \
   $$files(qml/Hueometry/js/*.mjs) \
-  $$files(qml/Hueometry/sounds/*)
+  $$files(qml/Hueometry/sounds/*) \
+  $$files(qml/Hueometry/fonts/*)
 game.prefix = /
 RESOURCES += game
 

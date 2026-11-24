@@ -27,5 +27,11 @@ QtObject {
   readonly property color glow: "#FFE7A0"
   readonly property color card: "#D9142319"
   readonly property color cardEdge: "#5A7A4A"
-  readonly property string font: "sans-serif"
+  // Nunito (SIL Open Font License, LICENSE-OFL), bundled so the game looks
+  // the same on every machine; the three styles register as one family, so
+  // font.bold and font.italic pick the right file
+  readonly property FontLoader regular: FontLoader { source: "fonts/Nunito-Regular.ttf" }
+  readonly property FontLoader bold: FontLoader { source: "fonts/Nunito-Bold.ttf" }
+  readonly property FontLoader italic: FontLoader { source: "fonts/Nunito-Italic.ttf" }
+  readonly property string font: regular.status === FontLoader.Ready ? regular.font.family : "sans-serif"
 }

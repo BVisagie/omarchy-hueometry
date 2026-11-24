@@ -157,7 +157,8 @@ All defaults in plan.md section 10 were accepted, except:
   pack never credits a record or replays moves on a different board.
 - A save that cannot be written is said on screen, and the unsaved progress
   stays in memory until a later save succeeds.
-- v0.1 uses the system font (no bundled font) and English source strings
+- v0.1 used the system font; 0.2 bundles Nunito (OFL), subset to Latin, so
+  the game looks the same on every machine. Text is English source strings
   marked for translation, with no translation catalogue yet.
 - The smallest supported window is 720×540: every screen is checked there
   at 150% interface size, and the app window will not shrink below it. The

@@ -1,8 +1,8 @@
 # Assets
 
-Every asset in Hueometry is this project's own work, licensed CC BY-SA 4.0
-(see LICENSE-ASSETS), © 2026 Bernard Visagie and the Hueometry contributors.
-There are no third-party images, sounds or fonts.
+Every image and sound in Hueometry is this project's own work, licensed
+CC BY-SA 4.0 (see LICENSE-ASSETS), © 2026 Bernard Visagie and the Hueometry
+contributors. The one third-party asset is the typeface (below).
 
 ## Pictures
 
@@ -47,4 +47,14 @@ with fixed random seeds: no samples or recordings.
 
 ## Typeface
 
-The game uses the system's sans-serif font; it ships none.
+| File | Source | Licence |
+|---|---|---|
+| `qml/Hueometry/fonts/Nunito-Regular.ttf` | Nunito, © 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito) | SIL Open Font License 1.1 (LICENSE-OFL) |
+| `qml/Hueometry/fonts/Nunito-Bold.ttf` | as above | as above |
+| `qml/Hueometry/fonts/Nunito-Italic.ttf` | as above | as above |
+
+The three files are static instances (weights 400, 700 and italic 400) of
+the variable `Nunito[wght].ttf` and `Nunito-Italic[wght].ttf`, made with
+fontTools' `varLib.instancer` and subset with `pyftsubset` to Latin and the
+punctuation the game shows. Characters Nunito lacks (the arrows) fall back
+to the system font.

@@ -118,5 +118,6 @@ checks).
 
 ## Licences
 
-Code: [MIT](LICENSE). Art and audio: [CC BY-SA 4.0](LICENSE-ASSETS); every
-asset is listed in [ASSETS.md](ASSETS.md).
+Code: [MIT](LICENSE). Art and audio: [CC BY-SA 4.0](LICENSE-ASSETS). The
+Nunito typeface: [SIL Open Font License 1.1](LICENSE-OFL). Every asset is
+listed in [ASSETS.md](ASSETS.md).
