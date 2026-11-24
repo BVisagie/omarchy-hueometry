@@ -182,10 +182,10 @@ All defaults in plan.md section 10 were accepted, except:
 
 ## Version on the menu
 
-- The main menu shows the version in a bottom corner: `v0.1.0` for a build
-  of the release tag, `v0.1.0 · <commit>` for any other build, with `+` when
-  tracked files had uncommitted changes, so a local test build can be told
-  apart. The host provides it as `version` (see ARCHITECTURE.md).
+- The main menu shows the version in a bottom corner: `v0.1.0` for a clean
+  build of the release tag, `v0.1.0 · <commit>` for any other build, with
+  `+` when tracked files had uncommitted changes (a patched build of the
+  release included), so a local test build can be told apart. The host provides it as `version` (see ARCHITECTURE.md).
 - The version stays written where each tool reads it (hueometry.pro, the
   PKGBUILD, the plugin manifest), with no separate VERSION file;
   `tools/check/version.sh` fails on every check run unless they agree.

@@ -34,7 +34,8 @@ jobs:
           # itself; fetch it explicitly, as checkout can leave it out
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
-          git tag --points-at HEAD | grep -Fqx -- "$GITHUB_REF_NAME"
+          git tag --points-at HEAD | grep -Fqx -- "$GITHUB_REF_NAME" \
+            || { echo "the tag $GITHUB_REF_NAME does not point at the commit being built"; exit 1; }
       - name: Build the package (makepkg refuses root)
         run: |
           useradd -m builder

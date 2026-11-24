@@ -57,6 +57,10 @@ reports what happened so the board can animate it; `layout.mjs` places
 pillars on a line or as spokes of a circle and fixes the keyboard order,
 knowing only how many pillars there are.
 
+Saves are JSON in XDG folders, with a format version: a save from a newer
+Hueometry is read but never overwritten. Progress only grows, and each save
+first merges what is on disk, so the app and the plugin can share it.
+
 ### The host
 
 `Game.qml` takes everything outside the game from its `host`, which may
@@ -79,13 +83,9 @@ in `plugin/Overlay.qml`; tests use `tests/qml/MemoryHost.qml`.
 The version is written in `hueometry.pro`, `pkgbuild/PKGBUILD` and
 `plugin/manifest.json`; `tools/check/version.sh` fails unless they agree
 (and, at a release, unless the tag matches). `tools/version/build-id.sh`
-names the build: nothing when the commit carries the release tag, else the
-short commit. qmake writes both into `buildinfo.h`; `bin/plugin` stamps the
+names the build: nothing for a clean build of the commit that carries the
+release tag, else the short commit (with `+` for uncommitted changes). qmake writes both into `buildinfo.h`; `bin/plugin` stamps the
 build into its copy of the overlay.
-
-Saves are JSON in XDG folders, with a format version: a save from a newer
-Hueometry is read but never overwritten. Progress only grows, and each save
-first merges what is on disk, so the app and the plugin can share it.
 
 ## Content
 
@@ -100,7 +100,7 @@ preview.
 `bin/check` runs: shellcheck; the Laws-Change trailer rule; `--verdict`; the
 engine drift check; the 512 KiB file limit; Node tests (unit, property tests
 against an independent model, levels, session, layouts); native-vs-JavaScript
-generation; the qmldir list; the palette and sound checks; Qt Quick tests
-(the engine in Qt's engine, a worker, hints, the level pack, a keyboard
-playthrough); the app build and its Qt tests; the plugin's assembly,
+generation; the version check; the qmldir list; the palette and sound checks;
+Qt Quick tests (the engine in Qt's engine, a worker, hints, the level pack, a
+keyboard playthrough); the app build and its Qt tests; the plugin's assembly,
 `omarchy plugin validate`, and the overlay under Quickshell where installed.
