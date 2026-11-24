@@ -194,3 +194,14 @@ All defaults in plan.md section 10 were accepted, except:
   it changes, and a header could be shadowed by a stale copy left in the
   source folder. The PKGBUILD has no pkgver(): makepkg would rewrite it and
   every build would then count as having uncommitted changes.
+
+## Silent tests
+
+- The tests' stand-in host starts muted, and every game test checks it is
+  still muted before and after it runs, so `bin/check` makes no sound.
+- Silence now stops sound rather than playing it at no volume: effects do
+  not start while their volume is zero, music and ambience pause while
+  silenced or turned to nothing (and resume when turned back up), and the
+  sound bank plays nothing until the game's settings reach it.
+- The build-id check's throwaway repositories ignore the global and system
+  git settings (signing, hooks) as well as git's environment.

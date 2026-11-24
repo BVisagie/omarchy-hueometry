@@ -19,6 +19,17 @@ Item {
     name: "Game"
     when: windowShown
 
+    // every test runs silent (MemoryHost starts muted; tests that replace
+    // the settings keep it)
+    // and the sound bank obeys it: no music or ambience is playing
+    function playingPlayers() {
+      const loader = game.sound.children.find(c => c.status !== undefined && c.item !== undefined)
+      if (!loader || !loader.item) return 0
+      return loader.item.data.filter(d => d.playbackState === 1).length   // MediaPlayer.PlayingState
+    }
+    function init() { verify(game.settings.muted, "the game is muted"); compare(playingPlayers(), 0, "no music plays") }
+    function cleanup() { verify(game.settings.muted, "the game is still muted"); compare(playingPlayers(), 0, "no music plays") }
+
     function keys(list) { for (const k of list) { keyClick(k); wait(0) } }
 
     function test_1_menu_to_tutorial() {
@@ -88,7 +99,7 @@ Item {
       // the first puzzle solved, the game closed from its results card
       const done = {}
       done[Store.key({ kind: "tutorial", index: 0 })] = { best: 3 }
-      const host = hostMaker.createObject(root, { files: { "progress-app.json": JSON.stringify({ done }) } })
+      const host = hostMaker.createObject(root, { files: { "settings.json": JSON.stringify({ muted: true }), "progress-app.json": JSON.stringify({ done }) } })
       const g = gameMaker.createObject(root, { host })
       g.continueOrMap()
       compare(g.screen, "map", "a returning player is not sent back to the first steps")
@@ -233,7 +244,7 @@ Item {
     }
 
     function test_9c_a_newer_save_is_never_overwritten() {
-      const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3 })
+      const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3, muted: true })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })
       game.setSetting("music", 0.9)
       compare(memory.files["settings.json"], newer)
