@@ -160,7 +160,7 @@ Item {
       }
     }
     }
-    // there is more above (it opens on its buttons) or below: say so
+    // there is more above or below (the focused button is kept in view): say so
     MoreCue {
       up: true
       anchors.horizontalCenter: parent.horizontalCenter
