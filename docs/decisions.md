@@ -179,3 +179,17 @@ All defaults in plan.md section 10 were accepted, except:
   independent model.
 - No chime for a finished pillar: it would need a new sound and would land
   on top of the solved fanfare.
+
+## Version on the menu
+
+- The main menu shows the version in a bottom corner: `v0.1.0` for a build
+  of the release tag, `v0.1.0 · <commit>` for any other build, with `+` when
+  tracked files had uncommitted changes, so a local test build can be told
+  apart. The host provides it as `version` (see ARCHITECTURE.md).
+- The version stays written where each tool reads it (hueometry.pro, the
+  PKGBUILD, the plugin manifest), with no separate VERSION file;
+  `tools/check/version.sh` fails on every check run unless they agree.
+- The app takes the build id from a header qmake writes (buildinfo.h), not
+  a compiler define, since the incremental build would not recompile for a
+  changed define. The PKGBUILD has no pkgver(): makepkg would rewrite it and
+  every build would then count as having uncommitted changes.

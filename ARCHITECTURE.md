@@ -57,6 +57,32 @@ reports what happened so the board can animate it; `layout.mjs` places
 pillars on a line or as spokes of a circle and fixes the keyboard order,
 knowing only how many pillars there are.
 
+### The host
+
+`Game.qml` takes everything outside the game from its `host`, which may
+arrive after the game has loaded (the plugin sets it late), so the module
+copes with a missing host. A host provides:
+
+| Member | What it is |
+|---|---|
+| `kind` | `"app"` or `"plugin"` |
+| `readText(name)`, `writeText(name, text)` | the save files, by name; `writeText` answers whether it wrote |
+| `quit()` | close the game |
+| `canFullscreen`, `toggleFullscreen()` | full screen, where the host can |
+| `version` | what the menu shows: `0.1.0`, or `0.1.0 · 9323709` (with `+` for uncommitted changes) for a build that is not the release itself |
+
+The app's host is `gameHost` in `src/Main.qml`; the plugin's is `gameHost`
+in `plugin/Overlay.qml`; tests use `tests/qml/MemoryHost.qml`.
+
+### Version
+
+The version is written in `hueometry.pro`, `pkgbuild/PKGBUILD` and
+`plugin/manifest.json`; `tools/check/version.sh` fails unless they agree
+(and, at a release, unless the tag matches). `tools/version/build-id.sh`
+names the build: nothing when the commit carries the release tag, else the
+short commit. qmake writes both into `buildinfo.h`; `bin/plugin` stamps the
+build into its copy of the overlay.
+
 Saves are JSON in XDG folders, with a format version: a save from a newer
 Hueometry is read but never overwritten. Progress only grows, and each save
 first merges what is on disk, so the app and the plugin can share it.

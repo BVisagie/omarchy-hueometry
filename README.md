@@ -59,6 +59,10 @@ Sound needs Qt Multimedia
 (`omarchy-pkg-add qt6-multimedia`); without it the plugin plays silently. To
 remove it: `omarchy plugin remove io.github.bvisagie.hueometry`.
 
+The main menu shows the version in its bottom corner: `v0.1.0` for a
+release, or with the commit (`v0.1.0 · 9323709`) for a build made from any
+other point in the repository.
+
 Both ways share one save: progress in `~/.local/share/hueometry`, settings in
 `~/.config/hueometry`. Delete those folders to forget them.
 

@@ -15,5 +15,7 @@
   progress, all offline.
 - Moss and ferns at the foot of each pillar, and a flower in the pillar's
   colour that opens when the pillar holds one colour and is full.
+- The main menu shows the version, with the commit for builds that are not
+  a release.
 - A standalone app (Arch package with a launcher entry) and an Omarchy shell
   plugin (full-screen overlay with a bar button), sharing one save.
