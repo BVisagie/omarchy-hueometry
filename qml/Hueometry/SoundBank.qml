@@ -6,11 +6,11 @@ import QtMultimedia
 // music and the area's ambience follow the music slider.
 Item {
   id: bank
-  property real music: 0.6
-  property real effects: 0.8
+  // silent until Sound.qml passes on the game's settings, in whatever order
+  // its bindings arrive, so a muted game never starts its music on load
+  property real music: 0
+  property real effects: 0
   property int area: 0
-  // nothing plays until Sound.qml has passed on the game's settings, so a
-  // muted game never starts its music while loading
   property bool playing: false
   property bool inPlay: false
   property real duck: 1.0
@@ -79,7 +79,6 @@ Item {
     loops: MediaPlayer.Infinite
     audioOutput: AudioOutput { volume: bank.music * bank.duck * 0.7 }
     onSourceChanged: if (bank.musicOn) play()
-    Component.onCompleted: if (bank.musicOn) play()
   }
 
   MediaPlayer {
