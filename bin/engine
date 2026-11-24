@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Rebuilds qml/Hueometry/js/engine.mjs from engine/api.bend.
+# With --check, builds a fresh copy and fails if the committed file differs.
+set -euo pipefail
+# shellcheck source=bin/env.sh
+source "$(dirname "$0")/env.sh"
+need_bend
+cd "$ROOT"
+mkdir -p build
+bend engine/api.bend --check-only >/dev/null
+bend engine/api.bend -o build/engine.raw.mjs
+out=qml/Hueometry/js/engine.mjs
+if [[ "${1:-}" == "--check" ]]; then
+  python3 tools/engine/build.py build/engine.raw.mjs build/engine.check.mjs "$BEND_VERSION" >/dev/null
+  if ! cmp -s build/engine.check.mjs "$out"; then
+    echo "$out is out of date: run bin/engine and commit the result" >&2
+    exit 1
+  fi
+  echo "$out is up to date"
+else
+  python3 tools/engine/build.py build/engine.raw.mjs "$out" "$BEND_VERSION"
+fi
+size=$(stat -c %s "$out")
+if (( size > 512 * 1024 )); then
+  echo "$out is $size bytes; the marketplace scanner caps a file at 512 KiB" >&2
+  exit 1
+fi

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Installs the pinned Bend and Lean (for `bend --verdict`) into your home
+# folder. Needs no root. Safe to run again.
+set -euo pipefail
+# shellcheck source=bin/env.sh
+source "$(dirname "$0")/env.sh"
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+fetch() { # url sha256 out
+  curl -fsSL --retry 3 -o "$3" "$1"
+  echo "$2  $3" | sha256sum -c --quiet -
+}
+
+if [[ "$(bend version 2>/dev/null)" != "bend $BEND_VERSION" ]]; then
+  echo "Installing Bend $BEND_VERSION"
+  fetch "https://github.com/bendlang/bend/releases/download/v$BEND_VERSION/bend-$BEND_VERSION-linux-x64.tar.gz" \
+    "$BEND_SHA256" "$tmp/bend.tar.gz"
+  dest="$HOME/.local/share/bend-$BEND_VERSION"
+  rm -rf "$dest" && mkdir -p "$dest" "$HOME/.local/bin"
+  tar xzf "$tmp/bend.tar.gz" -C "$dest" --strip-components=1
+  ln -sf "$dest/bin/bend" "$HOME/.local/bin/bend"
+fi
+
+if ! command -v elan >/dev/null; then
+  echo "Installing elan $ELAN_VERSION"
+  fetch "https://github.com/leanprover/elan/releases/download/$ELAN_VERSION/elan-x86_64-unknown-linux-gnu.tar.gz" \
+    "$ELAN_SHA256" "$tmp/elan.tar.gz"
+  tar xzf "$tmp/elan.tar.gz" -C "$tmp"
+  "$tmp/elan-init" -y --default-toolchain none --no-modify-path >/dev/null
+fi
+# Bend runs this toolchain from ~/.elan/toolchains directly, so your default
+# Lean version is left alone.
+elan toolchain install "$LEAN_TOOLCHAIN"
+
+bend version
+elan run "$LEAN_TOOLCHAIN" lean --version

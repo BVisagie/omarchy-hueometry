@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Runs everything CI runs. Usage: bin/check [base-ref] [head-ref]
+set -euo pipefail
+# shellcheck source=bin/env.sh
+source "$(dirname "$0")/env.sh"
+cd "$ROOT"
+base="${1:-origin/main}"
+head="${2:-HEAD}"
+
+step() { printf '\n== %s\n' "$*"; }
+
+step "shell scripts"
+shellcheck -x -P SCRIPTDIR -P . bin/* tools/check/*.sh
+
+step "laws are changed only with a Laws-Change trailer"
+tools/check/laws-trailer.sh "$base" "$head"
+
+step "proofs (bend PROOF.bend --verdict)"
+bin/proof
+
+step "engine.mjs matches the Bend sources"
+bin/engine --check
+
+step "no shipped file is over the marketplace scanner's 512 KiB"
+bin/plugin >/dev/null
+# (the scanner reads text files; images have their own, larger limit)
+big=$(find qml dist/plugin -type f \( -name '*.qml' -o -name '*.mjs' -o -name '*.js' -o -name '*.json' -o -name '*.md' -o -name 'qmldir' \) -size +512k)
+if [[ -n "$big" ]]; then
+  echo "too big for the marketplace scan: $big" >&2
+  exit 1
+fi
+
+step "engine tests (node)"
+[[ -d node_modules ]] || npm ci --no-audit --no-fund
+npm test --silent
+
+step "native and JavaScript builds generate the same puzzles"
+tools/check/native.sh
+
+step "every component of the shared QML module is listed in its qmldir"
+# Quickshell (the plugin's engine) only sees types the qmldir lists
+for f in qml/Hueometry/*.qml; do
+  n=$(basename "$f" .qml)
+  grep -qE "^(singleton )?$n [0-9.]+ $n\.qml$" qml/Hueometry/qmldir || { echo "$n is missing from qml/Hueometry/qmldir" >&2; exit 1; }
+done
+
+step "orb colours stay apart under colour blindness"
+python3 tools/palette/check.py
+
+step "sounds are present, well formed and credited"
+python3 tools/check/audio.py
+
+step "QML tests (Qt's JavaScript engine)"
+QT_QPA_PLATFORM=offscreen QT_LOGGING_RULES="qt.qml.usedbeforedeclared=false" \
+  /usr/lib/qt6/bin/qmltestrunner -input tests/qml
+
+step "standalone app: build, and the C++ host's tests"
+bin/build
+bin/test
+
+step "shell plugin: assemble, validate, and run the overlay in Quickshell"
+bin/plugin --check
+tools/check/overlay.sh
+
+printf '\nAll checks passed.\n'

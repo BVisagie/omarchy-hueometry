@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Assembles the Omarchy shell plugin in dist/plugin: the plugin's own files,
+# the shared game module, the licences and the README. With --check, also
+# validates it with omarchy (when installed) and lints the QML.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUT="$ROOT/dist/plugin"
+rm -rf "$OUT"
+mkdir -p "$OUT"
+cp "$ROOT"/plugin/{manifest.json,Overlay.qml,BarWidget.qml,README.md} "$OUT/"
+cp "$ROOT"/LICENSE "$ROOT"/LICENSE-ASSETS "$OUT/"
+[[ -f "$ROOT/ASSETS.md" ]] && cp "$ROOT/ASSETS.md" "$OUT/"
+[[ -f "$ROOT/plugin/preview.png" ]] && cp "$ROOT/plugin/preview.png" "$OUT/"
+cp -r "$ROOT/qml/Hueometry" "$OUT/Hueometry"
+if find "$OUT" -type l | grep -q .; then
+  echo "the plugin must not contain symlinks" >&2
+  exit 1
+fi
+echo "assembled $OUT"
+if [[ "${1:-}" == "--check" ]]; then
+  if command -v omarchy >/dev/null; then
+    omarchy plugin validate "$OUT"
+    echo "omarchy plugin validate: ok"
+  else
+    echo "SKIPPED: omarchy is not installed here, so the plugin was not validated."
+    echo "         Run bin/check on an Omarchy machine before publishing the plugin."
+  fi
+  shell_dir="${OMARCHY_PATH:-/usr/share/omarchy}/shell"
+  if [[ -d "$shell_dir/Ui" ]]; then
+    # the shell's modules are named qs.*: give qmllint a qs folder to find
+    qs="$(mktemp -d)"
+    trap 'rm -rf "$qs"' EXIT
+    ln -s "$shell_dir" "$qs/qs"
+    /usr/lib/qt6/bin/qmllint -W 0 -I "$qs" "$OUT/Overlay.qml" "$OUT/BarWidget.qml"
+    echo "qmllint (plugin): no warnings"
+  else
+    echo "the Omarchy shell is not installed here; skipped linting the plugin"
+  fi
+fi

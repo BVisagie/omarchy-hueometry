@@ -1,0 +1,8 @@
+#!/bin/sh
+# Builds Hueometry from this checkout and installs it as an Arch package
+# (it asks for your password to install), so it appears in the app launcher.
+set -eu
+ROOT="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
+# makepkg -s installs any missing build tools first; the PKGBUILD then builds
+cd "$ROOT/pkgbuild"
+exec makepkg -fsi "$@"

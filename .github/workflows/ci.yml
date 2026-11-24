@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install system packages
+        run: |
+          pacman -Syu --noconfirm --needed git curl diffutils clang gcc make python python-numpy nodejs npm shellcheck \
+            qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Cache Bend, Lean and the BendTT kernel
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/bend-*
+            ~/.local/bin/bend
+            ~/.elan
+            ~/.bend
+          key: toolchain-${{ hashFiles('tools/versions.env') }}
+      - name: Install the pinned toolchain
+        run: bin/setup
+      - name: Check
+        env:
+          # the commits this run must check for the Laws-Change rule
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          # the authored head, not the merge commit GitHub checks out for a PR
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: bin/check "$BASE" "$HEAD_SHA"
+      - name: Build the Arch package as an ordinary user (makepkg refuses root)
+        run: |
+          pacman -S --noconfirm --needed base-devel
+          useradd -m builder
+          chown -R builder "$GITHUB_WORKSPACE"
+          su builder -c "cd '$GITHUB_WORKSPACE/pkgbuild' && makepkg -f --noconfirm"
+          ls pkgbuild/hueometry-*.pkg.tar.zst

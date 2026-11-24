@@ -1,0 +1,32 @@
+# Build output
+/build/
+/dist/
+*.o
+moc_*
+qrc_*
+Makefile
+.qmake.stash
+/hueometry
+/tools/shot/shot
+/tools/shot/Makefile
+
+# Package build
+/pkgbuild/src/
+/pkgbuild/pkg/
+/pkgbuild/*.pkg.tar.*
+/pkgbuild/*.tar.gz
+
+# Node
+node_modules/
+
+# Bend and Lean caches
+*.bendtt
+.bend-cache/
+
+# Editors
+*.swp
+.vscode/
+.idea/
+
+__pycache__/
+/tools/shot/*.o

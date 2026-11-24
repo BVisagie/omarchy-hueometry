@@ -1,0 +1,12 @@
+{
+  "name": "hueometry-dev",
+  "private": true,
+  "description": "Development tools for Hueometry. Nothing here ships with the game.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/engine/"
+  },
+  "devDependencies": {
+    "fast-check": "4.11.0"
+  }
+}
