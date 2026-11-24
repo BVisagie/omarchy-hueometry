@@ -103,8 +103,9 @@ Item {
       if (S.view(session).solved) {
         board.celebrating = true
         win()
-        // no landing to wait for (less movement, or no room to draw the board)
-        if (Theme.reducedMotion || !board.busy) showResult()
+        // no landing to wait for (less movement, or no room to draw the
+        // board): still hold the board a moment so the last flower is seen
+        if (Theme.reducedMotion || !board.busy) bloomWait.restart()
       } else {
         game.saveCurrent(ref, S.history(session), assisted)
       }
@@ -181,7 +182,8 @@ Item {
     // let the last pillar's flower open before the card covers the board
     if (won) bloomWait.restart()
   }
-  Timer { id: bloomWait; interval: Math.max(1, Theme.ms(550)); onTriggered: play.showResult() }
+  // a still pause, so it stays even with less movement
+  Timer { id: bloomWait; interval: 550; onTriggered: play.showResult() }
 
   function handleKey(event) {
     if (result) return results.handleKey(event)
