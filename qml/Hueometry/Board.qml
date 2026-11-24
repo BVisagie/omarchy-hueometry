@@ -93,6 +93,13 @@ Item {
     }
   }
 
+  // drop any orb in the air and draw the engine's state (undo, restart)
+  function stop() {
+    flyer.stopFlight()
+    busy = false
+    sync()
+  }
+
   function finish() {
     busy = false
     sync()
@@ -205,6 +212,7 @@ Item {
       flight.start()
     }
     function wobble() { wobbleAnim.restart() }
+    function stopFlight() { flight.stop(); after = null }
 
     NumberAnimation {
       id: flight

@@ -154,6 +154,10 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   assert.equal(out.done[k("clearing/0")].stars, 3);
   assert.equal(out.current.note, "x");
   assert.deepEqual(out.current.moves, [[0, 1]]);
+  // ... and through a merge and a move made in the other host
+  const moved = St.setCurrent(St.merge(St.progress(""), St.progress(saved)), { ref, moves: [[0, 1], [1, 2]], assisted: false }, 9);
+  assert.equal(moved.current.note, "x");
+  assert.equal(St.solved(St.progress(saved), { kind: "level", area: "clearing", index: 0 }, 5, false, 9).best.stars, 3);
   // solving one puzzle leaves another unfinished puzzle alone
   const other = { kind: "level", area: "river", index: 0 };
   const left = St.setCurrent(St.progress(""), { ref: other, moves: [[0, 1]], assisted: false }, 40);

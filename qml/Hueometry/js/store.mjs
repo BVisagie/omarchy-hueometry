@@ -95,12 +95,13 @@ export function progress(raw) {
   const done = {};
   if (p.done && typeof p.done === "object") {
     for (const [k, v] of Object.entries(p.done)) {
-      if (v && Number.isInteger(v.best) && v.best > 0) done[k] = { best: v.best, assisted: v.assisted === true };
+      // fields a newer Hueometry added ride along through merges and saves
+      if (v && Number.isInteger(v.best) && v.best > 0) done[k] = Object.assign({}, v, { best: v.best, assisted: v.assisted === true });
     }
   }
   // an unfinished puzzle from another pack names a different board: drop it
   const current = p.current && p.current.ref && Array.isArray(p.current.moves) && p.current.pack === PACK
-    ? { ref: p.current.ref, moves: p.current.moves, assisted: p.current.assisted === true, pack: PACK } : null;
+    ? Object.assign({}, p.current, { ref: p.current.ref, moves: p.current.moves, assisted: p.current.assisted === true, pack: PACK }) : null;
   // when `current` last changed (set or cleared), so the newest copy wins
   const currentAt = Number.isFinite(p.currentAt) ? p.currentAt : 0;
   return { tutorial: tutorialDone(done), done, current, currentAt };
@@ -150,7 +151,9 @@ export function nextAt(p, now) {
 
 // The unfinished puzzle changed (at a time from nextAt).
 export function setCurrent(p, current, at) {
-  return Object.assign({}, p, { current: current ? Object.assign({ pack: PACK }, current) : null, currentAt: at });
+  // the same puzzle keeps any fields a newer Hueometry stored with it
+  const base = current && p.current && p.current.ref && sameRef(p.current.ref, current.ref) ? p.current : {};
+  return Object.assign({}, p, { current: current ? Object.assign({}, base, { pack: PACK }, current) : null, currentAt: at });
 }
 
 // Records a solved puzzle. Answers { progress, record } where record says
@@ -159,9 +162,11 @@ export function solved(p, ref, moveCount, assisted, at) {
   const k = key(ref);
   const before = p.done[k];
   const now = { best: moveCount, assisted: assisted === true };
-  const kept = better(before, now);
+  // a better result keeps any fields a newer Hueometry stored on the record
+  const won = better(before, now) === now;
+  const kept = won ? Object.assign({}, before, now) : before;
   let record = "first";
-  if (before) record = kept === now && (now.best < before.best || (before.assisted && !now.assisted)) ? "better" : now.best === before.best ? "same" : "worse";
+  if (before) record = won && (now.best < before.best || (before.assisted && !now.assisted)) ? "better" : now.best === before.best ? "same" : "worse";
   const done = Object.assign({}, p.done);
   done[k] = kept;
   // the unfinished puzzle is over only if it is this one: another puzzle

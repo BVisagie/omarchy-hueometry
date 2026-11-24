@@ -161,6 +161,20 @@ Item {
       game.show("menu")
     }
 
+    function test_9bb_undo_during_a_flight_draws_the_engine_state() {
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const m = game.current.session.puzzle.solution[0]
+      game.current.touch(m.from); game.current.touch(m.to)
+      const board = game.current.children.find(c => c.busy !== undefined && c.stack !== undefined)
+      verify(board.busy || Theme.reducedMotion, "the orb is in flight")
+      keyClick(Qt.Key_U)
+      verify(!board.busy)
+      compare(game.current.view.moves, 0)
+      compare(JSON.stringify(board.stack), JSON.stringify(game.current.view.columns))
+      game.show("menu")
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3 })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })

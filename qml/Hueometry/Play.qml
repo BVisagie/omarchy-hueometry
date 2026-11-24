@@ -102,7 +102,8 @@ Item {
       if (S.view(session).solved) {
         board.celebrating = true
         win()
-        if (Theme.reducedMotion) showResult()
+        // no landing to wait for (less movement, or no room to draw the board)
+        if (Theme.reducedMotion || !board.busy) showResult()
       } else {
         game.saveCurrent(ref, S.history(session), assisted)
       }
@@ -129,6 +130,7 @@ Item {
   function undo() {
     if (!session || won || S.view(session).moves === 0) return
     session = S.undo(session)
+    board.stop()
     hint = null
     message = defaultText()
     game.sound.cue("undo")
@@ -138,6 +140,7 @@ Item {
   function restart() {
     if (!session) return
     session = S.restart(session)
+    board.stop()
     hint = null
     won = null
     result = null
