@@ -101,9 +101,28 @@ Item {
       verify(game.saveFailed)
       game.continueOrMap()                    // reads the disk again
       compare(game.current.ref.area, "clearing", "the unsaved puzzle survives the reread")
+      // settings changed while writes fail are all kept, and saved later
+      game.setSetting("reducedMotion", true)
+      game.setSetting("symbols", true)
+      verify(game.saveFailed)
+      verify(game.settings.reducedMotion && game.settings.symbols)
       memory.failWrites = false
       game.saveCurrent({ kind: "level", area: "clearing", index: 0 }, [], false)
+      verify(game.saveFailed, "settings are still unsaved")
+      game.setSetting("music", 0.5)
       verify(!game.saveFailed)
+      const s = JSON.parse(memory.files["settings.json"])
+      verify(s.reducedMotion && s.symbols)
+      compare(s.music, 0.5)
+      game.setSetting("reducedMotion", false); game.setSetting("symbols", false)
+    }
+
+    function test_7_a_move_after_the_clock_went_back_is_kept() {
+      // the plugin saved its puzzle with a clock far ahead of this one
+      const other = { done: {}, current: { ref: { kind: "tutorial", index: 2 }, moves: [], assisted: false, pack: Store.PACK }, currentAt: Date.now() + 1e9 }
+      memory.files = Object.assign({}, memory.files, { "progress-plugin.json": JSON.stringify(other) })
+      game.saveCurrent({ kind: "level", area: "river", index: 3 }, [], false)
+      compare(JSON.parse(memory.files["progress-app.json"]).current.ref.area, "river")
     }
   }
 }

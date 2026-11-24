@@ -2,11 +2,11 @@
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 
-// Names this exact pack: any change to a level, its order or the free-play
-// pool gives a new id, so saves made with another pack are never applied to
-// different boards.
-export function packId({ tutorial, areas, free }) {
-  return createHash("sha256").update(JSON.stringify({ tutorial, areas, free })).digest("hex").slice(0, 12);
+// Names this exact pack: any change to a level, its order, the free-play
+// pool or the generator that rebuilds boards from seeds gives a new id, so
+// saves made with another pack are never applied to different boards.
+export function packId({ generator, tutorial, areas, free }) {
+  return createHash("sha256").update(JSON.stringify({ generator, tutorial, areas, free })).digest("hex").slice(0, 12);
 }
 
 export function writeModule(name, value) {

@@ -62,14 +62,17 @@ Item {
   onHostChanged: load()
   Component.onCompleted: load()
 
-  // false when the last save could not be written (shown on screen)
-  property bool saveFailed: false
+  // a save that could not be written (shown on screen until one works)
+  property bool progressUnsaved: false
+  // settings changed here but not yet written, by key: kept over rereads
+  property var unsavedSettings: ({})
+  readonly property bool saveFailed: progressUnsaved || Object.keys(unsavedSettings).length > 0
 
   function saveProgress() {
     if (!host) return
     // merge keeps this copy's unfinished puzzle (the newest)
     progress = Store.merge(readProgress(), progress)
-    saveFailed = !host.writeText(ownProgressFile(), JSON.stringify(progress))
+    progressUnsaved = !host.writeText(ownProgressFile(), JSON.stringify(progress))
   }
 
   // what is on disk, merged with this copy: an unsaved change here (a failed
@@ -79,13 +82,20 @@ Item {
   }
 
   function setSetting(key, value) {
-    // apply the one change to what is on disk: the other host may have
+    const pending = Object.assign({}, unsavedSettings)
+    pending[key] = value
+    // apply this copy's changes to what is on disk: the other host may have
     // changed something else
-    settings = Store.withSetting(host ? host.readText("settings.json") : JSON.stringify(settings), key, value)
-    if (host) host.writeText("settings.json", JSON.stringify(settings))
+    let next = host ? host.readText("settings.json") : JSON.stringify(settings)
+    for (const k of Object.keys(pending)) next = JSON.stringify(Store.withSetting(next, k, pending[k]))
+    settings = Store.settings(next)
+    if (!host) return
+    unsavedSettings = host.writeText("settings.json", JSON.stringify(settings)) ? ({}) : pending
   }
 
   function saveCurrent(ref, moves, assisted) {
+    // stamp the change later than anything either host has saved
+    refreshProgress()
     progress = Store.setCurrent(progress, { ref, moves: moves.map(m => [m.from, m.to]), assisted: assisted === true }, Store.nextAt(progress, Date.now()))
     saveProgress()
   }
@@ -230,6 +240,7 @@ Item {
 
   Help {
     anchors.fill: parent
+    quitsAtOnce: !!root.host && root.host.kind === "plugin"
     visible: root.helpShown
     onClosed: root.helpShown = false
   }

@@ -23,12 +23,13 @@ Item {
     function play(volume) {
       const v = [a, b, c][next]
       next = (next + 1) % 3
-      v.volume = bank.effects * volume
+      v.level = volume
       v.play()
     }
-    SoundEffect { id: a; source: pool.source }
-    SoundEffect { id: b; source: pool.source }
-    SoundEffect { id: c; source: pool.source }
+    // the volume follows the slider (and silence) while a sound plays
+    SoundEffect { id: a; property real level: 1; source: pool.source; volume: bank.effects * level }
+    SoundEffect { id: b; property real level: 1; source: pool.source; volume: bank.effects * level }
+    SoundEffect { id: c; property real level: 1; source: pool.source; volume: bank.effects * level }
   }
 
   Pool { id: lift1; source: "sounds/lift-1.wav" }

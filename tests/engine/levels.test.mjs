@@ -53,3 +53,10 @@ test("free play puzzles are pre-solved, with seeds apart from the levels", () =>
     }
   }
 });
+
+test("the pack id names exactly these levels and this generator", async () => {
+  const { packId } = await import("../../tools/levels/write.mjs");
+  const id = packId({ generator: levels.generator, tutorial: levels.tutorial, areas: levels.areas, free: free.puzzles });
+  assert.equal(levels.pack, id);
+  assert.equal(free.pack, id);
+});

@@ -110,6 +110,6 @@ for (const [name, count] of Object.entries(FREE)) {
   free[name] = { colours: d.colours, cap: d.cap, puzzles: sample(name, count, 10001) };
 }
 
-const pack = packId({ tutorial, areas, free });
+const pack = packId({ generator: GENERATOR, tutorial, areas, free });
 writeModule("levels.mjs", { version: 1, generator: GENERATOR, pack, tutorial, areas });
 writeModule("free.mjs", { version: 1, generator: GENERATOR, pack, puzzles: free });

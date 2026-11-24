@@ -21,9 +21,16 @@ Item {
     }
   }
 
+  // where the lifted orb goes: a pillar the engine says takes it, or for
+  // "refused" one it says does not
   function second() {
-    if (has("flying")) g.current.touch(6)
-    if (has("refused")) g.current.touch(1)
+    const v = g.current.view
+    const legal = v.targets
+    if (has("flying") && legal.length > 0) g.current.touch(legal[0])
+    if (has("refused")) {
+      const wrong = v.columns.findIndex((c, i) => i !== v.selected && legal.indexOf(i) < 0)
+      if (wrong >= 0) g.current.touch(wrong)
+    }
   }
 
   Game {

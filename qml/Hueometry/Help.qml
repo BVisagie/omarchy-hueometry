@@ -4,6 +4,8 @@ import QtQuick
 Item {
   id: root
   signal closed()
+  // the plugin closes on Q; the app asks first
+  property bool quitsAtOnce: false
 
   function handleKey(event) { closed(); return true }
 
@@ -16,7 +18,7 @@ Item {
     [qsTr("H"), qsTr("a hint")],
     [qsTr("?"), qsTr("these keys")],
     [qsTr("F11"), qsTr("full screen (app)")],
-    [qsTr("Q"), qsTr("quit (asks first)")],
+    root.quitsAtOnce ? [qsTr("Q"), qsTr("close the game")] : [qsTr("Q, then Q"), qsTr("quit")],
   ]
 
   Rectangle { anchors.fill: parent; color: "#80000000" }

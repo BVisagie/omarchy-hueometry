@@ -11,6 +11,9 @@ Item {
   property string backLabel: qsTr("Map")
   // 0: map, 1: play again, 2: next
   property int cursor: hasNext ? 2 : 1
+  // a new result (or a change to what comes next) starts on the main action
+  onResultChanged: cursor = hasNext ? 2 : 1
+  onHasNextChanged: cursor = hasNext ? 2 : 1
   signal replay()
   signal next()
   signal leave()
