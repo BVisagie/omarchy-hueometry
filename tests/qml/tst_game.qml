@@ -326,6 +326,22 @@ Item {
       game.show("menu")
     }
 
+    function test_9bj_the_friend_belongs_to_the_scene_behind_the_board() {
+      const friendOf = ref => {
+        game.start(ref)
+        const f = game.current.children.find(c => c.cheering !== undefined && c.kind !== undefined)
+        const kind = f.kind
+        game.show("menu")
+        return kind
+      }
+      compare(friendOf({ kind: "tutorial", index: 0 }), "toucan")
+      compare(friendOf({ kind: "level", area: "river", index: 0 }), "frog")
+      compare(friendOf({ kind: "level", area: "temple", index: 0 }), "monkey")
+      // free play sizes show areas too: medium is the ruins
+      compare(friendOf({ kind: "free", difficulty: "medium", index: 0 }), "monkey")
+      compare(friendOf({ kind: "free", difficulty: "expert", index: 0 }), "frog")
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3, muted: true })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })

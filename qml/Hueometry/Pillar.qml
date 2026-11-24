@@ -46,7 +46,8 @@ Item {
     radius: width / 2
     opacity: root.target || root.hinted ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: Theme.ms(180) } }
-    readonly property real k: root.hinted && !root.target ? root.pulse : 1
+    // the hint keeps breathing, even once its orb is lifted
+    readonly property real k: root.hinted ? root.pulse : 1
     gradient: Gradient {
       GradientStop { position: 0.0; color: "transparent" }
       GradientStop { position: 0.6; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.18 * glow.k) }

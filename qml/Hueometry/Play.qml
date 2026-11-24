@@ -414,8 +414,9 @@ Item {
     anchors.rightMargin: Theme.em * 2
     anchors.bottomMargin: -Theme.em * 0.5
     size: Math.min(play.width, play.height) * 0.26
-    readonly property string where: play.ref ? (play.ref.area || play.ref.difficulty || "") : ""
-    kind: ["river", "waterfall", "heart"].indexOf(where) >= 0 ? "frog" : ["ruins", "temple"].indexOf(where) >= 0 ? "monkey" : "toucan"
+    // the friend of the scene behind the board (free play sizes have areas
+    // too): tutorial, clearing, river, ruins, waterfall, temple, heart
+    kind: ["toucan", "toucan", "frog", "monkey", "frog", "monkey", "frog"][play.game.areaIndex(play.ref)] ?? "toucan"
     cheering: !!play.result
   }
 }
