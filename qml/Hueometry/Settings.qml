@@ -97,6 +97,21 @@ Item {
       id: list
       width: scroller.width
       spacing: Theme.em * 0.5
+      // without Qt Multimedia there is no sound: say so plainly, first, so it
+      // is in view whatever row the keyboard is on
+      Text {
+        objectName: "soundMissing"
+        visible: root.game.sound.missing
+        width: list.width
+        leftPadding: Theme.em
+        rightPadding: Theme.em
+        bottomPadding: Theme.em * 0.4
+        wrapMode: Text.WordWrap
+        text: qsTr("Sound is off because Qt Multimedia is not installed. Install the qt6-multimedia package to hear the game.")
+        color: Theme.gold
+        font.family: Theme.font
+        font.pixelSize: Theme.em * 0.95
+      }
 
       Repeater {
         model: root.rows.length
@@ -233,20 +248,6 @@ Item {
             RoundButton { size: Theme.em * 2; icon: "play"; onActivated: { root.cursor = row.index; root.change(row.index, 1) } }
           }
         }
-      }
-      // without Qt Multimedia there is no sound: say so, plainly
-      Text {
-        objectName: "soundMissing"
-        visible: root.game.sound.missing
-        width: list.width
-        leftPadding: Theme.em
-        rightPadding: Theme.em
-        topPadding: Theme.em * 0.4
-        wrapMode: Text.WordWrap
-        text: qsTr("Sound is off because Qt Multimedia is not installed. Install the qt6-multimedia package to hear the game.")
-        color: Theme.gold
-        font.family: Theme.font
-        font.pixelSize: Theme.em * 0.95
       }
     }
     }

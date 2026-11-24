@@ -9,6 +9,15 @@ Item {
 
   function handleKey(event) { closed(); return true }
 
+  // the arrow and page keys scroll the rows when the card is too short for
+  // them; true when they did
+  function scroll(event) {
+    const step = { [Qt.Key_Up]: -1, [Qt.Key_Down]: 1, [Qt.Key_PageUp]: -4, [Qt.Key_PageDown]: 4 }[event.key]
+    if (!step || !rows.interactive) return false
+    rows.contentY = Math.max(0, Math.min(rows.contentHeight - rows.height, rows.contentY + step * Theme.em * 1.6))
+    return true
+  }
+
   readonly property var keys: [
     [qsTr("← → or 1–9"), qsTr("choose a pillar")],
     [qsTr("Space or Enter"), qsTr("lift an orb, or put it down")],
@@ -28,7 +37,8 @@ Item {
   Card {
     anchors.centerIn: parent
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 32)
-    height: grid.implicitHeight + title.implicitHeight + Theme.em * 4
+    // never taller than the window; the rows scroll inside when they must
+    height: Math.min(grid.implicitHeight + title.implicitHeight + Theme.em * 4, parent.height - Theme.em * 2)
     Text {
       id: title
       anchors.top: parent.top
@@ -40,10 +50,20 @@ Item {
       font.pixelSize: Theme.em * 1.8
       font.bold: true
     }
-    Grid {
-      id: grid
+    Flickable {
+      id: rows
       anchors.top: title.bottom
       anchors.topMargin: Theme.em
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: Theme.em
+      anchors.left: parent.left
+      anchors.right: parent.right
+      clip: true
+      contentHeight: grid.implicitHeight
+      interactive: contentHeight > height
+      boundsBehavior: Flickable.StopAtBounds
+    Grid {
+      id: grid
       anchors.horizontalCenter: parent.horizontalCenter
       columns: 2
       columnSpacing: Theme.em * 1.5
@@ -59,6 +79,7 @@ Item {
           font.bold: index % 2 === 0
         }
       }
+    }
     }
   }
 }

@@ -66,6 +66,7 @@ bin/test
 
 step "shell plugin: assemble, validate, and run the overlay in Quickshell"
 bin/plugin --check
+tools/check/plugin-guard-test.sh
 tools/check/plugin-guard.sh
 tools/check/overlay.sh
 

@@ -30,7 +30,8 @@ BarWidget {
   // command line instead
   function open() {
     const api = root.barApi ? root.barApi.shell : null
-    if (api && typeof api.toggle === "function" && api.toggle(root.moduleName, "{}")) return "api"
+    // the API's own answer stands (false means the shell declined)
+    if (api && typeof api.toggle === "function") { api.toggle(root.moduleName, "{}"); return "api" }
     Quickshell.execDetached(["omarchy-shell", "shell", "summon", root.moduleName, "{}"])
     return "command"
   }

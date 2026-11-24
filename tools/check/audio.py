@@ -41,8 +41,11 @@ def mix(bad):
         level = loudness.momentary_max(x)
         if abs(level - target) > 0.5:
             bad.append(f"{p.name}: {level:.1f} LUFS, expected {target:.1f}")
-        if abs(x[0]) > 2 / 32768:
-            bad.append(f"{p.name}: starts on a non-zero sample (a click)")
+        # the whole 0.5 ms fade-in stays under its raised-cosine envelope
+        n = int(44100 * 0.5 / 1000)
+        envelope = (0.5 - 0.5 * np.cos(np.pi * np.arange(n) / n)) * np.max(np.abs(x))
+        if np.any(np.abs(x[:n]) > envelope + 2 / 32768):
+            bad.append(f"{p.name}: starts faster than its fade-in (a click)")
     for name, target in LOOP_LUFS.items():
         p = SOUNDS / f"{name}.ogg"
         if not p.exists():
