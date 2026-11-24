@@ -20,6 +20,16 @@ Hueometry needs Omarchy 4.5 or newer.
 
 ### As an app (recommended)
 
+Download the package from the
+[latest release](https://github.com/BVisagie/omarchy-hueometry/releases/latest)
+and install it:
+
+```sh
+sudo pacman -U hueometry-0.1.0-1-x86_64.pkg.tar.zst
+```
+
+Or build it yourself from a checkout (needs `base-devel`):
+
 ```sh
 git clone https://github.com/BVisagie/omarchy-hueometry
 cd omarchy-hueometry
@@ -27,23 +37,17 @@ bin/install
 ```
 
 `bin/install` builds the game and installs it as an Arch package (it asks for
-your password), so Hueometry appears in the app launcher. It opens full
-screen; F11 switches to a window.
-
-Each [release](https://github.com/BVisagie/omarchy-hueometry/releases) also
-carries a ready-built package:
-
-```sh
-sudo pacman -U hueometry-0.1.0-1-x86_64.pkg.tar.zst
-```
+your password). Either way Hueometry appears in the app launcher. It opens
+full screen; F11 switches to a window.
 
 To remove it: `sudo pacman -R hueometry`.
 
 ### As an Omarchy shell plugin
 
 The plugin runs the same game as a full-screen overlay inside the Omarchy
-shell, opened from an orb (◉) in the bar. Once it is listed in the
-[plugin marketplace](https://omarchyplugins.com/):
+shell, opened from an orb (◉) in the bar. Install it from its own
+repository (it is also submitted to the
+[plugin marketplace](https://omarchyplugins.com/)):
 
 ```sh
 omarchy plugin add https://github.com/BVisagie/omarchy-hueometry-plugin --enable
@@ -103,8 +107,9 @@ buttons.
 | The shell plugin | `plugin/`, assembled by `bin/plugin` |
 | Levels, sounds | `bin/levels`, `bin/audio` |
 
-[ARCHITECTURE.md](ARCHITECTURE.md) explains how the parts fit, and
-[FEASIBILITY.md](FEASIBILITY.md) what is proved and what is tested.
+[ARCHITECTURE.md](ARCHITECTURE.md) explains how the parts fit,
+[FEASIBILITY.md](FEASIBILITY.md) what is proved and what is tested, and
+[docs/releasing.md](docs/releasing.md) how a release is cut.
 
 To work on it: `bin/setup` installs the pinned Bend and Lean into your home
 folder, and `bin/check` runs everything CI runs (proofs, engine tests in Node

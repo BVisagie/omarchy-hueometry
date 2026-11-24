@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-24)
 
 - First playable version: a Bend 2 rules engine whose gameplay laws are
   machine-checked proofs; seeded puzzle generation with a proof that every
