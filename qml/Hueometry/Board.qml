@@ -65,8 +65,7 @@ Item {
   // Plays what session.touch answered.
   function effect(e) {
     if (!view || !geom.columns.length) return
-    // a touch during a landing: land that orb now (its squash, dust and
-    // chime), then play the new effect
+    // an orb still in the air lands first (Play calls land() earlier still)
     flyer.settle()
     switch (e.kind) {
     case "lift": {
@@ -109,6 +108,11 @@ Item {
       break
     }
   }
+
+  // land any orb still in the air, from the state it flew in: call before
+  // the session changes, so a pillar it filled opens even if the next touch
+  // lifts from that pillar
+  function land() { flyer.settle() }
 
   // drop any orb in the air and draw the engine's state (undo, restart)
   function stop() {

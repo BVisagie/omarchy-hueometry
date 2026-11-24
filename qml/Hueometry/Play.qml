@@ -89,6 +89,7 @@ Item {
 
   function touch(column) {
     if (!session || won) return
+    board.land()
     const out = S.touch(session, column)
     session = out.state
     focusColumn = column
@@ -107,8 +108,10 @@ Item {
   // after the session changed: animate and sound the effect, and for a move
   // win or save (a touch and a redo both end here)
   function played(effect) {
-    board.effect(effect)
+    // the move's own note first: with less movement the board lands the orb
+    // (and may ring a pillar's chime) at once
     game.sound.effect(effect)
+    board.effect(effect)
     if (effect.kind === "move") {
       if (S.view(session).solved) {
         board.celebrating = true
@@ -152,6 +155,7 @@ Item {
   // plays the move taken back last, again (Ctrl+Shift+Z, or the button)
   function redo() {
     if (!session || won || !S.canRedo(session)) return
+    board.land()
     if (session.selected >= 0) { session = S.cancel(session); board.stop() }
     const out = S.redo(session)
     if (out.effect.kind !== "move") return

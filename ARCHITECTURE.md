@@ -73,7 +73,7 @@ copes with a missing host. A host provides:
 | `readText(name)`, `writeText(name, text)` | the save files, by name; `writeText` answers whether it wrote |
 | `quit()` | close the game |
 | `canFullscreen`, `toggleFullscreen()` | full screen, where the host can |
-| `version` | what the menu shows: `0.1.0`, or `0.1.0 · 9323709` (with `+` for uncommitted changes) for a build that is not the release itself |
+| `version` | what the menu shows: `0.2.0`, or `0.2.0 · 9323709` (with `+` for uncommitted changes) for a build that is not the release itself |
 
 The app's host is `gameHost` in `src/Main.qml`; the plugin's is `gameHost`
 in `plugin/Overlay.qml`; tests use `tests/qml/MemoryHost.qml`.

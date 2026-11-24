@@ -291,6 +291,24 @@ Item {
       game.show("menu")
     }
 
+    function test_9bh_lifting_from_the_pillar_just_filled_still_opens_it() {
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      game.current.touch(0); game.current.touch(2)
+      tryVerify(() => !board.busy, 2000)
+      opened.target = board
+      opened.clear()
+      game.current.touch(1); game.current.touch(0)   // fills column 0
+      game.current.touch(0)                          // and lifts from it at once
+      compare(opened.count, 1, "the filled pillar opened before the lift closed it")
+      compare(board.bloomed[0], false, "closed while its top orb is lifted")
+      game.current.touch(0)
+      tryVerify(() => !board.busy, 2000)
+      compare(opened.count, 1, "putting it back opens nothing")
+      game.show("menu")
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3, muted: true })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })
