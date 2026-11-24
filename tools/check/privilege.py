@@ -39,7 +39,8 @@ def main(paths):
             data = f.read()
         if b"\0" in data:
             continue  # binary (fonts, sounds, images)
-        lines = data.decode("utf-8", errors="replace").splitlines()
+        # lines as the scanner splits them: on \n or \r\n only
+        lines = re.split(r"\r?\n", data.decode("utf-8", errors="replace"))
         for n, line in enumerate(lines, 1):
             if privileged(line):
                 print(f"{path}:{n}:{line.strip()}")

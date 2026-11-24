@@ -39,6 +39,7 @@ expect fail "sudo in a sentence" README.md "Run it with sudo."
 expect fail "sudo after an invalid byte" notes.txt $'x\xff sudo rm'
 expect fail "curl after an invalid byte" notes.txt $'x\xff curl x'
 expect fail "sudo right after a non-ASCII letter" README.md "需要使用sudo命令"
+expect fail "sudo after a lone carriage return" README.md $'Needs no sudo\rjust run it'
 
 expect fail "an array across lines" Widget.qml $'Quickshell.execDetached([\n  "cargo",\n  "install", "x"])'
 expect pass "an ordinary array" Widget.qml 'Quickshell.execDetached(["omarchy-shell", "shell", "summon", "x", "{}"])'
@@ -47,4 +48,14 @@ rc=0; "$guard" "$d" >/dev/null 2>&1 || rc=$?
 [[ "$rc" == 1 ]] || { echo "plugin guard test: a group-executable file passed (exit $rc)" >&2; exit 1; }
 rc=0; "$guard" "$work/missing" >/dev/null 2>&1 || rc=$?
 [[ "$rc" == 2 ]] || { echo "plugin guard test: a missing folder did not error (exit $rc)" >&2; exit 1; }
+# a file name with a newline fails
+d="$work/newline"; mkdir -p "$d"; printf 'run sudo\n' > "$d/a"$'\n'"b.txt"
+rc=0; "$guard" "$d" >/dev/null 2>&1 || rc=$?
+[[ "$rc" == 1 ]] || { echo "plugin guard test: a newline-named file passed (exit $rc)" >&2; exit 1; }
+# a crash in the sudo check is an error, never a pass
+shim="$work/shim"; mkdir -p "$shim"; printf '#!/bin/sh\nexit 1\n' > "$shim/python3"; chmod +x "$shim/python3"
+d="$work/crash"; mkdir -p "$d"; echo 'import QtQuick' > "$d/Main.qml"
+rc=0; PATH="$shim:$PATH" "$guard" "$d" >/dev/null 2>&1 || rc=$?
+[[ "$rc" == 2 ]] || { echo "plugin guard test: a crashed sudo check did not error (exit $rc)" >&2; exit 1; }
+n=$((n + 2))
 echo "plugin guard test: $((n + 2)) cases"
