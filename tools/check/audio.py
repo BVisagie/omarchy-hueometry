@@ -33,19 +33,19 @@ def samples(p):
 
 
 def channels(p):
-    """Every channel at the file's own rate, for the true peak."""
+    """Every channel at the file's own rate, and that rate."""
     if p.suffix == ".wav":
         with wave.open(str(p)) as w:
-            c = w.getnchannels()
+            c, rate = w.getnchannels(), w.getframerate()
             x = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float64) / 32768
-        return [x[i::c] for i in range(c)]
-    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=channels", "-of", "csv=p=0", str(p)],
-                           capture_output=True, check=True, text=True).stdout
-    c = int(probe.strip().splitlines()[0])
+        return [x[i::c] for i in range(c)], rate
+    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=channels,sample_rate",
+                            "-of", "csv=p=0", str(p)], capture_output=True, check=True, text=True).stdout
+    rate, c = (int(v) for v in probe.strip().splitlines()[0].split(","))
     raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(p), "-f", "f32le", "-"],
                          capture_output=True, check=True).stdout
     x = np.frombuffer(raw, dtype=np.float32).astype(np.float64)
-    return [x[i::c] for i in range(c)]
+    return [x[i::c] for i in range(c)], rate
 
 
 def mix(bad):
@@ -66,11 +66,12 @@ def mix(bad):
         p = SOUNDS / f"{name}.ogg"
         if not p.exists():
             continue
-        level = loudness.integrated(channels(p))
+        chans, rate = channels(p)
+        level = loudness.integrated(chans, rate)
         if abs(level - target) > 1.0:
             bad.append(f"{p.name}: {level:.1f} LUFS, expected {target:.1f}")
     for p in sorted(SOUNDS.iterdir()):
-        peak = loudness.true_peak(channels(p))
+        peak = loudness.true_peak(channels(p)[0])
         if peak > TRUE_PEAK_MAX:
             bad.append(f"{p.name}: true peak {peak:.1f} dBTP, over {TRUE_PEAK_MAX}")
 
