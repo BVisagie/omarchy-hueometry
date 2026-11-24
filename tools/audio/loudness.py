@@ -26,22 +26,36 @@ def _kweight_coefficients(rate):
     return shelf, high
 
 
-def _response(b, a, w):
-    z = np.exp(-1j * w)
-    return (b[0] + b[1] * z + b[2] * z * z) / (a[0] + a[1] * z + a[2] * z * z)
+def _impulse_response(rate, length=16384):
+    """The two K-weighting stages' impulse response, by running the causal
+    biquads over an impulse (once per rate; it decays well within 16384)."""
+    h = np.zeros(length)
+    h[0] = 1.0
+    for (b0, b1, b2), (_, a1, a2) in _kweight_coefficients(rate):
+        y = np.zeros(length)
+        x1 = x2 = y1 = y2 = 0.0
+        for i in range(length):
+            xi = h[i]
+            yi = b0 * xi + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+            x2, x1, y2, y1 = x1, xi, y1, yi
+            y[i] = yi
+        h = y
+    return h
+
+
+_IR = {}
 
 
 def kweight(x, rate=44100):
-    """K-weighting applied by its magnitude in the frequency domain: fast in
-    numpy, and loudness depends only on the magnitude."""
+    """The causal K-weighting filter, as BS.1770 specifies it, applied by
+    fast convolution with its impulse response (numpy only, no scipy)."""
+    if rate not in _IR:
+        _IR[rate] = _impulse_response(rate)
+    h = _IR[rate]
     x = np.asarray(x, dtype=np.float64)
     n = len(x)
-    size = 1 << (n - 1).bit_length()
-    w = 2 * np.pi * np.fft.rfftfreq(size, 1 / rate) / rate
-    h = np.ones_like(w, dtype=np.complex128)
-    for b, a in _kweight_coefficients(rate):
-        h *= _response(b, a, w)
-    return np.fft.irfft(np.fft.rfft(x, size) * np.abs(h), size)[:n]
+    size = 1 << (n + len(h) - 2).bit_length()
+    return np.fft.irfft(np.fft.rfft(x, size) * np.fft.rfft(h, size), size)[:n]
 
 
 def _channels(x):

@@ -35,6 +35,8 @@ Item {
   // keep the chosen row in view
   onCursorChanged: reveal()
   function reveal() {
+    // back on the first row: right to the top, so the note above it shows
+    if (cursor === 0) { scroller.contentY = 0; return }
     // (the Repeater is a child of the column too, so find the row by index)
     const row = list.children.find(c => c.index === cursor && c.r !== undefined)
     if (!row) return
