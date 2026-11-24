@@ -53,6 +53,10 @@ Item {
       font.pixelSize: Theme.em * 1.8
       font.bold: true
     }
+    // the wheel anywhere on the card (its padding and the cue strip too)
+    // scrolls the keys
+    WheelScroll { anchors.fill: parent; view: rows }
+
     Flickable {
       id: rows
       anchors.top: title.bottom
