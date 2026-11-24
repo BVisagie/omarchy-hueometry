@@ -410,7 +410,8 @@ Item {
     anchors.rightMargin: Theme.em * 2
     anchors.bottomMargin: -Theme.em * 0.5
     size: Math.min(play.width, play.height) * 0.26
-    kind: play.ref && ["river", "waterfall", "heart"].indexOf(play.ref.area || play.ref.difficulty) >= 0 ? "frog" : "toucan"
+    readonly property string where: play.ref ? (play.ref.area || play.ref.difficulty || "") : ""
+    kind: ["river", "waterfall", "heart"].indexOf(where) >= 0 ? "frog" : ["ruins", "temple"].indexOf(where) >= 0 ? "monkey" : "toucan"
     cheering: !!play.result
   }
 }
