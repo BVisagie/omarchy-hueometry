@@ -26,7 +26,8 @@ release.
    `bin/check` (CI cannot run the plugin's checks against a real shell).
 3. Optionally run the release workflow by hand first (Actions, Release, Run
    workflow): a dry run builds both, keeps them as files on the run, and
-   publishes the plugin to the plugin repository's `dry-run` branch only.
+   (when publishing is turned on) publishes the plugin to the plugin
+   repository's `dry-run` branch only.
 4. Tag that commit with `v` and the version (the first release is 0.1.0;
    use the version you are releasing) and push the tag:
 

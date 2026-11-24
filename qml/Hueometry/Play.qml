@@ -244,7 +244,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -Theme.em * 0.6
         spacing: Theme.em * 0.1
-        // the name shortens if it must; the place ("3 of 8") always shows
+        // the area's name and its place ("· 3 of 8"): the name keeps at least half
+        // the row, and either part shortens if it must
         Row {
           width: parent.width
           Text {

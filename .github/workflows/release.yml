@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Install system packages
         run: |
-          pacman -Syu --noconfirm --needed git base-devel qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland github-cli
+          pacman -Syu --noconfirm --needed git base-devel qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland
       - uses: actions/checkout@v7
       - name: Check the tag matches every version
         if: github.event_name == 'push'
@@ -125,7 +125,10 @@ jobs:
           # the plugin repository must already have `main` as its default
           # branch (what `omarchy plugin add` and the marketplace clone);
           # never let a first push create it, or make dry-run the default
-          head=$(git ls-remote --symref git@github.com:BVisagie/omarchy-hueometry-plugin.git HEAD | sed -n 's|^ref: refs/heads/\([^[:space:]]*\).*|\1|p')
+          # (two steps, so a failed ls-remote, such as a wrong deploy key,
+          # stops here with its own error)
+          remote=$(git ls-remote --symref git@github.com:BVisagie/omarchy-hueometry-plugin.git HEAD)
+          head=$(sed -n 's|^ref: refs/heads/\([^[:space:]]*\).*|\1|p' <<<"$remote")
           if [[ "$head" != main ]]; then
             echo "BVisagie/omarchy-hueometry-plugin must have main as its default branch (it has '${head:-nothing}')" >&2
             exit 1
@@ -145,6 +148,6 @@ jobs:
             git push origin "HEAD:refs/heads/main"
           else
             # a dry run always pushes, so its branch shows this run's plugin
-            git diff --cached --quiet || git commit -m "Hueometry ${GITHUB_REF_NAME} (dry run)"
+            git diff --cached --quiet || git commit -m "Hueometry ${GITHUB_SHA::7} (dry run)"
             git push --force origin "HEAD:refs/heads/$BRANCH"
           fi
