@@ -7,8 +7,9 @@ import "js/store.mjs" as Store
 Item {
   id: map
   required property var game
-  // the first steps until they are done, then the area last visited
-  property int area: game.progress.tutorial ? openAtOrBefore(game.lastArea) : 0
+  // the first steps until they are done, then the area last visited (set
+  // once on opening: a binding here would loop through lastArea)
+  property int area: 0
   // free play can leave lastArea on an area not open yet
   function openAtOrBefore(i) {
     let a = Math.max(0, Math.min(i, S.AREAS.length))
@@ -47,7 +48,10 @@ Item {
 
   onAreaChanged: { game.lastArea = area; areaScroll.show(tiles.itemAt(area)) }
   // reveal the starting selection once the grid has placed its tiles
-  Component.onCompleted: Qt.callLater(function() { areaScroll.show(tiles.itemAt(area)) })
+  Component.onCompleted: {
+    area = game.progress.tutorial ? openAtOrBefore(game.lastArea) : 0
+    Qt.callLater(function() { areaScroll.show(tiles.itemAt(area)) })
+  }
   onLevelChanged: levelScroll.show(stones.itemAt(level))
 
   RoundButton {

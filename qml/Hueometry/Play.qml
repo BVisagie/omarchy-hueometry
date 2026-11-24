@@ -248,7 +248,10 @@ Item {
         Row {
           width: parent.width
           Text {
-            width: Math.min(implicitWidth, parent.width - placeText.implicitWidth)
+            id: nameText
+            // up to half the row, so a long place ("· Temple Keeper")
+            // cannot squeeze the name to a letter
+            width: Math.min(implicitWidth, Math.max(parent.width * 0.5, parent.width - placeText.implicitWidth))
             elide: Text.ElideRight
             text: play.ref ? play.game.nameOf(play.ref) : ""
             color: Theme.ink
@@ -260,6 +263,8 @@ Item {
           }
           Text {
             id: placeText
+            width: Math.min(implicitWidth, parent.width - nameText.width)
+            elide: Text.ElideRight
             text: play.ref ? " · " + play.game.placeOf(play.ref) : ""
             color: Theme.ink
             font.family: Theme.font
