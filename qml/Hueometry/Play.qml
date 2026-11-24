@@ -30,6 +30,7 @@ Item {
   // Opens a puzzle, or resumes a saved one ({ moves, assisted }). The board
   // is regenerated on a worker thread; play starts when it arrives.
   function open(r, saved) {
+    bloomWait.stop()
     ref = r
     session = null
     won = null
@@ -139,6 +140,7 @@ Item {
 
   function restart() {
     if (!session) return
+    bloomWait.stop()
     session = S.restart(session)
     // a new attempt uses the latest layout and motion settings
     game.refreshSettings()

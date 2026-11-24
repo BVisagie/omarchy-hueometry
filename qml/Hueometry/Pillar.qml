@@ -223,6 +223,8 @@ Item {
   // the flower: opens on the plinth when the pillar is done, in its colour
   Item {
     id: flower
+    // above the focus outline, which would cross its heart
+    z: 1
     // never so small that its symbol cannot be read (thin circle spokes)
     width: Math.max(root.w * 0.5, Theme.em * 1.5)
     height: width

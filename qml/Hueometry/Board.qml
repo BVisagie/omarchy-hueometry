@@ -170,7 +170,8 @@ Item {
       seed: index + 1
       bloomAtEnd: board.pattern === "circle"
       complete: board.bloomed[index] === true
-      tone: board.view && board.view.columns[index] && board.view.columns[index].length ? Palette.orb(board.view.columns[index][0]) : null
+      // from the orbs as drawn, so a flower changes colour only with them
+      tone: board.stack[index] && board.stack[index].length ? Palette.orb(board.stack[index][board.stack[index].length - 1]) : null
 
       function nudge() { shakeAnim.restart() }
       SequentialAnimation {

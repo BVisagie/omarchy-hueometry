@@ -211,6 +211,14 @@ Item {
       keyClick(Qt.Key_U)
       compare(board.bloomed[0], false, "closed again after undo")
       compare(pillar.bloomTone.name, opened, "it closes in the colour it opened in")
+      // open it again, then restart while another orb is in flight
+      tryVerify(() => !board.busy, 2000)
+      game.current.touch(1); game.current.touch(0)
+      tryVerify(() => board.bloomed[0] === true, 2000)
+      game.current.touch(1); game.current.touch(2)
+      game.current.restart()
+      compare(board.bloomed[0], false, "closed by the restart")
+      compare(pillar.bloomTone.name, opened, "and still in its own colour")
       game.show("menu")
     }
 
