@@ -20,8 +20,9 @@ Item {
     onTriggered: {
       const p = g.current
       const sol = p.session.puzzle.solution
-      for (let i = 0; i < sol.length - root.remaining; i++) { p.touch(sol[i].from); p.touch(sol[i].to) }
-      p.focusColumn = sol[sol.length - root.remaining].from
+      const left = Math.max(1, Math.min(sol.length, root.remaining))
+      for (let i = 0; i < sol.length - left; i++) { p.touch(sol[i].from); p.touch(sol[i].to) }
+      p.focusColumn = sol[sol.length - left].from
     }
   }
 }

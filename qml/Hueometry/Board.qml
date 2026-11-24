@@ -65,6 +65,9 @@ Item {
   // Plays what session.touch answered.
   function effect(e) {
     if (!view || !geom.columns.length) return
+    // a touch during a landing: land that orb now (its squash, dust and
+    // chime), then play the new effect
+    flyer.settle()
     switch (e.kind) {
     case "lift": {
       const cols = copy(view.columns)
@@ -289,6 +292,16 @@ Item {
     }
     function wobble() { wobbleAnim.restart() }
     function stopFlight() { flight.stop(); after = null }
+    // run the rest of the flight at once: a move's second leg, then its
+    // landing (a few steps at most)
+    function settle() {
+      for (let i = 0; i < 4 && flight.running && after; i++) {
+        const next = after
+        after = null
+        flight.stop()
+        next()
+      }
+    }
 
     NumberAnimation {
       id: flight

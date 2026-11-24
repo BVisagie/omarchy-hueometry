@@ -223,7 +223,7 @@ Item {
             color: "transparent"
             border.width: Math.max(1.5, width * 0.14)
             border.color: root.restored ? Qt.alpha("#FFE9A0", 0.8) : Qt.alpha("#000000", 0.25)
-            Behavior on border.color { ColorAnimation { duration: Theme.ms(1200) } }
+            Behavior on border.color { enabled: !root.still; ColorAnimation { duration: Theme.ms(1200) } }
           }
         }
       }
@@ -595,7 +595,7 @@ Item {
             color: "transparent"
             border.color: root.restored ? Qt.alpha("#FFD890", 0.8) : "#40000000"
             border.width: Math.max(1.5, width * 0.18)
-            Behavior on border.color { ColorAnimation { duration: Theme.ms(1500) } }
+            Behavior on border.color { enabled: !root.still; ColorAnimation { duration: Theme.ms(1500) } }
           }
         }
       }
@@ -616,7 +616,7 @@ Item {
         width: root.w * 0.05; height: root.h * 0.08
         radius: width * 0.5
         color: root.restored ? "#FFD27A" : "#1E150A"
-        Behavior on color { ColorAnimation { duration: Theme.ms(1500) } }
+        Behavior on color { enabled: !root.still; ColorAnimation { duration: Theme.ms(1500) } }
       }
       Torch { fx: 0.455; fy: 0.2 }
       Torch { fx: 0.545; fy: 0.2 }
@@ -733,8 +733,10 @@ Item {
       // the heart in the fork, and its glow
       Rectangle {
         x: root.w * 0.5 - width / 2; y: root.h * 0.22 - height / 2
-        width: root.w * (root.restored ? 0.16 : 0.1); height: width; radius: width / 2
-        Behavior on width { NumberAnimation { duration: Theme.ms(1500) } }
+        // grows when the colour returns (a resize never animates)
+        property real grow: root.restored ? 1.6 : 1
+        Behavior on grow { enabled: !root.still; NumberAnimation { duration: Theme.ms(1500) } }
+        width: root.w * 0.1 * grow; height: width; radius: width / 2
         gradient: Gradient {
           GradientStop { position: 0.0; color: "transparent" }
           GradientStop { position: 0.5; color: Qt.alpha("#FFB8E0", root.restored ? 0.35 : 0.16) }
@@ -750,7 +752,7 @@ Item {
         preferredRendererType: Shape.CurveRenderer
         transformOrigin: Item.TopLeft
         opacity: root.restored ? 1.0 : 0.65
-        Behavior on opacity { NumberAnimation { duration: Theme.ms(1500) } }
+        Behavior on opacity { enabled: !root.still; NumberAnimation { duration: Theme.ms(1500) } }
         ShapePath {
           strokeColor: Qt.alpha("#FFFFFF", 0.5)
           strokeWidth: 1.5
@@ -928,12 +930,12 @@ Item {
     anchors.fill: parent
     color: "#081408"
     opacity: root.restored ? 0.0 : 0.22
-    Behavior on opacity { NumberAnimation { duration: Theme.ms(1800); easing.type: Easing.InOutQuad } }
+    Behavior on opacity { enabled: !root.still; NumberAnimation { duration: Theme.ms(1800); easing.type: Easing.InOutQuad } }
   }
   Rectangle {
     anchors.fill: parent
     opacity: root.restored ? 0.18 : 0.0
-    Behavior on opacity { NumberAnimation { duration: Theme.ms(1200) } }
+    Behavior on opacity { enabled: !root.still; NumberAnimation { duration: Theme.ms(1200) } }
     gradient: Gradient {
       GradientStop { position: 0.0; color: root.look.light }
       GradientStop { position: 1.0; color: "transparent" }

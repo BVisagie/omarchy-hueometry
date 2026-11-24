@@ -270,6 +270,27 @@ Item {
       game.show("menu")
     }
 
+    function test_9bg_a_quick_touch_still_lands_the_orb_and_opens_its_flower() {
+      // as in 9bd: 0->2, then 1->0 fills column 0; lifting again at once
+      // must not swallow that landing (its flower, squash and chime)
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      game.current.touch(0); game.current.touch(2)
+      tryVerify(() => !board.busy, 2000)
+      opened.target = board
+      opened.clear()
+      game.current.touch(1); game.current.touch(0)
+      game.current.touch(1)                   // lift at once, mid-landing
+      compare(opened.count, 1, "the filled pillar opened")
+      compare(opened.signalArguments[0][0], 0)
+      compare(board.bloomed[0], true)
+      game.current.touch(1)                   // put it back: no chime
+      tryVerify(() => !board.busy, 2000)
+      compare(opened.count, 1, "putting an orb back opens nothing")
+      game.show("menu")
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3, muted: true })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })

@@ -116,7 +116,10 @@ Item {
   Timer {
     id: critterClock
     running: bank.musicOn && bank.inPlay
+    repeat: true
     interval: 6000
+    // leaving the puzzle or turning the music off silences a critter at once
+    onRunningChanged: if (!running) { for (const v of bank.critterVoices) v.stop(); interval = 6000 }
     onTriggered: {
       const names = bank.crittersFor[bank.family] ?? []
       const name = names[Math.floor(Math.random() * names.length)]

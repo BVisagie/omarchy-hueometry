@@ -38,6 +38,7 @@ Item {
 
   // where a legal move may land: a warm light rising from the base
   Rectangle {
+    id: glow
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
     width: root.w * 1.9
@@ -48,8 +49,8 @@ Item {
     readonly property real k: root.hinted && !root.target ? root.pulse : 1
     gradient: Gradient {
       GradientStop { position: 0.0; color: "transparent" }
-      GradientStop { position: 0.6; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.18 * parent.k) }
-      GradientStop { position: 1.0; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.42 * parent.k) }
+      GradientStop { position: 0.6; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.18 * glow.k) }
+      GradientStop { position: 1.0; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.42 * glow.k) }
     }
   }
 
