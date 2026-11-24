@@ -39,9 +39,16 @@ export function progressText(diskRaw, p) {
   return JSON.stringify(Object.assign({}, disk, p, { done, current, version: VERSION }));
 }
 
-// the same puzzle saved again: the new fields over the old, in its ref too
+// the same puzzle saved again: the game's own fields from the newest copy,
+// and the destination's unknown fields kept, in its ref too
 function sameCurrent(old, now) {
-  return Object.assign({}, old, now, { ref: Object.assign({}, old.ref, now.ref) });
+  const pick = (o, names) => {
+    const out = {};
+    for (const n of names) if (n in o) out[n] = o[n];
+    return out;
+  };
+  const ref = Object.assign({}, now.ref, old.ref, pick(now.ref, ["kind", "index", "area", "difficulty"]));
+  return Object.assign({}, now, old, pick(now, ["moves", "assisted", "pack"]), { ref });
 }
 
 // the same puzzle: only the fields that name a puzzle of its kind count

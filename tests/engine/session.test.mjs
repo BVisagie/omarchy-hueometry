@@ -154,6 +154,13 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   assert.equal(out.done[k("clearing/0")].stars, 3);
   assert.equal(out.current.note, "x");
   assert.deepEqual(out.current.moves, [[0, 1]]);
+  // saving the same puzzle from the other host's copy keeps this file's own
+  // extra fields and takes the moves from the newest copy
+  const there = St.progress(JSON.stringify({ current: { ref: Object.assign({ seed: 9 }, ref), moves: [[2, 3]], pack: St.PACK, note: "y" }, currentAt: 50 }));
+  const cur = JSON.parse(St.progressText(saved, St.merge(St.progress(saved), there))).current;
+  assert.equal(cur.note, "x");
+  assert.equal(cur.ref.seed, 7);
+  assert.deepEqual(cur.moves, [[2, 3]]);
   // a better score from the other host keeps this file's own extra fields
   const theirs = St.progress(JSON.stringify({ done: { [k("clearing/0")]: { best: 7, stars: 2 } } }));
   const kept = JSON.parse(St.progressText(saved, St.merge(theirs, St.progress(saved)))).done[k("clearing/0")];
