@@ -227,7 +227,8 @@ Item {
     width: Math.max(root.w * 0.5, Theme.em * 1.5)
     height: width
     x: root.w / 2 - width / 2
-    y: root.bloomAtEnd ? root.w * 0.15 - height / 2 : root.h - root.w * 0.17 - height / 2
+    // past the capital on the circle, clear of the outermost orb
+    y: root.bloomAtEnd ? root.w * 0.1 - height : root.h - root.w * 0.17 - height / 2
     visible: scale > 0 && !!root.bloomTone
     scale: root.complete && root.tone ? 1 : 0
     Behavior on scale { NumberAnimation { duration: Theme.ms(420); easing.type: Easing.OutBack } }
