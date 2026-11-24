@@ -29,7 +29,9 @@ export function progressText(diskRaw, p) {
   const done = {};
   for (const [k, v] of Object.entries(p.done)) {
     const old = diskDone[k];
-    done[k] = old && typeof old === "object" ? Object.assign({}, old, v) : v;
+    // the winning record gives the score; this file's own fields win over
+    // fields carried in from the other host's file
+    done[k] = old && typeof old === "object" ? Object.assign({}, v, old, { best: v.best, assisted: v.assisted }) : v;
   }
   const same = p.current && disk.current && typeof disk.current === "object" && disk.current.ref
     && disk.current.pack === p.current.pack && sameRef(disk.current.ref, p.current.ref);
