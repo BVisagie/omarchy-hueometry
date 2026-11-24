@@ -315,12 +315,13 @@ Item {
       tryVerify(() => game.current.session !== null, 5000)
       const board = game.current.children.find(c => c.bloomed !== undefined)
       game.current.touch(0); game.current.touch(2)
-      tryVerify(() => !board.busy, 2000)       // landed: its squash runs
+      board.land()                            // land it now: its squash starts
       const row = board.children.find(c => c.content !== undefined && c.index === 2)
       const orb = row.orbs.itemAt(0)
+      verify(orb.squashing, "the landing squashes")
       game.current.touch(1)                   // lift from another pillar
       verify(row.orbs.itemAt(0) === orb, "the landed orb was not rebuilt")
-      verify(orb.squish > 0, "and still squashes")
+      verify(orb.squashing, "and it still squashes")
       game.current.touch(1)
       tryVerify(() => !board.busy, 2000)
       game.show("menu")

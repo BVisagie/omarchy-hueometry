@@ -23,6 +23,7 @@ Item {
     Rotation { origin.x: orb.size / 2; origin.y: orb.size / 2; angle: orb.axis }
   ]
   function land() { if (!Theme.reducedMotion) squash.restart() }
+  readonly property bool squashing: squash.running
   SequentialAnimation {
     id: squash
     NumberAnimation { target: orb; property: "squish"; to: 0.12; duration: Theme.ms(60); easing.type: Easing.OutQuad }
