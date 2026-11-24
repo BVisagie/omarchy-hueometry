@@ -5,7 +5,8 @@ QtObject {
   property string kind: "app"
   property bool canFullscreen: false
   property string version: ""
-  property var files: ({})
+  // muted, so the tests make no sound
+  property var files: ({ "settings.json": JSON.stringify({ muted: true }) })
   // true to act like a full disk
   property bool failWrites: false
   function readText(name) { return files[name] || "" }

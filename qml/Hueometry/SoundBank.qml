@@ -6,10 +6,12 @@ import QtMultimedia
 // music and the area's ambience follow the music slider.
 Item {
   id: bank
-  property real music: 0.6
-  property real effects: 0.8
+  // silent until Sound.qml passes on the game's settings, in whatever order
+  // its bindings arrive, so a muted game never starts its music on load
+  property real music: 0
+  property real effects: 0
   property int area: 0
-  property bool playing: true
+  property bool playing: false
   property bool inPlay: false
   property real duck: 1.0
 
@@ -21,6 +23,8 @@ Item {
     property url source
     property int next: 0
     function play(volume) {
+      // silenced: start nothing at all, rather than a sound at no volume
+      if (bank.effects <= 0) return
       const v = [a, b, c][next]
       next = (next + 1) % 3
       v.level = volume
@@ -74,8 +78,7 @@ Item {
     source: bank.inPlay ? "sounds/music-play.ogg" : "sounds/music-menu.ogg"
     loops: MediaPlayer.Infinite
     audioOutput: AudioOutput { volume: bank.music * bank.duck * 0.7 }
-    onSourceChanged: if (bank.playing) play()
-    Component.onCompleted: if (bank.playing) play()
+    onSourceChanged: if (bank.musicOn) play()
   }
 
   MediaPlayer {
@@ -83,11 +86,14 @@ Item {
     source: bank.inPlay ? "sounds/ambience-" + bank.ambienceFor[bank.area] + ".ogg" : ""
     loops: MediaPlayer.Infinite
     audioOutput: AudioOutput { volume: bank.music * 0.9 }
-    onSourceChanged: if (bank.playing && source != "") play()
+    onSourceChanged: if (bank.musicOn && source != "") play()
   }
 
-  onPlayingChanged: {
-    if (playing) { tune.play(); if (air.source != "") air.play() }
+  // music and ambience pause while silenced or turned to nothing, and pick
+  // up where they were when turned back up
+  readonly property bool musicOn: playing && music > 0
+  onMusicOnChanged: {
+    if (musicOn) { tune.play(); if (air.source != "") air.play() }
     else { tune.pause(); air.pause() }
   }
 }
