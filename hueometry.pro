@@ -2,7 +2,7 @@
 QT += quick qml
 CONFIG += c++17
 TARGET = hueometry
-VERSION = 0.1.0
+VERSION = 0.2.0
 
 # The version, and which commit this build is (tools/version/build-id.sh),
 # written into a source file in the build folder rather than a define (a
@@ -22,7 +22,8 @@ game.files = src/Main.qml \
   $$files(qml/Hueometry/qmldir) \
   $$files(qml/Hueometry/*.qml) \
   $$files(qml/Hueometry/js/*.mjs) \
-  $$files(qml/Hueometry/sounds/*)
+  $$files(qml/Hueometry/sounds/*) \
+  $$files(qml/Hueometry/fonts/*)
 game.prefix = /
 RESOURCES += game
 

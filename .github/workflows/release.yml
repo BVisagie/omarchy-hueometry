@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Install system packages
         run: |
-          pacman -Syu --noconfirm --needed git base-devel qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland
+          pacman -Syu --noconfirm --needed git base-devel python qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-wayland
       - uses: actions/checkout@v7
       - name: Check the tag matches every version
         if: github.event_name == 'push'
@@ -49,7 +49,10 @@ jobs:
           chown -R builder "$GITHUB_WORKSPACE"
           su builder -c "cd '$GITHUB_WORKSPACE/pkgbuild' && makepkg -f --noconfirm"
       - name: Assemble the shell plugin
-        run: su builder -c "cd '$GITHUB_WORKSPACE' && bin/plugin"
+        run: |
+          su builder -c "cd '$GITHUB_WORKSPACE' && bin/plugin"
+          # what the marketplace would review never reaches a release
+          tools/check/plugin-guard.sh
       - uses: actions/upload-artifact@v7
         with:
           name: plugin

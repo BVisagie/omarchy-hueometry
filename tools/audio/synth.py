@@ -21,6 +21,9 @@ import wave
 
 import numpy as np
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import loudness  # noqa: E402  (shared with tools/check/audio.py)
+
 SR = 44100
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "qml", "Hueometry", "sounds")
 
@@ -186,9 +189,13 @@ def fade_tail(x, ms=30):
 
 
 def write_wav(path, x):
-    data = (np.clip(x, -1, 1) * 32767).astype("<i2")
+    """Writes 16-bit PCM: x is mono (n,) or stereo (2, n)."""
+    x = np.asarray(x)
+    channels = 1 if x.ndim == 1 else x.shape[0]
+    frames = x if x.ndim == 1 else x.T.reshape(-1)
+    data = (np.clip(frames, -1, 1) * 32767).astype("<i2")
     with wave.open(path, "wb") as w:
-        w.setnchannels(1)
+        w.setnchannels(channels)
         w.setsampwidth(2)
         w.setframerate(SR)
         w.writeframes(data.tobytes())
@@ -213,6 +220,54 @@ def seamless(x, crossfade):
 
 # Effects
 # -------
+
+# How loud each effect is, as its loudest 400 ms (K-weighted LUFS): the mix
+# lives here, not in SoundBank.qml, which plays every effect at full level.
+# tools/check/audio.py checks the shipped files against this table.
+EFFECT_LUFS = {
+    "solved": -14.5, "hint": -16.0, "restart": -16.5,
+    **{f"place-{c}": -17.5 for c in range(6)}, **{f"lift-{i}": -17.5 for i in (1, 2, 3)},
+    "drop": -18.0, "undo": -18.5, "refuse": -19.5, "select": -25.5,
+    **{f"complete-{c}": -21.0 for c in range(6)},
+}
+TRUE_PEAK_MAX = -1.0
+# the loops' integrated loudness (LUFS)
+LOOP_LUFS = {"music-menu": -21.0, "music-forest": -21.0, "music-river": -21.0, "music-temple": -21.0,
+             "ambience-forest": -27.0, "ambience-river": -27.0, "ambience-temple": -27.0}
+
+
+def fade_head(x, ms=0.5):
+    """A raised-cosine fade-in so no effect starts on a click; short enough
+    to keep a mallet's attack crisp."""
+    n = max(1, int(SR * ms / 1000))
+    x = x.copy()
+    x[:n] *= 0.5 - 0.5 * np.cos(np.pi * np.arange(n) / n)
+    return x
+
+
+def brighten(x, db=2.0, lo=5000.0, hi=9000.0):
+    """A gentle shelf above about 7 kHz, so effects are not dull."""
+    def gain(f):
+        t = np.clip((f - lo) / (hi - lo), 0, 1)
+        return 1 + (10 ** (db / 20) - 1) * (t * t * (3 - 2 * t))
+    return spectrum_filter(x, gain)
+
+
+def to_level(x, lufs):
+    """Scales an effect to its loudest-moment target, never past the true
+    peak limit (a quieter result then fails the check, loudly)."""
+    x = x * 10 ** ((lufs - loudness.momentary_max(x)) / 20)
+    over = loudness.true_peak(x) - (TRUE_PEAK_MAX - 0.1)  # headroom for 16-bit and Vorbis
+    return x * 10 ** (-over / 20) if over > 0 else x
+
+
+def to_integrated(x, lufs):
+    """Scales a loop to its integrated loudness, never past the true peak
+    limit."""
+    x = x * 10 ** ((lufs - loudness.integrated(x)) / 20)
+    over = loudness.true_peak(x) - (TRUE_PEAK_MAX - 0.1)  # headroom for 16-bit and Vorbis
+    return x * 10 ** (-over / 20) if over > 0 else x
+
 
 def effects():
     rng = np.random.default_rng(11)
@@ -264,15 +319,71 @@ def effects():
     chord = pad([NOTE["C4"], NOTE["E4"], NOTE["G4"], NOTE["C5"]], dur, rng, attack=0.4, release=1.6) * 0.5
     fan += fit(chord, len(fan))
     out["solved"] = fade_tail(reverb(fan, 2.2, 0.32, rng), 200)
+    # complete: a pillar full of one colour rings that colour's note softly
+    # on a bell, the octave above following
+    for c, name in enumerate(ORB_NOTES):
+        ring = np.zeros(int(SR * 1.6))
+        for k, mult in enumerate((1, 2)):
+            b = bell(NOTE[name] * mult, 1.3, 1.4) * (0.7 if k == 0 else 0.4)
+            at = int(SR * 0.08 * k)
+            ring[at:at + len(b)] += b[: len(ring) - at]
+        out[f"complete-{c}"] = fade_tail(reverb(ring, 1.2, 0.3, rng), 120)
     for k in list(out):
-        out[k] = peak_normalise(out[k], -4.0 if k != "solved" else -2.5)
-    out["refuse"] *= 0.55
-    out["select"] *= 0.5
+        out[k] = to_level(fade_head(brighten(out[k])), EFFECT_LUFS[k])
     return out
+
+
+# Stereo
+# ------
+# Music and ambience are stereo, shape (2, n); effects stay mono.
+
+def pan(x, p):
+    """Constant-power pan of a mono signal: p from -1 (left) to 1 (right)."""
+    a = (p + 1) * np.pi / 4
+    return np.stack([x * np.cos(a), x * np.sin(a)])
+
+
+def place(out, x, at, p=0.0):
+    """Adds a mono sound into a stereo buffer at sample `at`, panned."""
+    st = pan(x, p)
+    end = min(out.shape[1], at + st.shape[1])
+    if at < end:
+        out[:, at:end] += st[:, : end - at]
+
+
+def stereo_reverb(x, seconds=2.0, wet=0.3, rng=None, bright=6000):
+    """Reverb with a different decaying-noise response per side, so the
+    room sounds wide; keeps the dry signal where it was panned."""
+    rng = rng or np.random.default_rng(7)
+    m = int(SR * seconds)
+    t = np.arange(m) / SR
+    n = x.shape[1] + m
+    size = 1 << (n - 1).bit_length()
+    mid = np.fft.rfft(x.sum(axis=0) * 0.5, size)
+    out = np.zeros((2, n))
+    for side in range(2):
+        ir = lowpass(rng.standard_normal(m), bright) * np.exp(-t * 6.9 / seconds)
+        ir[0] = 0
+        ir /= np.sqrt(np.sum(ir ** 2))
+        wetside = np.fft.irfft(mid * np.fft.rfft(ir, size), size)[:n]
+        dry = np.concatenate([x[side], np.zeros(m)])
+        out[side] = dry * (1 - wet) + wetside * wet
+    return out
+
+
+def seamless_stereo(x, crossfade):
+    return np.stack([seamless(x[0], crossfade), seamless(x[1], crossfade)])
+
+
+def hz(midi):
+    return 440.0 * 2 ** ((midi - 69) / 12)
 
 
 # Ambience
 # --------
+# A stereo bed per family (wind, water, drone), looped; birds, frogs and
+# drips are separate short sounds the game scatters at random while you
+# play (SoundBank.qml), so the soundscape never repeats.
 
 def bird(rng, kind):
     if kind == 0:  # a two-note whistle
@@ -294,116 +405,299 @@ def bird(rng, kind):
     return np.sin(phase) * env
 
 
-def scatter(base, rng, make, rate, gain, lo=0.0):
-    n = len(base)
-    t = 0.0
-    total = n / SR
-    while True:
-        t += rng.exponential(1 / rate)
-        if t > total - 1.5:
-            break
-        s = make(rng) * gain * rng.uniform(0.4, 1.0)
-        at = int(t * SR)
-        base[at:at + len(s)] += s[: n - at]
-    return base
+def frog(rng):
+    """A soft, low double croak."""
+    out = np.zeros(int(SR * 0.55))
+    for k in range(2):
+        d = 0.16
+        t = t_axis(d)
+        f = 210 + 40 * np.sin(np.pi * t / d)
+        buzz = np.sign(np.sin(2 * np.pi * 38 * t)) * 0.5 + 0.5
+        c = np.sin(2 * np.pi * np.cumsum(f) / SR) * (0.6 + 0.4 * buzz) * np.sin(np.pi * t / d) ** 2
+        at = int(SR * 0.22 * k)
+        out[at:at + len(c)] += lowpass(c, 1800)
+    return out
 
 
-def ambience(name, seconds=42):
+def plop(rng):
+    """A small fish or pebble in water."""
+    d = 0.12
+    t = t_axis(d)
+    f = 700 * (1 + 3.0 * t / d)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.sin(np.pi * t / d)
+
+
+def drip(rng, pitch):
+    return bell(pitch, 0.6, 1.2) * 0.7
+
+
+# the scattered critters: file name -> how it is made
+CRITTERS = {
+    "critter-bird-1": lambda r: bird(r, 0),
+    "critter-bird-2": lambda r: bird(r, 1),
+    "critter-bird-3": lambda r: bird(r, 2),
+    "critter-frog": frog,
+    "critter-plop": plop,
+    # A6 and D7: in tune with every theme's scale
+    "critter-drip-1": lambda r: drip(r, 1760),
+    "critter-drip-2": lambda r: drip(r, 2349.3),
+}
+CRITTER_LUFS = -25.0
+
+
+def trim_tail(x, db=-60):
+    """Cuts the silence after the last sample louder than `db` below the
+    peak, with a short fade."""
+    loud = np.nonzero(np.abs(x) > np.max(np.abs(x)) * 10 ** (db / 20))[0]
+    return fade_tail(x[: loud[-1] + 1], 40) if len(loud) else x
+
+
+def critters():
+    rng = np.random.default_rng(41)
+    out = {}
+    for name, make in CRITTERS.items():
+        x = make(rng)
+        room = 2.4 if "drip" in name else 1.2
+        x = reverb(np.concatenate([x, np.zeros(int(SR * 0.2))]), room, 0.35 if "drip" not in name else 0.55, rng)
+        out[name] = to_level(fade_head(trim_tail(x)), CRITTER_LUFS)
+    return out
+
+
+def ambience(name, seconds=48):
     rng = np.random.default_rng({"forest": 21, "river": 22, "temple": 23}[name])
     n = int(SR * (seconds + 3))
     t = np.arange(n) / SR
-    # wind in the leaves: pink noise, banded, swelling slowly
-    wind = bandpass(pink(n, rng), 150, 900)
-    wind /= np.std(wind)
-    swell = 0.55 + 0.45 * np.sin(2 * np.pi * t / 11.0 + 1.0) * np.sin(2 * np.pi * t / 7.3)
-    mix = 0.22 * wind * swell
-    if name in ("forest", "river"):
-        # insects: a faint high shimmer, pulsing
-        ins = bandpass(rng.standard_normal(n), 4200, 5600)
-        ins /= np.std(ins)
-        mix += 0.03 * ins * (0.5 + 0.5 * np.sin(2 * np.pi * 18 * t)) * (0.6 + 0.4 * np.sin(2 * np.pi * t / 9))
-        birds = scatter(np.zeros(n), rng, lambda r: bird(r, int(r.integers(0, 3))), 0.5, 0.6)
-        mix += reverb(birds, 1.2, 0.35, rng)[:n]
+    mix = np.zeros((2, n))
+
+    def wide(make):
+        """Two sides that share half their noise: wide, not hollow."""
+        common = make()
+        return [np.sqrt(0.5) * common + np.sqrt(0.5) * make() for _ in range(2)]
+
+    # wind in the leaves, swelling slowly, a little differently per side
+    for side, w in enumerate(wide(lambda: pink(n, rng))):
+        wind = bandpass(w, 150, 900)
+        wind /= np.std(wind)
+        swell = 0.55 + 0.45 * np.sin(2 * np.pi * t / (11.0 + 2 * side) + 1.0 + side) * np.sin(2 * np.pi * t / 7.3)
+        mix[side] += 0.22 * wind * swell
+    if name == "forest":
+        # insects: a faint high shimmer, pulsing, a little wider than the wind
+        for side, w in enumerate(wide(lambda: rng.standard_normal(n))):
+            ins = bandpass(w, 4200, 5600)
+            ins /= np.std(ins)
+            mix[side] += 0.025 * ins * (0.5 + 0.5 * np.sin(2 * np.pi * (18 + side) * t)) * (0.6 + 0.4 * np.sin(2 * np.pi * t / 9))
     if name == "river":
-        water = bandpass(pink(n, rng), 120, 2200)
-        water /= np.std(water)
-        mix += 0.35 * water * (0.85 + 0.15 * np.sin(2 * np.pi * t / 5.1))
-
-        def bubble(r):
-            d = r.uniform(0.03, 0.08)
-            tt = t_axis(d)
-            f = r.uniform(600, 1400) * (1 + 2.5 * tt / d)
-            return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.sin(np.pi * tt / d)
-        mix += scatter(np.zeros(n), rng, bubble, 6.0, 0.05)
+        for side, w in enumerate(wide(lambda: pink(n, rng))):
+            water = bandpass(w, 120, 2200)
+            water /= np.std(water)
+            mix[side] += 0.35 * water * (0.85 + 0.15 * np.sin(2 * np.pi * t / (5.1 + 0.7 * side)))
     if name == "temple":
-        # a deep hush, a low drone and slow water drips in stone
-        drone = fit(pad([NOTE["C3"], NOTE["G3"]], seconds + 3, rng, attack=4, release=4) * 0.35, n)
-        mix = 0.5 * mix + drone
-
-        def drip(r):
-            return bell(r.uniform(1400, 2200), 0.5, 1.2) * 0.6
-        mix += reverb(scatter(np.zeros(n), rng, drip, 0.25, 0.25), 3.0, 0.6, rng)[:n]
-    return rms_normalise(seamless(mix, 3), -27)
+        # a deep hush and a low, wide drone in stone, on the temple theme's
+        # D: D3 and A3 on the left, A2 and A3 on the right
+        mix *= 0.5
+        for side, notes in enumerate(([50, 57], [45, 57])):
+            mix[side] += fit(pad([hz(m) for m in notes], seconds + 3, rng, attack=4, release=4) * 0.35, n)
+    return to_integrated(seamless_stereo(mix, 3), LOOP_LUFS[f"ambience-{name}"])
 
 
 # Music
 # -----
+# Four short pieces in an A A' B A form that end on the tonic and ring out:
+# the menu, and one play theme per ambience family. The melody follows the
+# chords (chord tones on strong beats, pentatonic steps between), phrases
+# end on long notes, and each family has its own key, tempo and voices.
+
+PIECES = {
+    # name: tonic, scale (pentatonic), tempo, lead, chords for A and B as
+    # (root offset, quality) per bar
+    "menu": dict(tonic=60, scale=[0, 2, 4, 7, 9], bpm=84, lead="kalimba", lead_lo=67, seed=31,
+                 a=[(0, "M"), (9, "m"), (5, "M"), (7, "M")], b=[(5, "M"), (7, "M"), (4, "m"), (9, "m")]),
+    "forest": dict(tonic=60, scale=[0, 2, 4, 7, 9], bpm=76, lead="marimba", lead_lo=67, seed=32,
+                   a=[(0, "M"), (5, "M"), (9, "m"), (7, "M")], b=[(5, "M"), (0, "M"), (2, "m"), (7, "M")]),
+    "river": dict(tonic=67, scale=[0, 2, 4, 7, 9], bpm=80, lead="kalimba", lead_lo=69, seed=33, arpeggio=True,
+                  a=[(0, "M"), (7, "M"), (9, "m"), (5, "M")], b=[(9, "m"), (5, "M"), (0, "M"), (7, "M")]),
+    "temple": dict(tonic=62, scale=[0, 3, 5, 7, 10], bpm=66, lead="bell", lead_lo=65, seed=34,
+                   a=[(0, "m"), (10, "M"), (8, "M"), (10, "M")], b=[(8, "M"), (10, "M"), (0, "m"), (7, "m")]),
+}
+QUALITY = {"M": (0, 4, 7), "m": (0, 3, 7)}
+
+
+def chord_notes(tonic, root, quality, low=48):
+    """The triad on `root` (semitones above the tonic), voiced upward from
+    near `low`: the bass note and the pad's three notes."""
+    base = tonic + root
+    while base - 12 >= low:
+        base -= 12
+    while base < low:
+        base += 12
+    return [base + q for q in QUALITY[quality]]
+
+
+# melodic shapes for a phrase's first bar: (beat, move in scale steps)
+CONTOURS = [
+    [(0, 0), (1, 1), (1.5, 1), (2, 1), (3, -1)],      # a rise and a turn
+    [(0, 0), (0.5, 1), (1, -1), (2, -1), (3, 2)],     # a little wave, then a lift
+    [(0, 0), (1, 2), (2, -1), (2.5, -1), (3, -1)],    # a leap, stepping back down
+    [(0, 0), (1.5, -1), (2, -1), (3, 2)],             # a dip and a reach
+    [(0, 0), (1, 1), (2, 2), (3, -1)],                # climbing
+]
+
+
+def melody(spec, bars, rng):
+    """(beat, length, midi) notes in phrases of two bars: a shaped first bar,
+    then two long notes that settle. Strong beats (1 and 3) take a chord
+    tone; the steps between stay in the pentatonic scale, so nothing clashes.
+    Every 8-bar section ends on its last chord's root where the scale has
+    it, and the piece on the tonic. The A sections share their shapes, the
+    B section has its own, a step higher."""
+    tonic, scale, lo = spec["tonic"], spec["scale"], spec["lead_lo"]
+    pool = [m for m in range(lo, lo + 22) if (m - tonic) % 12 in scale]
+    top = len(pool) - 1
+
+    def tones(bar):
+        root, quality = bars[bar]
+        return {(tonic + root + q) % 12 for q in QUALITY[quality]}
+
+    def snap(i, bar, direction, avoid=None):
+        """The chord tone nearest scale step i, leaning toward `direction`,
+        never the pitch `avoid`."""
+        best = None
+        for d in sorted(range(-3, 4), key=lambda d: (abs(d), -d * direction)):
+            k = min(top, max(0, i + d))
+            if pool[k] % 12 in tones(bar) and pool[k] != avoid:
+                best = k
+                break
+        return best if best is not None else min(top, max(0, i))
+
+    def walk(i, step):
+        k = i + step
+        return k if 0 <= k <= top else i - step  # turn back at the edges
+
+    sections = {}  # the shapes of the A and B tunes
+    notes = []
+    i = len(pool) // 2 - 1
+    for bar in range(len(bars)):
+        if bar == len(bars) - 1:
+            # the ring-out: the tonic, near where the tune is
+            home = min((k for k in range(top + 1) if pool[k] % 12 == tonic % 12), key=lambda k: abs(k - i))
+            notes.append((bar * 4, 4, pool[home]))
+            break
+        inside = bar % 8
+        b_part = 16 <= bar < 24
+        if not sections:
+            pick = rng.permutation(len(CONTOURS))
+            sections["A"] = [CONTOURS[pick[0]], CONTOURS[pick[1]]]
+            sections["B"] = [CONTOURS[pick[2]], CONTOURS[pick[3]]]
+        if inside % 2 == 0:
+            # the phrase's shaped bar: phrases 1 and 3 share a shape, 2 and 4
+            # the other; each phrase starts where the section's tune does
+            shape = sections["B" if b_part else "A"][(inside // 2) % 2]
+            start = len(pool) // 2 + (1 if b_part else -1) + (inside // 4)
+            for k, (beat, step) in enumerate(shape):
+                if k == 0:
+                    i = snap(start, bar, 1)
+                elif beat in (0, 2):
+                    i = snap(walk(i, step), bar, step, avoid=pool[i])
+                else:
+                    i = walk(i, step)
+                nxt = shape[k + 1][0] if k + 1 < len(shape) else 4
+                notes.append((bar * 4 + beat, nxt - beat, pool[i]))
+        else:
+            # the phrase settles: down a step to a chord tone, then (at the
+            # end of a section) to the root, else to another chord tone
+            i = snap(walk(i, -1), bar, -1, avoid=pool[i])
+            notes.append((bar * 4, 2, pool[i]))
+            root = (tonic + bars[bar][0]) % 12
+            if inside == 7:
+                cands = [k for k in range(top + 1) if pool[k] % 12 == root]
+                i = min(cands, key=lambda k: abs(k - i)) if cands else snap(i, bar, -1, avoid=pool[i])
+            else:
+                i = snap(walk(i, -1 if inside == 3 else 1), bar, -1 if inside == 3 else 1, avoid=pool[i])
+            notes.append((bar * 4 + 2, 2, pool[i]))
+    return notes
+
+
+def voice(lead, f, dur, rng):
+    if lead == "kalimba":
+        return kalimba(f, dur, rng)
+    if lead == "bell":
+        return bell(f, dur, 1.6) * 0.8
+    return marimba(f, dur, 0.7, rng)
+
 
 def music(name):
-    rng = np.random.default_rng({"menu": 31, "play": 32}[name])
-    bpm = 84 if name == "menu" else 72
-    beat = 60 / bpm
-    bars = 16
-    total = bars * 4 * beat
+    spec = PIECES[name]
+    rng = np.random.default_rng(spec["seed"])
+    beat = 60 / spec["bpm"]
+    a, b = spec["a"], spec["b"]
+    # A A' B A, then one bar of the tonic to ring out on
+    bars = a + a + a + a + b + b + a + a + [(0, a[0][1])]
+    total = len(bars) * 4 * beat
     n = int(SR * (total + 4))
-    out = np.zeros(n)
-    # chords: I - vi - IV - V in C, gently
-    chords = [["C4", "E4", "G4"], ["A3", "C4", "E4"], ["F4", "A4", "C5"], ["G3", "B4", "D4"]]
-    for bar in range(bars):
-        chord = chords[bar % 4]
-        p = pad([NOTE[c] for c in chord], 4 * beat + 1.5, rng, attack=0.8, release=1.2) * 0.32
-        at = int(SR * bar * 4 * beat)
-        out[at:at + len(p)] += p[: n - at]
-        # a log drum on beat 1, softly
-        d = log_drum(NOTE["C3"] if bar % 2 == 0 else NOTE["G3"] / 2, 0.6) * 0.25
-        out[at:at + len(d)] += d[: n - at]
-    # a pentatonic melody, mostly stepwise, on kalimba (menu) or marimba (play)
-    scale = ["C5", "D5", "E5", "G5", "A5", "C6", "D6", "E6"]
-    step = 0.5 if name == "menu" else 1.0
-    pos = 2
-    k = 0.0
-    while k < bars * 4 - 1:
-        if rng.random() < (0.72 if name == "menu" else 0.5):
-            note = NOTE[scale[pos]]
-            inst = kalimba(note, 1.4, rng) if name == "menu" else marimba(note, 1.4, 0.7, rng)
-            at = int(SR * k * beat)
-            out[at:at + len(inst)] += inst[: n - at] * (0.42 if name == "menu" else 0.36)
-        pos = int(np.clip(pos + rng.choice([-2, -1, -1, 0, 1, 1, 2]), 0, len(scale) - 1))
-        k += step * (2 if rng.random() < 0.25 else 1)
-    if name == "menu":
-        for b in range(bars * 4):
-            if b % 2 == 1:
-                s = shaker(0.15, rng) * 0.04
-                at = int(SR * b * beat)
-                out[at:at + len(s)] += s[: n - at]
-    out = reverb(out, 2.4, 0.3, rng)[:n]
-    return rms_normalise(seamless(out[: int(SR * (total + 2))], 2), -21)
+    out = np.zeros((2, n))
+    at = lambda beats: int(SR * beats * beat)  # noqa: E731
+    for k, (root, quality) in enumerate(bars):
+        notes = chord_notes(spec["tonic"], root, quality)
+        last = k == len(bars) - 1
+        length = 4 * beat + (3.0 if last else 1.2)
+        # a soft pad, spread wide by two slightly different takes
+        for side, p in ((0, -0.6), (1, 0.6)):
+            pd = pad([hz(m) for m in notes], length, rng, attack=0.8, release=1.2 if not last else 3.0) * 0.16
+            place(out, pd, at(k * 4), p)
+        # the bass: a log drum on the root, beat 1 (and 3 in the B section)
+        bass = notes[0] - 12
+        place(out, log_drum(hz(bass), 0.7) * 0.32, at(k * 4), 0.0)
+        if 16 <= k < 24 and not last:
+            place(out, log_drum(hz(bass), 0.5) * 0.2, at(k * 4 + 2), 0.0)
+        if spec.get("arpeggio") and not last:
+            # river: flowing eighth-note arpeggios, left and right in turn
+            arp = notes + [notes[0] + 12]
+            for e in range(8):
+                m = arp[e % len(arp)] + 12
+                place(out, kalimba(hz(m), 0.9, rng) * 0.12, at(k * 4 + e * 0.5), -0.45 if e % 2 else 0.45)
+    for start, length, m in melody(spec, bars, rng):
+        dur = min(2.4, length * beat + 0.8)
+        gain = 0.42 if spec["lead"] != "bell" else 0.5
+        place(out, voice(spec["lead"], hz(m), dur, rng) * gain, at(start), 0.12)
+        if spec["lead"] == "bell" and length >= 2:
+            # temple: a low marimba answers long bell notes
+            place(out, marimba(hz(m - 24), 1.2, 0.5, rng) * 0.25, at(start + 1), -0.2)
+    if name in ("menu", "forest"):
+        for bt in range(len(bars) * 4 - 4):
+            if bt % 2 == 1:
+                place(out, shaker(0.15, rng) * 0.035, at(bt), 0.35 if bt % 4 == 1 else -0.35)
+    out = stereo_reverb(out, 2.4, 0.3, rng)[:, :n]
+    return to_integrated(out, LOOP_LUFS[f"music-{name}"])
 
 
 def main():
+    """Makes every sound, or only the kinds named: effects, critters,
+    ambience, music (numpy's rounding differs a little between machines, so
+    remaking a kind you did not change only churns its files)."""
+    known = ["effects", "critters", "ambience", "music"]
+    kinds = sys.argv[1:] or known
+    unknown = [k for k in kinds if k not in known]
+    if unknown:
+        print(f"synth: unknown kind {', '.join(unknown)} (one of {', '.join(known)})", file=sys.stderr)
+        return 2
     os.makedirs(OUT, exist_ok=True)
     made = []
-    for name, x in effects().items():
+    shorts = {}
+    if "effects" in kinds:
+        shorts.update(effects())
+    if "critters" in kinds:
+        shorts.update(critters())
+    for name, x in shorts.items():
         path = os.path.join(OUT, f"{name}.wav")
         write_wav(path, x)
         made.append(path)
-    for name in ("forest", "river", "temple"):
+    for name in ("forest", "river", "temple") if "ambience" in kinds else ():
         path = os.path.join(OUT, f"ambience-{name}.ogg")
-        write_ogg(path, ambience(name), 2)
+        write_ogg(path, ambience(name), 1)
         made.append(path)
-    for name in ("menu", "play"):
+    for name in PIECES if "music" in kinds else ():
         path = os.path.join(OUT, f"music-{name}.ogg")
-        write_ogg(path, music(name), 3)
+        write_ogg(path, music(name), 2)
         made.append(path)
     for p in made:
         print(os.path.relpath(p), os.path.getsize(p))

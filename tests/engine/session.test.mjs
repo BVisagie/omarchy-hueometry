@@ -198,3 +198,32 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   assert.equal(S.known({ kind: "free", difficulty: "constructor", index: 0 }), false);
   assert.equal(S.puzzle({ kind: "free", difficulty: "constructor", index: 0 }), null);
 });
+
+test("redo plays back what undo took, and a new move or restart forgets it", () => {
+  const p = S.puzzle({ kind: "tutorial", index: 0 });
+  let s = S.start(p);
+  const [a, b] = p.solution;
+  s = S.touch(S.touch(s, a.from).state, a.to).state;
+  s = S.touch(S.touch(s, b.from).state, b.to).state;
+  const two = S.view(s).columns;
+  s = S.undo(s);
+  s = S.undo(s);
+  assert.equal(S.view(s).moves, 0);
+  assert.ok(S.canRedo(s));
+  let r = S.redo(s);
+  assert.deepEqual(r.effect, { kind: "move", from: a.from, to: a.to, bead: r.effect.bead });
+  r = S.redo(r.state);
+  assert.deepEqual(S.view(r.state).columns, two, "both moves back, in order");
+  assert.equal(S.canRedo(r.state), false);
+  assert.equal(S.redo(r.state).effect.kind, "none", "nothing left to redo");
+  // a new move after an undo forgets the rest
+  s = S.undo(r.state);
+  assert.ok(S.canRedo(s));
+  const moved = S.touch(S.touch(s, b.from).state, b.to);
+  assert.equal(moved.effect.kind, "move");
+  s = moved.state;
+  assert.equal(S.canRedo(s), false);
+  // and so does a restart
+  s = S.restart(S.undo(s));
+  assert.equal(S.canRedo(s), false);
+});

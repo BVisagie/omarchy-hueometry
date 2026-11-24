@@ -14,6 +14,7 @@ Item {
   Component { id: hostMaker; MemoryHost {} }
   Component { id: gameMaker; Game { width: 1280; height: 720 } }
   Game { id: game; anchors.fill: parent; host: memory }
+  SignalSpy { id: opened; signalName: "opened" }
 
   TestCase {
     name: "Game"
@@ -25,7 +26,8 @@ Item {
     function playingPlayers() {
       const loader = game.sound.children.find(c => c.status !== undefined && c.item !== undefined)
       if (!loader || !loader.item) return 0
-      return loader.item.data.filter(d => d.playbackState === 1).length   // MediaPlayer.PlayingState
+      // MediaPlayer.PlayingState, and the critters' clock counts as playing
+      return loader.item.data.filter(d => d.playbackState === 1).length + (loader.item.crittersOn ? 1 : 0)
     }
     function init() { verify(game.settings.muted, "the game is muted"); compare(playingPlayers(), 0, "no music plays") }
     function cleanup() { verify(game.settings.muted, "the game is still muted"); compare(playingPlayers(), 0, "no music plays") }
@@ -44,6 +46,10 @@ Item {
 
     function test_2_solve_with_keys() {
       const sol = game.current.session.puzzle.solution
+      // the board says when a move fills a pillar (Play rings its chime,
+      // except on the winning move)
+      opened.target = game.current.children.find(c => c.geom !== undefined && c.opened !== undefined)
+      opened.clear()
       for (const m of sol) {
         keyClick(Qt.Key_1 + m.from)             // choose the pillar,
         keyClick(Qt.Key_Space)                  // lift,
@@ -54,6 +60,7 @@ Item {
       }
       tryVerify(() => !!game.current.result, 3000)
       compare(game.current.view.moves, sol.length)
+      verify(opened.count >= 1, "filling a pillar opened its flower")
       const saved = JSON.parse(memory.files["progress-app.json"])
       compare(saved.done[Store.key({ kind: "tutorial", index: 0 })].best, sol.length)
       compare(saved.current, null)
@@ -241,6 +248,99 @@ Item {
       compare(label.text, "v1.2.3 · abc1234")
       verify(label.visible)
       memory.version = ""
+    }
+
+    function test_9bf_redo_replays_an_undone_move() {
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      const sol = game.current.session.puzzle.solution
+      // every move but the winning one, then U and Ctrl+Shift+Z
+      for (const m of sol.slice(0, -1)) { game.current.touch(m.from); game.current.touch(m.to); tryVerify(() => !board.busy, 2000) }
+      const before = game.current.view.moves
+      keyClick(Qt.Key_U)
+      compare(game.current.view.moves, before - 1)
+      keyClick(Qt.Key_Z, Qt.ControlModifier | Qt.ShiftModifier)
+      tryVerify(() => !board.busy, 2000)
+      compare(game.current.view.moves, before, "Ctrl+Shift+Z redid the move, and did not also undo")
+      // and the game still plays on to its win
+      const last = sol[sol.length - 1]
+      game.current.touch(last.from); game.current.touch(last.to)
+      tryVerify(() => !!game.current.won, 2000)
+      game.show("menu")
+    }
+
+    function test_9bg_a_quick_touch_still_lands_the_orb_and_opens_its_flower() {
+      // as in 9bd: 0->2, then 1->0 fills column 0; lifting again at once
+      // must not swallow that landing (its flower, squash and chime)
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      game.current.touch(0); game.current.touch(2)
+      tryVerify(() => !board.busy, 2000)
+      opened.target = board
+      opened.clear()
+      game.current.touch(1); game.current.touch(0)
+      game.current.touch(1)                   // lift at once, mid-landing
+      compare(opened.count, 1, "the filled pillar opened")
+      compare(opened.signalArguments[0][0], 0)
+      compare(board.bloomed[0], true)
+      game.current.touch(1)                   // put it back: no chime
+      tryVerify(() => !board.busy, 2000)
+      compare(opened.count, 1, "putting an orb back opens nothing")
+      game.show("menu")
+    }
+
+    function test_9bh_lifting_from_the_pillar_just_filled_still_opens_it() {
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      game.current.touch(0); game.current.touch(2)
+      tryVerify(() => !board.busy, 2000)
+      opened.target = board
+      opened.clear()
+      game.current.touch(1); game.current.touch(0)   // fills column 0
+      game.current.touch(0)                          // and lifts from it at once
+      compare(opened.count, 1, "the filled pillar opened before the lift closed it")
+      compare(board.bloomed[0], false, "closed while its top orb is lifted")
+      game.current.touch(0)
+      tryVerify(() => !board.busy, 2000)
+      compare(opened.count, 1, "putting it back opens nothing")
+      game.show("menu")
+    }
+
+    function test_9bi_a_landing_keeps_its_squash_when_another_pillar_changes() {
+      if (Theme.reducedMotion) skip("no squash with less movement")
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      game.current.touch(0); game.current.touch(2)
+      board.land()                            // land it now: its squash starts
+      const row = board.children.find(c => c.content !== undefined && c.index === 2)
+      const orb = row.orbs.itemAt(0)
+      verify(orb.squashing, "the landing squashes")
+      game.current.touch(1)                   // lift from another pillar
+      verify(row.orbs.itemAt(0) === orb, "the landed orb was not rebuilt")
+      verify(orb.squashing, "and it still squashes")
+      game.current.touch(1)
+      tryVerify(() => !board.busy, 2000)
+      game.show("menu")
+    }
+
+    function test_9bj_the_friend_belongs_to_the_scene_behind_the_board() {
+      const friendOf = ref => {
+        game.start(ref)
+        const f = game.current.children.find(c => c.cheering !== undefined && c.kind !== undefined)
+        const kind = f.kind
+        game.show("menu")
+        return kind
+      }
+      compare(friendOf({ kind: "tutorial", index: 0 }), "toucan")
+      compare(friendOf({ kind: "level", area: "river", index: 0 }), "frog")
+      compare(friendOf({ kind: "level", area: "temple", index: 0 }), "monkey")
+      // free play sizes show areas too: medium is the ruins
+      compare(friendOf({ kind: "free", difficulty: "medium", index: 0 }), "monkey")
+      compare(friendOf({ kind: "free", difficulty: "expert", index: 0 }), "frog")
     }
 
     function test_9c_a_newer_save_is_never_overwritten() {

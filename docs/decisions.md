@@ -157,7 +157,8 @@ All defaults in plan.md section 10 were accepted, except:
   pack never credits a record or replays moves on a different board.
 - A save that cannot be written is said on screen, and the unsaved progress
   stays in memory until a later save succeeds.
-- v0.1 uses the system font (no bundled font) and English source strings
+- v0.1 used the system font; 0.2 bundles Nunito (OFL), subset to Latin, so
+  the game looks the same on every machine. Text is English source strings
   marked for translation, with no translation catalogue yet.
 - The smallest supported window is 720×540: every screen is checked there
   at 150% interface size, and the app window will not shrink below it. The
@@ -178,7 +179,7 @@ All defaults in plan.md section 10 were accepted, except:
   it. No law covers `complete`; a property test checks it against the
   independent model.
 - No chime for a finished pillar: it would need a new sound and would land
-  on top of the solved fanfare.
+  on top of the solved fanfare. (Reversed in 0.2: see Game feel.)
 
 ## Version on the menu
 
@@ -205,3 +206,41 @@ All defaults in plan.md section 10 were accepted, except:
   sound bank plays nothing until the game's settings reach it.
 - The build-id check's throwaway repositories ignore the global and system
   git settings (signing, hooks) as well as git's environment.
+
+## Omarchy conventions (0.2)
+
+- Hueometry keeps its own jungle palette and rounded style rather than
+  following the Omarchy theme accent and Hyprland's window rounding: a
+  puzzle's colours are chosen and checked for colour blindness, and should
+  not change with the desktop theme. The bar orb, drawn by the shell's own
+  WidgetButton, does follow the theme.
+- Without Qt Multimedia the game is silent and says so in Settings, naming
+  the package rather than a command (shown only once loading has failed).
+- The bar orb opens the game through the shell's plugin API (bar.shell,
+  limited to the plugin's own id), and falls back to `omarchy-shell shell
+  summon` on a shell without it.
+- Redo (Ctrl+Shift+Z, or the Redo button) plays back a taken-back move
+  through the engine; a new move or a restart forgets what was taken back.
+  It keeps no state in the engine and nothing in the save.
+- `tools/check/plugin-guard.sh` keeps the plugin clear of what the
+  marketplace's security baseline reports for review.
+
+## Game feel (0.2)
+
+- A pillar filled by a move now rings a soft bell on its colour's note
+  (`complete-<colour>.wav`), as its flower opens, reversing "no chime" above:
+  the sound is quiet (-21 LUFS against the move's -17.5), it comes when the
+  orb lands, after the move's own note, and it is skipped on the winning
+  move so the fanfare stays alone. Putting an orb back on its own pillar
+  never chimes.
+- A landing orb squashes a little along its pillar and a faint puff of dust
+  spreads from the stone; a hinted pillar's light breathes. All of it reads
+  its timing from `Theme.ms` and does not run with less movement.
+- Each area's landmark is drawn large and sunk in the area's haze, rising
+  into the band above the board, where it can be seen without competing
+  with the orbs; the map's area tiles are still pictures of the same scenes
+  (`Jungle { still: true }`, drawn once into a texture).
+- Music: a theme per area family (forest, river, temple) and one for the
+  menu, in stereo, A A' B A, ringing out on the tonic; the ambience beds
+  carry no birds or drips, which the sound bank scatters at random as
+  separate short sounds so the soundscape never repeats.

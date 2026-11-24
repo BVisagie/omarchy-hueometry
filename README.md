@@ -5,7 +5,7 @@ glowing jungle orbs so every pillar holds one colour, using the empty pillar
 as space, in as few moves as you can. Any orb may sit on any colour; you move
 one orb at a time, always the top one.
 
-![Hueometry in the Waterfall Sanctuary](plugin/preview.png)
+![Hueometry in the Hidden Temple](plugin/preview.png)
 
 Explore the Lost Jungle Temple through a short tutorial and six areas of eight
 puzzles, or pick a size in free play. There is no timer, no account, no
@@ -25,7 +25,7 @@ Download the package from the
 and install that file (use the name of the one you downloaded):
 
 ```sh
-sudo pacman -U ./hueometry-0.1.0-1-x86_64.pkg.tar.zst
+sudo pacman -U ./hueometry-0.2.0-1-x86_64.pkg.tar.zst
 ```
 
 Or build it yourself from a checkout (needs `base-devel`):
@@ -63,8 +63,8 @@ Sound needs Qt Multimedia
 (`omarchy-pkg-add qt6-multimedia`); without it the plugin plays silently. To
 remove it: `omarchy plugin remove io.github.bvisagie.hueometry`.
 
-The main menu shows the version in its bottom corner: `v0.1.0` for a
-release, or with the commit (`v0.1.0 · 9323709`) for a build made from any
+The main menu shows the version in its bottom corner: `v0.2.0` for a
+release, or with the commit (`v0.2.0 · 9323709`) for a build made from any
 other point in the repository or with local changes.
 
 Both ways share one save: progress in `~/.local/share/hueometry`, settings in
@@ -83,6 +83,7 @@ shares its pillar with only its own colour and one pillar is empty.
 | Space or Enter | lift an orb, or put it down |
 | Esc | put the orb back, or go back |
 | U or Ctrl+Z | undo a move |
+| Ctrl+Shift+Z | redo it |
 | R, then R (or hold the button) | start the puzzle again |
 | H | a hint |
 | ? | all keys |
@@ -118,5 +119,6 @@ checks).
 
 ## Licences
 
-Code: [MIT](LICENSE). Art and audio: [CC BY-SA 4.0](LICENSE-ASSETS); every
-asset is listed in [ASSETS.md](ASSETS.md).
+Code: [MIT](LICENSE). Art and audio: [CC BY-SA 4.0](LICENSE-ASSETS). The
+Nunito typeface: [SIL Open Font License 1.1](LICENSE-OFL). Every asset is
+listed in [ASSETS.md](ASSETS.md).
