@@ -65,7 +65,8 @@ Both ways share one save: progress in `~/.local/share/hueometry`, settings in
 ## Playing
 
 Click a pillar to lift its top orb, then click another pillar to put it down.
-A pillar that can take the orb glows. The puzzle is solved when every orb
+A pillar that can take the orb glows, and a pillar full of one colour
+blooms with a flower in that colour. The puzzle is solved when every orb
 shares its pillar with only its own colour and one pillar is empty.
 
 | Key | Does |
