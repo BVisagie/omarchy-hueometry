@@ -5,7 +5,7 @@ glowing jungle orbs so every pillar holds one colour, using the empty pillar
 as space, in as few moves as you can. Any orb may sit on any colour; you move
 one orb at a time, always the top one.
 
-![Hueometry in the Waterfall Sanctuary](plugin/preview.png)
+![Hueometry in the Hidden Temple](plugin/preview.png)
 
 Explore the Lost Jungle Temple through a short tutorial and six areas of eight
 puzzles, or pick a size in free play. There is no timer, no account, no
@@ -25,7 +25,7 @@ Download the package from the
 and install that file (use the name of the one you downloaded):
 
 ```sh
-sudo pacman -U ./hueometry-0.1.0-1-x86_64.pkg.tar.zst
+sudo pacman -U ./hueometry-0.2.0-1-x86_64.pkg.tar.zst
 ```
 
 Or build it yourself from a checkout (needs `base-devel`):

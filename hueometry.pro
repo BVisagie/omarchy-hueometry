@@ -2,7 +2,7 @@
 QT += quick qml
 CONFIG += c++17
 TARGET = hueometry
-VERSION = 0.1.0
+VERSION = 0.2.0
 
 # The version, and which commit this build is (tools/version/build-id.sh),
 # written into a source file in the build folder rather than a define (a
