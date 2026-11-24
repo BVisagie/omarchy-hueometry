@@ -29,10 +29,12 @@ jobs:
       - uses: actions/checkout@v7
       - name: Check the tag matches every version
         run: |
-          v="${GITHUB_REF_NAME#v}"
-          grep -qx "VERSION = $v" hueometry.pro || { echo "hueometry.pro is not $v"; exit 1; }
-          grep -qx "pkgver=$v" pkgbuild/PKGBUILD || { echo "pkgbuild/PKGBUILD is not $v"; exit 1; }
-          grep -q "\"version\": \"$v\"" plugin/manifest.json || { echo "plugin/manifest.json is not $v"; exit 1; }
+          tools/check/version.sh "$GITHUB_REF_NAME"
+          # the build shows no commit only when HEAD carries the release tag
+          # itself; fetch it explicitly, as checkout can leave it out
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          git tag --points-at HEAD | grep -qx "$GITHUB_REF_NAME"
       - name: Build the package (makepkg refuses root)
         run: |
           useradd -m builder

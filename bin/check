@@ -10,7 +10,10 @@ head="${2:-HEAD}"
 step() { printf '\n== %s\n' "$*"; }
 
 step "shell scripts"
-shellcheck -x -P SCRIPTDIR -P . bin/* tools/check/*.sh
+shellcheck -x -P SCRIPTDIR -P . bin/* tools/check/*.sh tools/version/*.sh
+
+step "the version agrees in hueometry.pro, the PKGBUILD and the plugin manifest"
+tools/check/version.sh
 
 step "laws are changed only with a Laws-Change trailer"
 tools/check/laws-trailer.sh "$base" "$head"
