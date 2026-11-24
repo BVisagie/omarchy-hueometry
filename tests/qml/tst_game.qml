@@ -189,6 +189,28 @@ Item {
       game.show("menu")
     }
 
+    function test_9bd_a_done_pillar_blooms_once_its_orb_lands() {
+      // tutorial 1: columns [1,0] [0,1] [] (top first), capacity 2; after
+      // 0->2 and 1->0, column 0 holds two 0s and is done
+      game.start({ kind: "tutorial", index: 0 })
+      tryVerify(() => game.current.session !== null, 5000)
+      const board = game.current.children.find(c => c.bloomed !== undefined)
+      game.current.touch(0); game.current.touch(2)
+      tryVerify(() => !board.busy, 2000)
+      compare(board.bloomed[0], false)
+      game.current.touch(1); game.current.touch(0)
+      compare(game.current.view.complete[0], true, "the engine says column 0 is done")
+      if (!Theme.reducedMotion) compare(board.bloomed[0], false, "not before its orb lands")
+      tryVerify(() => board.bloomed[0] === true, 2000)
+      game.current.touch(0)
+      compare(board.bloomed[0], false, "closed while its top orb is lifted")
+      game.current.touch(0)
+      tryVerify(() => board.bloomed[0] === true, 2000)
+      keyClick(Qt.Key_U)
+      compare(board.bloomed[0], false, "closed again after undo")
+      game.show("menu")
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3 })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })

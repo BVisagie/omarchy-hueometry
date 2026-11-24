@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import "js/layout.mjs" as Layout
+import "js/palette.mjs" as Palette
 
 // The puzzle board: pillars placed by a layout, the orbs on them, and the
 // animations between two engine states. It draws what `view` says (from
@@ -8,7 +9,8 @@ import "js/layout.mjs" as Layout
 Item {
   id: board
 
-  // { columns (top first), cap, selected, targets, solved } from session.view
+  // { columns (top first), cap, selected, targets, solved, complete } from
+  // session.view
   property var view: null
   property string pattern: "line"
   property int focusColumn: -1
@@ -32,8 +34,15 @@ Item {
 
   function copy(cols) { return cols.map(c => c.slice()) }
 
+  // the pillars whose flower is open: the engine's `complete`, drawn in step
+  // with the orbs, so a flower waits for its last orb to land and closes
+  // while an orb is lifted from its pillar
+  property var bloomed: []
+  function bloomExcept(column) { bloomed = (view && view.complete ? view.complete : []).map((d, i) => d && i !== column) }
+
   function sync() {
-    if (!view) { stack = []; return }
+    if (!view) { stack = []; bloomed = []; return }
+    bloomExcept(view.selected)
     const cols = copy(view.columns)
     if (view.selected >= 0 && cols[view.selected].length > 0) {
       const top = cols[view.selected].shift()
@@ -59,6 +68,7 @@ Item {
       const cols = copy(view.columns)
       const colour = cols[e.column].shift()
       stack = cols
+      bloomExcept(e.column)
       flyer.colour = colour
       flyer.fly(Layout.beadAt(geom.columns[e.column], cols[e.column].length, unit),
                 Layout.liftedAt(geom.columns[e.column], cap, unit), 0, Theme.ms(150), null)
@@ -67,6 +77,7 @@ Item {
     case "drop": {
       const cols = copy(view.columns)
       stack = cols.map((c, i) => i === e.column ? c.slice(1) : c)
+      bloomExcept(e.column)
       flyer.fly(Layout.liftedAt(geom.columns[e.column], cap, unit),
                 Layout.beadAt(geom.columns[e.column], cols[e.column].length - 1, unit), 0, Theme.ms(150),
                 function() { board.finish() })
@@ -76,6 +87,7 @@ Item {
       // the board already shows the new state; hold the landing orb back
       const cols = copy(view.columns)
       stack = cols.map((c, i) => i === e.to ? c.slice(1) : c)
+      bloomExcept(e.to)
       flyer.colour = e.bead
       const a = geom.columns[e.from], b = geom.columns[e.to]
       flyer.fly(Layout.liftedAt(a, cap, unit), Layout.liftedAt(b, cap, unit), unit * 1.6, Theme.ms(260), function() {
@@ -155,6 +167,9 @@ Item {
       target: !!board.view && board.view.targets.indexOf(index) >= 0
       hinted: !!board.hint && board.hint.kind === "play" && (board.hint.from === index || board.hint.to === index)
       empty: !!board.view && board.view.columns[index].length === 0
+      seed: index + 1
+      complete: board.bloomed[index] === true
+      tone: board.view && board.view.columns[index] && board.view.columns[index].length ? Palette.orb(board.view.columns[index][0]) : null
 
       function nudge() { shakeAnim.restart() }
       SequentialAnimation {
