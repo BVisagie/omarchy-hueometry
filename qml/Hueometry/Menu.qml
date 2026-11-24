@@ -63,4 +63,22 @@ Item {
     }
   }
   }
+
+  // which version (and build) is running, quietly in the corner, outside
+  // the scrolling column so it never covers a button; nothing when the host
+  // does not say (or has not arrived yet)
+  Text {
+    objectName: "version"
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    anchors.margins: Theme.em * 0.6
+    text: menu.game.host && menu.game.host.version ? qsTr("v%1").arg(menu.game.host.version) : ""
+    visible: text !== ""
+    color: Theme.inkSoft
+    opacity: 0.85
+    font.family: Theme.font
+    font.pixelSize: Theme.em * 0.85
+    style: Text.Raised
+    styleColor: "#A0000000"
+  }
 }

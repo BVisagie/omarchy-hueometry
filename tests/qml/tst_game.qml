@@ -222,6 +222,16 @@ Item {
       game.show("menu")
     }
 
+    function test_9be_the_menu_shows_the_version() {
+      game.show("menu")
+      const label = findChild(game.current, "version")
+      verify(!label.visible, "nothing when the host gives no version")
+      memory.version = "1.2.3 · abc1234"
+      compare(label.text, "v1.2.3 · abc1234")
+      verify(label.visible)
+      memory.version = ""
+    }
+
     function test_9c_a_newer_save_is_never_overwritten() {
       const newer = JSON.stringify({ version: Store.VERSION + 1, music: 0.3 })
       memory.files = Object.assign({}, memory.files, { "settings.json": newer })

@@ -4,6 +4,7 @@ import QtQuick
 QtObject {
   property string kind: "app"
   property bool canFullscreen: false
+  property string version: ""
   property var files: ({})
   // true to act like a full disk
   property bool failWrites: false

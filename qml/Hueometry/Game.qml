@@ -3,8 +3,9 @@ import "js/session.mjs" as S
 import "js/store.mjs" as Store
 
 // The whole game, for either host. `host` provides storage and window
-// control (see docs/decisions.md): readText(name), writeText(name, text),
-// quit(), kind ("app" or "plugin"), canFullscreen, toggleFullscreen().
+// control (see ARCHITECTURE.md): readText(name), writeText(name, text),
+// quit(), kind ("app" or "plugin"), canFullscreen, toggleFullscreen(), and
+// version (shown on the menu).
 Item {
   id: root
   property var host: null

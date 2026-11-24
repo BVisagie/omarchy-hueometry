@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
+#include "buildinfo.h"
 #include "host.h"
 
 int main(int argc, char *argv[]) {
@@ -15,6 +16,8 @@ int main(int argc, char *argv[]) {
   Host host;
   QQmlApplicationEngine engine;
   engine.rootContext()->setContextProperty(QStringLiteral("appHost"), &host);
+  // the commit, for a build that is not the release itself (or "")
+  engine.rootContext()->setContextProperty(QStringLiteral("appBuild"), QStringLiteral(HUEOMETRY_BUILD));
   QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                    [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
   engine.load(QUrl(QStringLiteral("qrc:/src/Main.qml")));

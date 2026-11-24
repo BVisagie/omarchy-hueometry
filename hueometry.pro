@@ -3,7 +3,15 @@ QT += quick qml
 CONFIG += c++17
 TARGET = hueometry
 VERSION = 0.1.0
-DEFINES += HUEOMETRY_VERSION=\\\"$$VERSION\\\"
+
+# The version, and which commit this build is (tools/version/build-id.sh),
+# written into a header rather than a define: a changed header recompiles
+# main.cpp, a changed define does not, so the build never shows a stale id.
+BUILD_ID = $$system(sh $$shell_quote($$PWD/tools/version/build-id.sh) $$VERSION)
+BUILDINFO = "$${LITERAL_HASH}define HUEOMETRY_VERSION \"$$VERSION\"" \
+            "$${LITERAL_HASH}define HUEOMETRY_BUILD \"$$BUILD_ID\""
+write_file($$OUT_PWD/buildinfo.h, BUILDINFO)|error("could not write buildinfo.h")
+INCLUDEPATH += $$OUT_PWD
 
 SOURCES += src/main.cpp src/host.cpp
 HEADERS += src/host.h

@@ -4,6 +4,8 @@ import QtQuick
 QtObject {
   property string kind: "app"
   property bool canFullscreen: false
+  // fixed, so screenshots do not change with every commit
+  property string version: "0.1.0"
   property var files: ({})
   // true to act like a full disk
   property bool failWrites: false

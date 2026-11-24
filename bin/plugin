@@ -12,6 +12,16 @@ cp "$ROOT"/LICENSE "$ROOT"/LICENSE-ASSETS "$OUT/"
 [[ -f "$ROOT/ASSETS.md" ]] && cp "$ROOT/ASSETS.md" "$OUT/"
 [[ -f "$ROOT/plugin/preview.png" ]] && cp "$ROOT/plugin/preview.png" "$OUT/"
 cp -r "$ROOT/qml/Hueometry" "$OUT/Hueometry"
+# stamp which commit this is into the overlay: exactly one marker, or the
+# build id would be lost without a word
+marker="@HUEOMETRY_BUILD@"
+if [[ "$(grep -o "$marker" "$OUT/Overlay.qml" | wc -l)" != 1 ]]; then
+  echo "plugin/Overlay.qml must hold the marker $marker exactly once" >&2
+  exit 1
+fi
+version=$(sed -n 's/^VERSION = //p' "$ROOT/hueometry.pro")
+build=$("$ROOT/tools/version/build-id.sh" "$version")
+sed -i "s|$marker|$build|" "$OUT/Overlay.qml"
 if find "$OUT" -type l | grep -q .; then
   echo "the plugin must not contain symlinks" >&2
   exit 1
