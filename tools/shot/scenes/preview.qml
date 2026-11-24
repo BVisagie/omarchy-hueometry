@@ -15,10 +15,13 @@ Item {
     host: MemoryHost { files: ({ "settings.json": JSON.stringify({ muted: true }) }) }
     Component.onCompleted: g.start({ kind: "level", area: root.area, index: 3 })
   }
+  // once the puzzle is prepared (on a worker)
   Timer {
-    interval: 200; running: true
+    interval: 50; running: true; repeat: true
     onTriggered: {
       const p = g.current
+      if (!p.session) return
+      stop()
       const sol = p.session.puzzle.solution
       const left = Math.max(1, Math.min(sol.length, root.remaining))
       for (let i = 0; i < sol.length - left; i++) { p.touch(sol[i].from); p.touch(sol[i].to) }

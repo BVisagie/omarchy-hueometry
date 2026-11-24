@@ -15,9 +15,10 @@ dir="${1:-$ROOT/dist/plugin}"
 fails=0
 say() { echo "plugin guard: $*" >&2; fails=1; }
 
-# a file name with a newline in it would split the lists below: refuse it
+# a file name with a newline in it would split the lists below (into paths
+# that may not even be in the plugin): refuse it and stop here
 odd=$(find "$dir" -path "$dir/.git" -prune -o -name $'*\n*' -print0 | tr '\0' '\n' | head -c 200)
-if [[ -n "$odd" ]]; then say "a file name with a newline: $odd"; fi
+if [[ -n "$odd" ]]; then say "a file name with a newline: $odd"; exit 1; fi
 # (command substitution under set -e: a find error stops the guard)
 files=$(find "$dir" -path "$dir/.git" -prune -o -type f -print)
 while IFS= read -r f; do

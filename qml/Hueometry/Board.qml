@@ -129,8 +129,9 @@ Item {
     sync()
     settled()
     if (column === undefined || column < 0 || !stack[column] || !stack[column].length) return
-    landed(column)
     if (moved && bloomed[column] && !before[column]) opened(column, stack[column][0])
+    // no room to draw the board: nothing to squash
+    if (geom.columns[column]) landed(column)
   }
 
   // the landed orb gives a little squash, and dust puffs from the stone
