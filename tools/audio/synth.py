@@ -21,6 +21,9 @@ import wave
 
 import numpy as np
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import loudness  # noqa: E402  (shared with tools/check/audio.py)
+
 SR = 44100
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "qml", "Hueometry", "sounds")
 
@@ -214,6 +217,53 @@ def seamless(x, crossfade):
 # Effects
 # -------
 
+# How loud each effect is, as its loudest 400 ms (K-weighted LUFS): the mix
+# lives here, not in SoundBank.qml, which plays every effect at full level.
+# tools/check/audio.py checks the shipped files against this table.
+EFFECT_LUFS = {
+    "solved": -14.5, "hint": -16.0, "restart": -16.5,
+    **{f"place-{c}": -17.5 for c in range(6)}, **{f"lift-{i}": -17.5 for i in (1, 2, 3)},
+    "drop": -18.0, "undo": -18.5, "refuse": -19.5, "select": -25.5,
+}
+TRUE_PEAK_MAX = -1.0
+# the loops' integrated loudness (LUFS)
+LOOP_LUFS = {"music-menu": -21.0, "music-play": -21.0,
+             "ambience-forest": -27.0, "ambience-river": -27.0, "ambience-temple": -27.0}
+
+
+def fade_head(x, ms=0.5):
+    """A raised-cosine fade-in so no effect starts on a click; short enough
+    to keep a mallet's attack crisp."""
+    n = max(1, int(SR * ms / 1000))
+    x = x.copy()
+    x[:n] *= 0.5 - 0.5 * np.cos(np.pi * np.arange(n) / n)
+    return x
+
+
+def brighten(x, db=2.0, lo=5000.0, hi=9000.0):
+    """A gentle shelf above about 7 kHz, so effects are not dull."""
+    def gain(f):
+        t = np.clip((f - lo) / (hi - lo), 0, 1)
+        return 1 + (10 ** (db / 20) - 1) * (t * t * (3 - 2 * t))
+    return spectrum_filter(x, gain)
+
+
+def to_level(x, lufs):
+    """Scales an effect to its loudest-moment target, never past the true
+    peak limit (a quieter result then fails the check, loudly)."""
+    x = x * 10 ** ((lufs - loudness.momentary_max(x)) / 20)
+    over = loudness.true_peak(x) - TRUE_PEAK_MAX
+    return x * 10 ** (-over / 20) if over > 0 else x
+
+
+def to_integrated(x, lufs):
+    """Scales a loop to its integrated loudness, never past the true peak
+    limit."""
+    x = x * 10 ** ((lufs - loudness.integrated(x)) / 20)
+    over = loudness.true_peak(x) - TRUE_PEAK_MAX
+    return x * 10 ** (-over / 20) if over > 0 else x
+
+
 def effects():
     rng = np.random.default_rng(11)
     out = {}
@@ -265,9 +315,7 @@ def effects():
     fan += fit(chord, len(fan))
     out["solved"] = fade_tail(reverb(fan, 2.2, 0.32, rng), 200)
     for k in list(out):
-        out[k] = peak_normalise(out[k], -4.0 if k != "solved" else -2.5)
-    out["refuse"] *= 0.55
-    out["select"] *= 0.5
+        out[k] = to_level(fade_head(brighten(out[k])), EFFECT_LUFS[k])
     return out
 
 
@@ -343,7 +391,7 @@ def ambience(name, seconds=42):
         def drip(r):
             return bell(r.uniform(1400, 2200), 0.5, 1.2) * 0.6
         mix += reverb(scatter(np.zeros(n), rng, drip, 0.25, 0.25), 3.0, 0.6, rng)[:n]
-    return rms_normalise(seamless(mix, 3), -27)
+    return to_integrated(seamless(mix, 3), LOOP_LUFS[f"ambience-{name}"])
 
 
 # Music
@@ -387,7 +435,7 @@ def music(name):
                 at = int(SR * b * beat)
                 out[at:at + len(s)] += s[: n - at]
     out = reverb(out, 2.4, 0.3, rng)[:n]
-    return rms_normalise(seamless(out[: int(SR * (total + 2))], 2), -21)
+    return to_integrated(seamless(out[: int(SR * (total + 2))], 2), LOOP_LUFS[f"music-{name}"])
 
 
 def main():

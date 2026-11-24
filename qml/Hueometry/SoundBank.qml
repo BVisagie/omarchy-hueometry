@@ -50,16 +50,18 @@ Item {
 
   property int liftTurn: 0
 
+  // every effect plays at full level: the mix is set in the files
+  // (EFFECT_LUFS in tools/audio/synth.py, checked by tools/check/audio.py)
   function cue(name, arg) {
     switch (name) {
-    case "lift": [lift1, lift2, lift3][liftTurn++ % 3].play(0.8); break
-    case "place": places.itemAt(Math.max(0, Math.min(5, arg % 6)))?.play(0.9); break
-    case "drop": drop.play(0.7); break
+    case "lift": [lift1, lift2, lift3][liftTurn++ % 3].play(1.0); break
+    case "place": places.itemAt(Math.max(0, Math.min(5, arg % 6)))?.play(1.0); break
+    case "drop": drop.play(1.0); break
     case "refuse": refuse.play(1.0); break
-    case "undo": undo.play(0.8); break
-    case "restart": restart.play(0.8); break
-    case "hint": hint.play(0.8); break
-    case "select": select.play(0.6); break
+    case "undo": undo.play(1.0); break
+    case "restart": restart.play(1.0); break
+    case "hint": hint.play(1.0); break
+    case "select": select.play(1.0); break
     // the music steps back only for a fanfare that can be heard
     case "solved": solved.play(1.0); if (effects > 0) duckAnim.restart(); break
     }
