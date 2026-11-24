@@ -326,6 +326,7 @@ Item {
     moves: play.view ? play.view.moves : 0
     par: play.showPar && play.session ? play.session.puzzle.par : 0
     hasNext: !!play.ref && !!play.game.nextRef(play.ref)
+    backLabel: play.ref && play.ref.kind === "free" ? qsTr("Sizes") : qsTr("Map")
     onReplay: play.restart()
     onNext: play.game.playNext(play.ref)
     onLeave: play.game.goBack()

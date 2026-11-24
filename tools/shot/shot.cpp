@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
   p.addPositionalArgument("qml", "QML file");
   p.addPositionalArgument("out", "output PNG (use %1 for the frame number with --every)");
   p.addPositionalArgument("words", "words the scene reads from Qt.application.arguments", "[words...]");
-  p.addOption({"size", "WxH", "size", "1920x1080"});
+  p.addOption({"size", "WxH (default: the scene's own width and height)", "size"});
   p.addOption({"frames", "frames to run before the shot", "n", "60"});
   p.addOption({"every", "also save every n frames", "n", "0"});
   p.addOption({"settle", "real milliseconds to let worker threads finish before stepping", "ms", "1500"});
@@ -41,8 +41,6 @@ int main(int argc, char **argv) {
   p.process(app);
   const QStringList pos = p.positionalArguments();
   if (pos.size() < 2) p.showHelp(2);  // more words are for the scene (Qt.application.arguments)
-  const QStringList wh = p.value("size").split('x');
-  const QSize size(wh.value(0).toInt(), wh.value(1).toInt());
   const int frames = p.value("frames").toInt(), every = p.value("every").toInt();
 
   StepDriver driver;
@@ -56,6 +54,19 @@ int main(int argc, char **argv) {
   keepAlive.setDuration(1000);
   keepAlive.setLoopCount(-1);
   keepAlive.start();
+
+  QQmlEngine engine;
+  QQmlComponent comp(&engine, QUrl::fromLocalFile(pos[0]));
+  QObject *root = comp.create();
+  if (!root) { fprintf(stderr, "shot: %s\n", qPrintable(comp.errorString())); return 1; }
+  QQuickItem *item = qobject_cast<QQuickItem *>(root);
+  if (!item) { fprintf(stderr, "shot: root must be an Item\n"); return 1; }
+  QSize size(qRound(item->width()), qRound(item->height()));
+  if (p.isSet("size")) {
+    const QStringList wh = p.value("size").split('x');
+    size = QSize(wh.value(0).toInt(), wh.value(1).toInt());
+  }
+  if (size.isEmpty()) size = QSize(1920, 1080);
 
   QSurfaceFormat fmt; fmt.setDepthBufferSize(24); fmt.setStencilBufferSize(8);
   QOpenGLContext ctx; ctx.setFormat(fmt);
@@ -77,12 +88,6 @@ int main(int argc, char **argv) {
   gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   window.setRenderTarget(QQuickRenderTarget::fromOpenGLTexture(tex, size));
 
-  QQmlEngine engine;
-  QQmlComponent comp(&engine, QUrl::fromLocalFile(pos[0]));
-  QObject *root = comp.create();
-  if (!root) { fprintf(stderr, "shot: %s\n", qPrintable(comp.errorString())); return 1; }
-  QQuickItem *item = qobject_cast<QQuickItem *>(root);
-  if (!item) { fprintf(stderr, "shot: root must be an Item\n"); return 1; }
   item->setParentItem(window.contentItem());
   item->setSize(size);
   window.contentItem()->setSize(size);

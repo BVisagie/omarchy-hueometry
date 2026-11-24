@@ -77,9 +77,10 @@ function tutorialDone(done) {
 }
 
 // Levels and free-play puzzles are named by their place in the level pack,
-// so a record names the pack too: a new pack (generator) starts fresh
-// records rather than crediting a best to a different board.
-export const PACK = levels.generator;
+// so a record names the pack too: the pack id is a hash of its contents, so
+// any change to a level or its order starts fresh records rather than
+// crediting a best (or replaying moves) on a different board.
+export const PACK = levels.pack;
 
 export function key(ref) {
   if (ref.kind === "tutorial") return `${PACK}:tutorial/${ref.index}`;
@@ -106,7 +107,13 @@ export function merge(disk, mine) {
   return { tutorial: tutorialDone(done), done, current: newer.current, currentAt: newer.currentAt || 0 };
 }
 
-// The unfinished puzzle changed (at a time in milliseconds).
+// A time for the next change that is later than any change already seen,
+// even if the clock went back or two changes share a millisecond.
+export function nextAt(p, now) {
+  return Math.max(now, (p.currentAt || 0) + 1);
+}
+
+// The unfinished puzzle changed (at a time from nextAt).
 export function setCurrent(p, current, at) {
   return Object.assign({}, p, { current: current ? Object.assign({ pack: PACK }, current) : null, currentAt: at });
 }

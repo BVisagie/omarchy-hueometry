@@ -62,11 +62,20 @@ Item {
   onHostChanged: load()
   Component.onCompleted: load()
 
+  // false when the last save could not be written (shown on screen)
+  property bool saveFailed: false
+
   function saveProgress() {
     if (!host) return
-    // merge keeps this copy's unfinished puzzle
+    // merge keeps this copy's unfinished puzzle (the newest)
     progress = Store.merge(readProgress(), progress)
-    host.writeText(ownProgressFile(), JSON.stringify(progress))
+    saveFailed = !host.writeText(ownProgressFile(), JSON.stringify(progress))
+  }
+
+  // what is on disk, merged with this copy: an unsaved change here (a failed
+  // write) is newer, so it survives
+  function refreshProgress() {
+    if (host) progress = Store.merge(readProgress(), progress)
   }
 
   function setSetting(key, value) {
@@ -77,14 +86,14 @@ Item {
   }
 
   function saveCurrent(ref, moves, assisted) {
-    progress = Store.setCurrent(progress, { ref, moves: moves.map(m => [m.from, m.to]), assisted: assisted === true }, Date.now())
+    progress = Store.setCurrent(progress, { ref, moves: moves.map(m => [m.from, m.to]), assisted: assisted === true }, Store.nextAt(progress, Date.now()))
     saveProgress()
   }
 
   function recordSolved(ref, moves, assisted) {
     // compare against every host's records, not this copy's
-    if (host) progress = Store.merge(readProgress(), progress)
-    const out = Store.solved(progress, ref, moves, assisted, Date.now())
+    refreshProgress()
+    const out = Store.solved(progress, ref, moves, assisted, Store.nextAt(progress, Date.now()))
     progress = out.progress
     saveProgress()
     return out
@@ -143,14 +152,14 @@ Item {
 
   function continueOrMap() {
     // the other host may have finished or changed the puzzle since
-    if (host) progress = readProgress()
+    refreshProgress()
     const c = progress.current
     if (c && S.known(c.ref)) {
       lastArea = areaIndex(c.ref)
       screen = "play"
       // the adapter reads [from, to] pairs and drops anything malformed
       screens.item.open(c.ref, { moves: Array.isArray(c.moves) ? c.moves : [], assisted: c.assisted === true })
-    } else if (!progress.tutorial && !progress.done["tutorial/0"]) {
+    } else if (!progress.tutorial && !progress.done[Store.key({ kind: "tutorial", index: 0 })]) {
       // a first visit starts with the first steps
       start({ kind: "tutorial", index: 0 })
     } else {
@@ -223,6 +232,28 @@ Item {
     anchors.fill: parent
     visible: root.helpShown
     onClosed: root.helpShown = false
+  }
+
+  // a save that could not be written, said plainly
+  Rectangle {
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    anchors.topMargin: Theme.em * 0.6
+    visible: root.saveFailed
+    z: 20
+    width: saveText.implicitWidth + Theme.em * 2
+    height: Theme.em * 2.4
+    radius: height / 2
+    color: "#E0402018"
+    border.color: Theme.gold
+    Text {
+      id: saveText
+      anchors.centerIn: parent
+      text: qsTr("Progress could not be saved. Check the disk has room.")
+      color: Theme.ink
+      font.family: Theme.font
+      font.pixelSize: Theme.em
+    }
   }
 
   // "press Q again" when quitting the app

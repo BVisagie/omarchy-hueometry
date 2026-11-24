@@ -11,7 +11,7 @@
 import * as R from "../../qml/Hueometry/js/rules.mjs";
 import { solve, lowerBound } from "./solve.mjs";
 
-import { writeModule } from "./write.mjs";
+import { writeModule, packId } from "./write.mjs";
 // Bump when engine/gen.bend changes what a seed produces.
 const GENERATOR = 2;
 
@@ -110,5 +110,6 @@ for (const [name, count] of Object.entries(FREE)) {
   free[name] = { colours: d.colours, cap: d.cap, puzzles: sample(name, count, 10001) };
 }
 
-writeModule("levels.mjs", { version: 1, generator: GENERATOR, tutorial, areas });
-writeModule("free.mjs", { version: 1, generator: GENERATOR, puzzles: free });
+const pack = packId({ tutorial, areas, free });
+writeModule("levels.mjs", { version: 1, generator: GENERATOR, pack, tutorial, areas });
+writeModule("free.mjs", { version: 1, generator: GENERATOR, pack, puzzles: free });

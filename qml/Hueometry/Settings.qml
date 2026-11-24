@@ -121,6 +121,16 @@ Item {
             anchors.rightMargin: Theme.em
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.em * 0.2
+            // off
+            Rectangle {
+              width: Theme.em * 1.4
+              height: Theme.em * 1.4
+              anchors.bottom: parent.bottom
+              radius: width / 2
+              color: (root.s[row.r.key] || 0) === 0 ? Theme.gold : "#40FFFFFF"
+              Text { anchors.centerIn: parent; text: "0"; color: Theme.inkDark; font.family: Theme.font; font.pixelSize: Theme.em * 0.8; font.bold: true }
+              MouseArea { anchors.fill: parent; anchors.margins: -Theme.em * 0.1; onClicked: { root.cursor = row.index; root.game.setSetting(row.r.key, 0) } }
+            }
             Repeater {
               model: 10
               Rectangle {

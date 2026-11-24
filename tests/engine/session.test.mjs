@@ -135,6 +135,13 @@ test("across two hosts, the newest unfinished puzzle wins and settings merge per
   const next = St.withSetting(disk, "music", 0.8);
   assert.equal(next.reducedMotion, true);
   assert.equal(next.music, 0.8);
+  // a change made after a clock jump back is still the newest
+  assert.equal(St.nextAt({ currentAt: 500 }, 100), 501);
+  assert.equal(St.nextAt({ currentAt: 500 }, 900), 900);
+  const later = St.setCurrent(plugin, { ref, moves: [], assisted: false }, St.nextAt(plugin, 50));
+  assert.deepEqual(St.merge(plugin, later).current.ref, ref);
+  // records name the pack by its contents
+  assert.match(St.PACK, /^[0-9a-f]{12}$/);
   assert.equal(S.known({ kind: "free", difficulty: "constructor", index: 0 }), false);
   assert.equal(S.puzzle({ kind: "free", difficulty: "constructor", index: 0 }), null);
 });

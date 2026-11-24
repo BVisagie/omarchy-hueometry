@@ -39,3 +39,10 @@ jobs:
           # the authored head, not the merge commit GitHub checks out for a PR
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: bin/check "$BASE" "$HEAD_SHA"
+      - name: Build the Arch package as an ordinary user (makepkg refuses root)
+        run: |
+          pacman -S --noconfirm --needed base-devel
+          useradd -m builder
+          chown -R builder "$GITHUB_WORKSPACE"
+          su builder -c "cd '$GITHUB_WORKSPACE/pkgbuild' && makepkg -f --noconfirm"
+          ls pkgbuild/hueometry-*.pkg.tar.zst

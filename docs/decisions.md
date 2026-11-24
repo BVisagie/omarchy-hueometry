@@ -151,3 +151,11 @@ All defaults in plan.md section 10 were accepted, except:
   and Q repeat but never confirm.
 - The plugin is linted against the installed shell's own modules, and
   warnings fail `bin/check`.
+- Each local change to the unfinished puzzle is stamped later than any
+  stamp already seen, so a clock that steps back cannot let an older puzzle
+  win the merge. The level pack is named by a hash of its contents, so a new
+  pack never credits a record or replays moves on a different board.
+- A save that cannot be written is said on screen, and the unsaved progress
+  stays in memory until a later save succeeds.
+- v0.1 uses the system font (no bundled font) and English source strings
+  marked for translation, with no translation catalogue yet.

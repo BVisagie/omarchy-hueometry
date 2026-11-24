@@ -34,10 +34,10 @@ Item {
 
   // the plugin writes progress-plugin.json; it reads the app's file and the
   // old shared file too (Game.qml merges them)
-  FileView { id: pluginProgress; path: root.dataDir + "/progress-plugin.json"; blockLoading: true; blockAllReads: true; atomicWrites: true; printErrors: false }
+  FileView { id: pluginProgress; path: root.dataDir + "/progress-plugin.json"; blockLoading: true; blockAllReads: true; atomicWrites: true; blockWrites: true; printErrors: false }
   FileView { id: appProgress; path: root.dataDir + "/progress-app.json"; blockLoading: true; blockAllReads: true; printErrors: false }
   FileView { id: oldProgress; path: root.dataDir + "/progress.json"; blockLoading: true; blockAllReads: true; printErrors: false }
-  FileView { id: settingsFile; path: root.configDir + "/settings.json"; blockLoading: true; blockAllReads: true; atomicWrites: true; printErrors: false }
+  FileView { id: settingsFile; path: root.configDir + "/settings.json"; blockLoading: true; blockAllReads: true; atomicWrites: true; blockWrites: true; printErrors: false }
 
   // what Game.qml needs from its host (not named `host`: inside Game that
   // name is Game's own property)
@@ -62,7 +62,11 @@ Item {
       const f = name === "progress-plugin.json" || name === "settings.json" ? file(name) : null
       if (!f) return false
       f.setText(text)
-      return true
+      // a failed write (a full disk) leaves the old text: read it back so
+      // the game can say so
+      f.reload()
+      f.waitForJob()
+      return f.text() === text
     }
     function quit() { root.dismiss() }
     function toggleFullscreen() {}

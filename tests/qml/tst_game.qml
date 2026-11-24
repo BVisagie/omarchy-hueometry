@@ -11,6 +11,8 @@ Item {
   height: 720
 
   MemoryHost { id: memory }
+  Component { id: hostMaker; MemoryHost {} }
+  Component { id: gameMaker; Game { width: 1280; height: 720 } }
   Game { id: game; anchors.fill: parent; host: memory }
 
   TestCase {
@@ -80,6 +82,28 @@ Item {
       keyClick(Qt.Key_Escape)
       compare(game.screen, "menu")
       compare(JSON.parse(memory.files["progress-app.json"]).current.ref.index, 1, "the unfinished puzzle is saved")
+    }
+
+    function test_5_reopen_after_part_of_the_tutorial() {
+      // the first puzzle solved, the game closed from its results card
+      const done = {}
+      done[Store.key({ kind: "tutorial", index: 0 })] = { best: 3 }
+      const host = hostMaker.createObject(root, { files: { "progress-app.json": JSON.stringify({ done }) } })
+      const g = gameMaker.createObject(root, { host })
+      g.continueOrMap()
+      compare(g.screen, "map", "a returning player is not sent back to the first steps")
+      g.destroy(); host.destroy()
+    }
+
+    function test_6_a_failed_save_is_shown_and_kept() {
+      memory.failWrites = true
+      game.saveCurrent({ kind: "level", area: "clearing", index: 0 }, [], false)
+      verify(game.saveFailed)
+      game.continueOrMap()                    // reads the disk again
+      compare(game.current.ref.area, "clearing", "the unsaved puzzle survives the reread")
+      memory.failWrites = false
+      game.saveCurrent({ kind: "level", area: "clearing", index: 0 }, [], false)
+      verify(!game.saveFailed)
     }
   }
 }

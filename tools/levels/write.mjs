@@ -1,5 +1,13 @@
 // Writes a level module: one JSON value as an ES module's default export.
+import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
+
+// Names this exact pack: any change to a level, its order or the free-play
+// pool gives a new id, so saves made with another pack are never applied to
+// different boards.
+export function packId({ tutorial, areas, free }) {
+  return createHash("sha256").update(JSON.stringify({ tutorial, areas, free })).digest("hex").slice(0, 12);
+}
 
 export function writeModule(name, value) {
   const out = new URL(`../../qml/Hueometry/js/${name}`, import.meta.url);

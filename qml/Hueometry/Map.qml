@@ -40,6 +40,8 @@ Item {
   }
 
   onAreaChanged: { game.lastArea = area; areaScroll.show(tiles.itemAt(area)) }
+  // reveal the starting selection once the grid has placed its tiles
+  Component.onCompleted: Qt.callLater(function() { areaScroll.show(tiles.itemAt(area)) })
   onLevelChanged: levelScroll.show(stones.itemAt(level))
 
   RoundButton {

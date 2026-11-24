@@ -7,6 +7,8 @@ Item {
   property int moves: 0
   property int par: 0
   property bool hasNext: false
+  // where "back" goes: the map, or the size picker for free play
+  property string backLabel: qsTr("Map")
   // 0: map, 1: play again, 2: next
   property int cursor: hasNext ? 2 : 1
   signal replay()
@@ -115,7 +117,7 @@ Item {
       Row {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.em
-        TextButton { text: qsTr("Map"); icon: "back"; wide: Theme.em * 8; focused: root.cursor === 0; onActivated: root.leave() }
+        TextButton { text: root.backLabel; icon: "back"; wide: Theme.em * 8; focused: root.cursor === 0; onActivated: root.leave() }
         TextButton { text: qsTr("Play again"); icon: "restart"; wide: Theme.em * 10; focused: root.cursor === 1; onActivated: root.replay() }
         TextButton { text: qsTr("Next"); icon: "play"; wide: Theme.em * 8; primary: true; visible: root.hasNext; focused: root.cursor === 2; onActivated: root.next() }
       }
