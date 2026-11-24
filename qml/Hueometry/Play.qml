@@ -52,7 +52,9 @@ Item {
     confirmRestart = false
     message = ref.kind === "tutorial" ? tutorialText(ref.index) : ""
     if (S.view(session).solved) { win(); showResult() }
-    else game.saveCurrent(ref, S.history(session), assisted)
+    // a resumed puzzle is saved again only when it changes, so resuming
+    // never makes an old save look newer than another host's
+    else if (!saved) game.saveCurrent(ref, S.history(session), assisted)
   }
 
   WorkerScript {
@@ -214,12 +216,17 @@ Item {
       spacing: Theme.em * 0.8
       anchors.left: parent.left
       anchors.top: parent.top
-      RoundButton { icon: "back"; label: qsTr("Back"); onActivated: play.game.goBack() }
+      // the title and counts never run under the buttons on the right
+      width: parent.width - tools.width - Theme.em
+      RoundButton { id: backButton; icon: "back"; label: qsTr("Back"); onActivated: play.game.goBack() }
       Column {
+        width: parent.width - backButton.width - parent.spacing
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -Theme.em * 0.6
         spacing: Theme.em * 0.1
         Text {
+          width: parent.width
+          elide: Text.ElideRight
           text: play.ref ? play.game.titleOf(play.ref) : ""
           color: Theme.ink
           font.family: Theme.font
@@ -229,6 +236,8 @@ Item {
           styleColor: "#90000000"
         }
         Text {
+          width: parent.width
+          elide: Text.ElideRight
           text: play.view ? (play.showPar ? qsTr("Moves: %1  ·  Par: %2").arg(play.view.moves).arg(play.session.puzzle.par)
                                           : qsTr("Moves: %1").arg(play.view.moves)) : ""
           color: Theme.inkSoft
@@ -241,6 +250,7 @@ Item {
     }
 
     Row {
+      id: tools
       spacing: Theme.em * 0.8
       anchors.right: parent.right
       anchors.top: parent.top

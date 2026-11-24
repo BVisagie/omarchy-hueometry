@@ -47,8 +47,10 @@ Item {
   function ownProgressFile() { return host && host.kind === "plugin" ? "progress-plugin.json" : "progress-app.json" }
 
   function readProgress() {
-    // merge keeps every record and the most recently changed unfinished puzzle
-    return progressFiles.map(name => Store.progress(host.readText(name)))
+    // merge keeps every record and the most recently changed unfinished
+    // puzzle; files that do not exist take no part
+    return progressFiles.map(name => host.readText(name)).filter(text => text !== "")
+      .map(text => Store.progress(text))
       .reduce((acc, p) => Store.merge(acc, p), Store.progress(""))
   }
 
@@ -80,6 +82,8 @@ Item {
   }
 
   function recordSolved(ref, moves, assisted) {
+    // compare against every host's records, not this copy's
+    if (host) progress = Store.merge(readProgress(), progress)
     const out = Store.solved(progress, ref, moves, assisted, Date.now())
     progress = out.progress
     saveProgress()
@@ -138,6 +142,8 @@ Item {
   }
 
   function continueOrMap() {
+    // the other host may have finished or changed the puzzle since
+    if (host) progress = readProgress()
     const c = progress.current
     if (c && S.known(c.ref)) {
       lastArea = areaIndex(c.ref)

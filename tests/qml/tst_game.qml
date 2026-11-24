@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import "../../qml/Hueometry"
+import "../../qml/Hueometry/js/store.mjs" as Store
 
 // The whole game through its keyboard: menus, a tutorial puzzle solved with
 // keys, the results card, and progress saved through the host.
@@ -41,7 +42,7 @@ Item {
       tryVerify(() => !!game.current.result, 3000)
       compare(game.current.view.moves, sol.length)
       const saved = JSON.parse(memory.files["progress-app.json"])
-      compare(saved.done["tutorial/0"].best, sol.length)
+      compare(saved.done[Store.key({ kind: "tutorial", index: 0 })].best, sol.length)
       compare(saved.current, null)
     }
 

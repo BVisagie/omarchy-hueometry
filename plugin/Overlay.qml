@@ -34,10 +34,10 @@ Item {
 
   // the plugin writes progress-plugin.json; it reads the app's file and the
   // old shared file too (Game.qml merges them)
-  FileView { id: pluginProgress; path: root.dataDir + "/progress-plugin.json"; blockLoading: true; atomicWrites: true; printErrors: false }
-  FileView { id: appProgress; path: root.dataDir + "/progress-app.json"; blockLoading: true; printErrors: false }
-  FileView { id: oldProgress; path: root.dataDir + "/progress.json"; blockLoading: true; printErrors: false }
-  FileView { id: settingsFile; path: root.configDir + "/settings.json"; blockLoading: true; atomicWrites: true; printErrors: false }
+  FileView { id: pluginProgress; path: root.dataDir + "/progress-plugin.json"; blockLoading: true; blockAllReads: true; atomicWrites: true; printErrors: false }
+  FileView { id: appProgress; path: root.dataDir + "/progress-app.json"; blockLoading: true; blockAllReads: true; printErrors: false }
+  FileView { id: oldProgress; path: root.dataDir + "/progress.json"; blockLoading: true; blockAllReads: true; printErrors: false }
+  FileView { id: settingsFile; path: root.configDir + "/settings.json"; blockLoading: true; blockAllReads: true; atomicWrites: true; printErrors: false }
 
   // what Game.qml needs from its host (not named `host`: inside Game that
   // name is Game's own property)
@@ -51,7 +51,10 @@ Item {
     function readText(name) {
       const f = file(name)
       if (!f) return ""
+      // reload() is asynchronous: wait for it, so a merge sees the other
+      // host's latest write
       f.reload()
+      f.waitForJob()
       return f.text() || ""
     }
     function writeText(name, text) {

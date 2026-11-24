@@ -50,11 +50,19 @@ Item {
     styleColor: "#A0000000"
   }
 
+  onCursorChanged: scroller.show(tiles.itemAt(cursor))
+
+  Scroller {
+    id: scroller
+    anchors.fill: parent
+    anchors.topMargin: Theme.em * 5
+    anchors.bottomMargin: Theme.em
   Grid {
-    anchors.centerIn: parent
-    columns: free.width > Theme.em * 72 ? 5 : 3
+    anchors.horizontalCenter: parent.horizontalCenter
+    columns: Math.max(1, Math.min(5, Math.floor((free.width - Theme.em * 2) / (Theme.em * 13.7))))
     spacing: Theme.em * 1.2
     Repeater {
+      id: tiles
       model: free.kinds.length
       Item {
         id: tile
@@ -105,5 +113,6 @@ Item {
         MouseArea { anchors.fill: parent; onClicked: free.pick(tile.index) }
       }
     }
+  }
   }
 }

@@ -23,7 +23,8 @@ bin/engine --check
 
 step "no shipped file is over the marketplace scanner's 512 KiB"
 bin/plugin >/dev/null
-big=$(find qml dist/plugin -type f -size +512k)
+# (the scanner reads text files; images have their own, larger limit)
+big=$(find qml dist/plugin -type f \( -name '*.qml' -o -name '*.mjs' -o -name '*.js' -o -name '*.json' -o -name '*.md' -o -name 'qmldir' \) -size +512k)
 if [[ -n "$big" ]]; then
   echo "too big for the marketplace scan: $big" >&2
   exit 1

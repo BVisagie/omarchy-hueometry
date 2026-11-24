@@ -1,3 +1,5 @@
+import levels from "./levels.mjs";
+
 // Progress and settings, as plain data, and how two copies of the progress
 // combine. The standalone app and the shell plugin share one save folder;
 // progress only ever grows (a level done stays done, a best only improves),
@@ -61,8 +63,9 @@ export function progress(raw) {
       if (v && Number.isInteger(v.best) && v.best > 0) done[k] = { best: v.best, assisted: v.assisted === true };
     }
   }
-  const current = p.current && p.current.ref && Array.isArray(p.current.moves)
-    ? { ref: p.current.ref, moves: p.current.moves, assisted: p.current.assisted === true } : null;
+  // an unfinished puzzle from another pack names a different board: drop it
+  const current = p.current && p.current.ref && Array.isArray(p.current.moves) && p.current.pack === PACK
+    ? { ref: p.current.ref, moves: p.current.moves, assisted: p.current.assisted === true, pack: PACK } : null;
   // when `current` last changed (set or cleared), so the newest copy wins
   const currentAt = Number.isFinite(p.currentAt) ? p.currentAt : 0;
   return { tutorial: tutorialDone(done), done, current, currentAt };
@@ -70,13 +73,18 @@ export function progress(raw) {
 
 // The tutorial is done when all three of its puzzles are.
 function tutorialDone(done) {
-  return [0, 1, 2].every((i) => !!done[`tutorial/${i}`]);
+  return [0, 1, 2].every((i) => !!done[key({ kind: "tutorial", index: i })]);
 }
 
+// Levels and free-play puzzles are named by their place in the level pack,
+// so a record names the pack too: a new pack (generator) starts fresh
+// records rather than crediting a best to a different board.
+export const PACK = levels.generator;
+
 export function key(ref) {
-  if (ref.kind === "tutorial") return `tutorial/${ref.index}`;
-  if (ref.kind === "level") return `${ref.area}/${ref.index}`;
-  return `free/${ref.difficulty}/${ref.index}`;
+  if (ref.kind === "tutorial") return `${PACK}:tutorial/${ref.index}`;
+  if (ref.kind === "level") return `${PACK}:${ref.area}/${ref.index}`;
+  return `${PACK}:free/${ref.difficulty}/${ref.index}`;
 }
 
 // The better of two records: fewer moves, and unassisted beats assisted.
@@ -92,13 +100,15 @@ function better(a, b) {
 export function merge(disk, mine) {
   const done = Object.assign({}, disk.done);
   for (const [k, v] of Object.entries(mine.done)) done[k] = better(done[k], v);
-  const newer = (mine.currentAt || 0) >= (disk.currentAt || 0) ? mine : disk;
+  // newest wins; on a tie (saves without a time), a puzzle beats none
+  const dt = mine.currentAt || 0, ot = disk.currentAt || 0;
+  const newer = dt > ot ? mine : ot > dt ? disk : (mine.current ? mine : disk);
   return { tutorial: tutorialDone(done), done, current: newer.current, currentAt: newer.currentAt || 0 };
 }
 
 // The unfinished puzzle changed (at a time in milliseconds).
 export function setCurrent(p, current, at) {
-  return Object.assign({}, p, { current, currentAt: at });
+  return Object.assign({}, p, { current: current ? Object.assign({ pack: PACK }, current) : null, currentAt: at });
 }
 
 // Records a solved puzzle. Answers { progress, record } where record says
@@ -121,9 +131,12 @@ export function solved(p, ref, moveCount, assisted, at) {
 // An area opens once five levels of the one before it are done.
 export const TO_OPEN = 5;
 
+// how many of an area's puzzles are done ("tutorial" for the first steps)
 export function doneIn(p, area, count) {
   let n = 0;
-  for (let i = 0; i < count; i++) if (p.done[`${area}/${i}`]) n++;
+  for (let i = 0; i < count; i++) {
+    if (p.done[key(area === "tutorial" ? { kind: "tutorial", index: i } : { kind: "level", area, index: i })]) n++;
+  }
   return n;
 }
 

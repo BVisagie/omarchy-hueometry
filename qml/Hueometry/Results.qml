@@ -7,7 +7,8 @@ Item {
   property int moves: 0
   property int par: 0
   property bool hasNext: false
-  property int cursor: hasNext ? 1 : 0
+  // 0: map, 1: play again, 2: next
+  property int cursor: hasNext ? 2 : 1
   signal replay()
   signal next()
   signal leave()
@@ -16,11 +17,12 @@ Item {
 
   function handleKey(event) {
     switch (event.key) {
-    case Qt.Key_Left: case Qt.Key_Right: case Qt.Key_Tab:
-      if (hasNext) cursor = 1 - cursor
-      return true
+    case Qt.Key_Left:
+      cursor = Math.max(0, cursor - 1); return true
+    case Qt.Key_Right: case Qt.Key_Tab:
+      cursor = Math.min(hasNext ? 2 : 1, cursor + 1); return true
     case Qt.Key_Space: case Qt.Key_Return: case Qt.Key_Enter:
-      if (cursor === 1 && hasNext) next(); else replay()
+      if (cursor === 0) leave(); else if (cursor === 2 && hasNext) next(); else replay()
       return true
     case Qt.Key_Escape: leave(); return true
     }
@@ -76,12 +78,22 @@ Item {
           const r = root.result
           // a hinted solve never replaces a best made without hints
           if (r.assisted && r.best && !r.best.assisted)
-            return qsTr("You used a hint this time. Your best without hints is %1.").arg(r.best.best)
+            return qsTr("Your best without hints is %1.").arg(r.best.best)
           if (r.record === "first") return root.par > 0 ? qsTr("Par for this puzzle is %1.").arg(root.par) : ""
           if (r.record === "better") return qsTr("New personal best! Your last best was %1.").arg(r.previous.best)
           if (r.record === "same") return qsTr("You matched your best of %1.").arg(r.previous.best)
           return qsTr("Your best is %1. Want to try for fewer moves?").arg(r.previous.best)
         }
+      }
+      Text {
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
+        visible: !!root.result && root.result.assisted
+        text: qsTr("You used a hint this time.")
+        color: Theme.inkSoft
+        font.family: Theme.font
+        font.pixelSize: Theme.em * 1.0
+        font.italic: true
       }
       Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
@@ -103,8 +115,9 @@ Item {
       Row {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.em
-        TextButton { text: qsTr("Play again"); icon: "restart"; wide: Theme.em * 11; focused: root.cursor === 0; onActivated: root.replay() }
-        TextButton { text: qsTr("Next"); icon: "play"; wide: Theme.em * 11; primary: true; visible: root.hasNext; focused: root.cursor === 1; onActivated: root.next() }
+        TextButton { text: qsTr("Map"); icon: "back"; wide: Theme.em * 8; focused: root.cursor === 0; onActivated: root.leave() }
+        TextButton { text: qsTr("Play again"); icon: "restart"; wide: Theme.em * 10; focused: root.cursor === 1; onActivated: root.replay() }
+        TextButton { text: qsTr("Next"); icon: "play"; wide: Theme.em * 8; primary: true; visible: root.hasNext; focused: root.cursor === 2; onActivated: root.next() }
       }
     }
   }
